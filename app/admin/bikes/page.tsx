@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { FaPowerOff } from "react-icons/fa";
 
 interface Bike {
   id: string;
@@ -145,6 +146,26 @@ export default function AdminBikesPage() {
 
   // Modal state for renter info
   const [modalBike, setModalBike] = useState<Bike | null>(null);
+  const [endingBikeId, setEndingBikeId] = useState<string | null>(null);
+  const handleEndRental = async (bikeId: string) => {
+    setEndingBikeId(bikeId);
+    try {
+      const res = await fetch("/api/admin/bikes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bikeId, status: "available" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchBikes();
+      } else {
+        alert(data.error || "Failed to end rental.");
+      }
+    } catch {
+      alert("Failed to end rental.");
+    }
+    setEndingBikeId(null);
+  };
 
   if (loading) {
     return (
@@ -432,7 +453,31 @@ export default function AdminBikesPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {bike.status === "rented" && bike.applications && bike.applications.length > 0 ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ color: '#ef4444', fontWeight: 700, fontSize: 16 }}>Rented</span>
+                      <button
+                        title="End Rental"
+                        onClick={e => { e.stopPropagation(); handleEndRental(bike.id); }}
+                        disabled={endingBikeId === bike.id}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#b22222',
+                          fontSize: 20,
+                          marginLeft: 4,
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                        aria-label="End Rental"
+                      >
+                        {endingBikeId === bike.id ? (
+                          <span style={{ fontSize: 14 }}>...</span>
+                        ) : (
+                          <FaPowerOff />
+                        )}
+                      </button>
+                    </span>
                   ) : (
                       <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 16 }}>Available</span>
                   )}
