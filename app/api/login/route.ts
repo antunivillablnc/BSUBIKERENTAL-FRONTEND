@@ -17,5 +17,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
   // Optionally, return user info (never return password)
+  // Log admin login activity
+  if (user.role === 'admin') {
+    await prisma.activityLog.create({
+      data: {
+        type: 'Login',
+        adminName: user.name || '',
+        adminEmail: user.email,
+        description: 'Admin logged in',
+      },
+    });
+  }
   return NextResponse.json({ message: "Login successful", user: { id: user.id, email: user.email, role: user.role, name: user.name } });
 } 
