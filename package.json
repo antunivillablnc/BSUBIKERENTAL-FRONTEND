@@ -13,6 +13,7 @@
     "@prisma/client": "^6.11.1",
     "@splinetool/react-spline": "^4.0.0",
     "@types/bcryptjs": "^2.4.6",
+    "all": "^0.0.0",
     "bcryptjs": "^3.0.2",
     "express": "^5.1.0",
     "next": "^15.3.5",
