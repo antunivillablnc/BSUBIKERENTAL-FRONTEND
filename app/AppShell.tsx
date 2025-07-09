@@ -4,9 +4,10 @@ import Navbar from "./Navbar";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isAdmin = pathname.startsWith('/admin');
   return (
     <>
-      {!['/', '/register'].includes(pathname) && <Navbar />}
+      {!isAdmin && !['/', '/register'].includes(pathname) && <Navbar />}
       {children}
     </>
   );
