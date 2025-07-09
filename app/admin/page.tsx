@@ -230,6 +230,12 @@ export default function AdminDashboard() {
               href="/admin/bikes"
               color="#22c55e"
             />
+            <QuickActionCard
+              title="Manage Accounts"
+              description="Create, edit, and manage user accounts"
+              href="/admin/users"
+              color="#8b5cf6"
+            />
           </div>
         </div>
 
