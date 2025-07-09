@@ -20,6 +20,15 @@ export async function POST(req: Request) {
       where: { id: bikeId },
       data: { status: 'rented' },
     });
+    // Log activity (replace with real admin info in the future)
+    await prisma.activityLog.create({
+      data: {
+        type: 'Assign Bike',
+        adminName: 'Admin',
+        adminEmail: 'admin@example.com',
+        description: `Assigned bike ID ${bikeId} to application ID ${applicationId}`,
+      },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });

@@ -47,6 +47,15 @@ export async function POST(req: Request) {
         status,
       },
     });
+    // Log activity (replace with real admin info in the future)
+    await prisma.activityLog.create({
+      data: {
+        type: 'Add Bike',
+        adminName: 'Admin',
+        adminEmail: 'admin@example.com',
+        description: `Added bike ${bike.name} to inventory`,
+      },
+    });
     return NextResponse.json({ success: true, bike });
   } catch (error) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
