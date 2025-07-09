@@ -53,3 +53,12 @@ model BikeRentalApplication {
   createdAt     DateTime @default(now())
 }
 
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  type        String
+  adminName   String
+  adminEmail  String
+  description String
+  createdAt   DateTime @default(now())
+}
+
