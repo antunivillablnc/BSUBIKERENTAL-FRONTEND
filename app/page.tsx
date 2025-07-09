@@ -40,8 +40,21 @@ export default function LoginPage() {
       body: JSON.stringify({ username, password }),
     });
     if (res.ok) {
+      const data = await res.json();
       setSuccess("Login successful!");
-      router.push("/dashboard");
+      if (data.user) {
+        console.log('Saving user to localStorage:', data.user);
+        console.log('User role:', data.user.role);
+        console.log('Is admin?', data.user.role === "admin");
+        localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user.role === "admin") {
+          console.log('Redirecting admin to /admin');
+          router.push("/admin");
+        } else {
+          console.log('Redirecting user to /dashboard');
+          router.push("/dashboard");
+        }
+      }
     } else {
       let data = null;
       const contentType = res.headers.get("content-type");
