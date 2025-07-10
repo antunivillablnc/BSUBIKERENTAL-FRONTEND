@@ -72,90 +72,113 @@ export default function BikeRentalPage() {
         ) : bikes.length === 0 ? (
           <div style={{ color: '#b22222', fontWeight: 700, fontSize: 22, marginTop: 40 }}>No bikes available at the moment.</div>
         ) : (
-          <Swiper
-            effect="coverflow"
-            grabCursor={true}
-            centeredSlides={true}
-            slidesPerView={slidesPerView}
-            loop={true}
-            coverflowEffect={{
-              rotate: 30,
-              stretch: 0,
-              depth: 150,
-              modifier: 1,
-              slideShadows: true,
-            }}
-            modules={[EffectCoverflow, Autoplay, Keyboard]}
-            style={{ width: swiperWidth, maxWidth: '100vw', padding: '40px 0' }}
-            keyboard={{ enabled: true, onlyInViewport: true }}
-            onSwiper={swiper => (swiperRef.current = swiper)}
-          >
-            {bikes.map((bike, i) => (
-              <SwiperSlide key={bike.id}>
-                <div style={{
-                  background: '#fff',
-                  borderRadius: 18,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
-                  border: '2px solid #1976d2',
-                  minWidth: 180,
-                  maxWidth: 260,
-                  width: '90vw',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  padding: 16,
-                  margin: '0 auto',
-                }}>
-                  <img src="/Bike.jpg" alt={bike.name} style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 10, marginBottom: 16, border: '1.5px solid #eee' }} />
-                  <div style={{ fontWeight: 800, fontSize: 22, color: '#1976d2', marginBottom: 8, letterSpacing: 1, textShadow: '0 1px 2px #eee' }}>{bike.name}</div>
-                  <div style={{ color: '#555', fontSize: 16, marginBottom: 18, textAlign: 'center' }}>Available for BSU students</div>
-                  {/* Amenities section */}
-                  <div style={{ color: '#1976d2', fontWeight: 600, fontSize: 15, marginBottom: 10, textAlign: 'center' }}>
-                    Amenities
+          <>
+            {/* Move the Rent a bike button above the Swiper carousel */}
+            <button
+              style={{
+                background: 'linear-gradient(90deg, #1976d2 60%, #2196f3 100%)',
+                color: '#fff',
+                fontWeight: 800,
+                padding: '18px 0',
+                borderRadius: 12,
+                fontSize: 22,
+                border: '2px solid #1565c0',
+                cursor: 'pointer',
+                width: 320,
+                maxWidth: '90vw',
+                boxShadow: '0 8px 32px rgba(25, 118, 210, 0.25), 0 2px 8px rgba(0,0,0,0.10)',
+                outline: 'none',
+                transition: 'background 0.2s, box-shadow 0.2s, transform 0.15s',
+                letterSpacing: 1,
+                margin: '0 auto 32px',
+                display: 'block',
+                opacity: 1,
+                textShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                userSelect: 'none',
+              }}
+              onClick={() => router.push('/reserve/apply')}
+              onMouseOver={e => {
+                e.currentTarget.style.background = 'linear-gradient(90deg, #2196f3 60%, #42a5f5 100%)';
+                e.currentTarget.style.boxShadow = '0 12px 36px rgba(33, 150, 243, 0.30), 0 4px 16px rgba(0,0,0,0.12)';
+                e.currentTarget.style.transform = 'scale(1.04)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = 'linear-gradient(90deg, #1976d2 60%, #2196f3 100%)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(25, 118, 210, 0.25), 0 2px 8px rgba(0,0,0,0.10)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              tabIndex={0}
+              aria-label="Rent a bike"
+            >
+              Rent a bike
+            </button>
+            <div style={{
+              textAlign: 'center',
+              color: '#1976d2',
+              fontWeight: 500,
+              fontSize: 15,
+              marginTop: 4,
+              marginBottom: 10,
+              letterSpacing: 0.1,
+              textShadow: '0 1px 2px #fff',
+            }}>
+              Swipe or scroll the bikes left and right
+            </div>
+            <Swiper
+              effect="coverflow"
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView={slidesPerView}
+              loop={true}
+              coverflowEffect={{
+                rotate: 30,
+                stretch: 0,
+                depth: 150,
+                modifier: 1,
+                slideShadows: true,
+              }}
+              modules={[EffectCoverflow, Autoplay, Keyboard]}
+              style={{ width: swiperWidth, maxWidth: '100vw', padding: '20px 0 0 0', marginTop: '-18px' }}
+              keyboard={{ enabled: true, onlyInViewport: true }}
+              onSwiper={swiper => (swiperRef.current = swiper)}
+            >
+              {bikes.map((bike, i) => (
+                <SwiperSlide key={bike.id}>
+                  <div style={{
+                    background: '#fff',
+                    borderRadius: 18,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                    border: '2px solid #1976d2',
+                    minWidth: 180,
+                    maxWidth: 260,
+                    width: '90vw',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    padding: 16,
+                    margin: '0 auto',
+                  }}>
+                    <img src="/Bike.jpg" alt={bike.name} style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 10, marginBottom: 16, border: '1.5px solid #eee' }} />
+                    <div style={{ fontWeight: 800, fontSize: 22, color: '#1976d2', marginBottom: 8, letterSpacing: 1, textShadow: '0 1px 2px #eee' }}>{bike.name}</div>
+                    <div style={{ color: '#555', fontSize: 16, marginBottom: 18, textAlign: 'center' }}>Available for BSU students</div>
+                    {/* Amenities section */}
+                    <div style={{ color: '#1976d2', fontWeight: 600, fontSize: 15, marginBottom: 10, textAlign: 'center' }}>
+                      Amenities
+                    </div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#444', fontSize: 15, marginBottom: 16, textAlign: 'center' }}>
+                      <li>🪖 Helmet</li>
+                      <li>🥤 Tumbler</li>
+                      <li>🛠️ Air pump</li>
+                    </ul>
+                    <div style={{ marginBottom: 10, fontWeight: 600, color: bike.status === 'rented' ? '#b22222' : '#22c55e', fontSize: 15, textAlign: 'center' }}>
+                      {bike.status === 'rented' ? 'Rented' : 'Available'}
+                    </div>
                   </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#444', fontSize: 15, marginBottom: 16, textAlign: 'center' }}>
-                    <li>🪖 Helmet</li>
-                    <li>🥤 Tumbler</li>
-                    <li>🛠️ Air pump</li>
-                  </ul>
-                  <div style={{ marginBottom: 10, fontWeight: 600, color: bike.status === 'rented' ? '#b22222' : '#22c55e', fontSize: 15, textAlign: 'center' }}>
-                    {bike.status === 'rented' && bike.applications && bike.applications.length > 0
-                      ? `Rented by: ${bike.applications[0].firstName} ${bike.applications[0].lastName}`
-                      : 'Available'}
-                  </div>
-                  <button style={{
-                    background: '#1976d2',
-                    color: '#fff',
-                    fontWeight: 700,
-                    padding: '10px 0',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    border: 'none',
-                    cursor: 'pointer',
-                    width: '100%',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    marginTop: 'auto',
-                  }}
-                  onClick={() => router.push('/reserve/apply')}
-                  >
-                    Rent Now
-                  </button>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </>
         )}
-        <div style={{
-          textAlign: 'center',
-          color: '#1976d2',
-          fontWeight: 800,
-          fontSize: 24,
-          marginTop: 12,
-          letterSpacing: 0.2,
-          textShadow: '0 2px 8px #fff, 0 1px 0 #fff',
-        }}>
-          Swipe or scroll the bikes left and right
-        </div>
       </main>
     </div>
   );
