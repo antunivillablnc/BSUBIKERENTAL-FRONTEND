@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { FaPowerOff } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEllipsisV } from "react-icons/fa";
 
 interface Bike {
   id: string;
@@ -15,7 +17,6 @@ export default function AdminBikesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [addName, setAddName] = useState("");
-  const [addStatus, setAddStatus] = useState("available");
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
   const [sortField, setSortField] = useState<'status' | 'name' | 'date'>('status');
@@ -24,7 +25,8 @@ export default function AdminBikesPage() {
 
   // Custom dropdown for status filter
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null); // for status filter dropdown
+  const rentedDropdownRef = useRef<HTMLDivElement>(null); // for rented bike actions dropdown
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -40,6 +42,24 @@ export default function AdminBikesPage() {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showDropdown]);
+
+  // Dropdown state for rented bikes
+  const [dropdownOpenId, setDropdownOpenId] = useState<string | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (rentedDropdownRef.current && !rentedDropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpenId(null);
+      }
+    }
+    if (dropdownOpenId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpenId]);
 
   const statusOptions = [
     { value: 'all', label: 'All' },
@@ -81,12 +101,11 @@ export default function AdminBikesPage() {
       const res = await fetch("/api/admin/bikes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: addName.trim(), status: addStatus }),
+        body: JSON.stringify({ name: addName.trim(), status: "available" }),
       });
       const data = await res.json();
       if (data.success) {
         setAddName("");
-        setAddStatus("available");
         fetchBikes();
       } else {
         setAddError(data.error || "Failed to add bike.");
@@ -167,6 +186,69 @@ export default function AdminBikesPage() {
     setEndingBikeId(null);
   };
 
+  // Add state for editing
+  const [editingBikeId, setEditingBikeId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editStatus, setEditStatus] = useState("available");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState("");
+
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
+
+  const handleEditClick = (bike: Bike) => {
+    setEditingBikeId(bike.id);
+    setEditName(bike.name);
+    setEditStatus(bike.status);
+    setEditError("");
+  };
+
+  const handleEditSave = async (bikeId: string) => {
+    setEditLoading(true);
+    setEditError("");
+    try {
+      const res = await fetch("/api/admin/bikes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bikeId, name: editName.trim(), status: editStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingBikeId(null);
+        fetchBikes();
+      } else {
+        setEditError(data.error || "Failed to update bike.");
+      }
+    } catch {
+      setEditError("Failed to update bike.");
+    }
+    setEditLoading(false);
+  };
+
+  const handleEditCancel = () => {
+    setEditingBikeId(null);
+    setEditError("");
+  };
+
+  const handleDeleteBike = async (bikeId: string) => {
+    setDeleteLoadingId(bikeId);
+    try {
+      const res = await fetch("/api/admin/bikes", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bikeId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchBikes();
+      } else {
+        alert(data.error || "Failed to delete bike.");
+      }
+    } catch {
+      alert("Failed to delete bike.");
+    }
+    setDeleteLoadingId(null);
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
@@ -240,24 +322,6 @@ export default function AdminBikesPage() {
               }}
               disabled={addLoading}
             />
-            <select
-              value={addStatus}
-              onChange={e => setAddStatus(e.target.value)}
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                border: '1.5px solid #e0e0e0',
-                fontSize: 16,
-                outline: 'none',
-                fontFamily: 'inherit',
-                background: '#fff',
-                color: '#222',
-              }}
-              disabled={addLoading}
-            >
-              <option value="available">Available</option>
-              <option value="rented">Rented</option>
-            </select>
             <button
               type="submit"
               style={{
@@ -444,12 +508,52 @@ export default function AdminBikesPage() {
                   aria-label={isRented ? 'Show renter information' : undefined}
               >
                 <div>
-                  <h3 style={{ color: '#111827', fontWeight: 600, fontSize: 18, marginBottom: 4 }}>
-                    {bike.name}
-                  </h3>
-                  <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
-                    Added: {new Date(bike.createdAt).toLocaleDateString()}
-                  </p>
+                  {editingBikeId === bike.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        style={{ fontSize: 16, padding: '4px 8px', borderRadius: 6, border: '1px solid #ccc', marginBottom: 4, marginRight: 8 }}
+                        disabled={editLoading}
+                      />
+                      <select
+                        value={editStatus}
+                        onChange={e => setEditStatus(e.target.value)}
+                        style={{ fontSize: 16, padding: '4px 8px', borderRadius: 6, border: '1px solid #ccc', marginBottom: 4 }}
+                        disabled={editLoading}
+                      >
+                        <option value="available">Available</option>
+                        <option value="rented">Rented</option>
+                      </select>
+                      <div style={{ marginTop: 4 }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleEditSave(bike.id); }}
+                          style={{ marginRight: 8, background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}
+                          disabled={editLoading}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleEditCancel(); }}
+                          style={{ background: '#ccc', color: '#222', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}
+                          disabled={editLoading}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {editError && <div style={{ color: '#b22222', fontWeight: 600, fontSize: 14, marginTop: 4 }}>{editError}</div>}
+                    </>
+                  ) : (
+                    <>
+                      <h3 style={{ color: '#111827', fontWeight: 600, fontSize: 18, marginBottom: 4 }}>
+                        {bike.name}
+                      </h3>
+                      <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
+                        Added: {new Date(bike.createdAt).toLocaleDateString()}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {bike.status === "rented" && bike.applications && bike.applications.length > 0 ? (
@@ -477,9 +581,80 @@ export default function AdminBikesPage() {
                           <FaPowerOff />
                         )}
                       </button>
+                      {/* Dropdown for edit/delete when rented */}
+                      {editingBikeId !== bike.id && (
+                        <div style={{ position: 'relative' }} ref={rentedDropdownRef}>
+                          <button
+                            title="More actions"
+                            onClick={e => { e.stopPropagation(); setDropdownOpenId(dropdownOpenId === bike.id ? null : bike.id); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1976d2', fontSize: 20, marginLeft: 4, padding: 4 }}
+                            aria-label="More actions"
+                          >
+                            <FaEllipsisV />
+                          </button>
+                          {dropdownOpenId === bike.id && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: '120%',
+                                right: 0,
+                                background: '#fff',
+                                border: '1.5px solid #e0e0e0',
+                                borderRadius: 10,
+                                boxShadow: '0 4px 16px rgba(31,38,135,0.10)',
+                                zIndex: 20,
+                                minWidth: 120,
+                                display: 'flex',
+                                flexDirection: 'column',
+                              }}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <button
+                                title="Edit Bike"
+                                onClick={e => { e.stopPropagation(); setDropdownOpenId(null); handleEditClick(bike); }}
+                                style={{ background: 'none', border: 'none', color: '#1976d2', fontWeight: 600, fontSize: 16, padding: '10px 16px', textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+                                aria-label="Edit Bike"
+                              >
+                                <FaEdit style={{ marginRight: 8 }} /> Edit
+                              </button>
+                              <button
+                                title="Delete Bike"
+                                onClick={e => { e.stopPropagation(); setDropdownOpenId(null); handleDeleteBike(bike.id); }}
+                                style={{ background: 'none', border: 'none', color: '#b22222', fontWeight: 600, fontSize: 16, padding: '10px 16px', textAlign: 'left', cursor: 'pointer' }}
+                                aria-label="Delete Bike"
+                                disabled={deleteLoadingId === bike.id}
+                              >
+                                <FaTrash style={{ marginRight: 8 }} /> {deleteLoadingId === bike.id ? 'Deleting...' : 'Delete'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </span>
                   ) : (
                       <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 16 }}>Available</span>
+                  )}
+                  {/* Edit and Delete buttons for available bikes only */}
+                  {bike.status !== 'rented' && editingBikeId !== bike.id && (
+                    <>
+                      <button
+                        title="Edit Bike"
+                        onClick={e => { e.stopPropagation(); handleEditClick(bike); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1976d2', fontSize: 20, marginLeft: 4 }}
+                        aria-label="Edit Bike"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        title="Delete Bike"
+                        onClick={e => { e.stopPropagation(); handleDeleteBike(bike.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b22222', fontSize: 20, marginLeft: 4 }}
+                        aria-label="Delete Bike"
+                        disabled={deleteLoadingId === bike.id}
+                      >
+                        {deleteLoadingId === bike.id ? <span style={{ fontSize: 14 }}>...</span> : <FaTrash />}
+                      </button>
+                    </>
                   )}
                   {bike.applications && bike.applications.length > 0 && (
                     <div style={{ textAlign: 'center' }}>

@@ -38,7 +38,7 @@ export default function Navbar() {
       return;
     }
     // Fetch real notifications
-    fetch(`/api/my-rentals?email=${encodeURIComponent(user.email)}`)
+    fetch(`/api/dashboard?email=${encodeURIComponent(user.email)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.applications)) {
@@ -71,9 +71,9 @@ export default function Navbar() {
   const latestNotifications = notifications.slice(0, 3);
 
   const navLinks = [
-    { href: "/dashboard", label: "Home" },
+    { href: "/home", label: "Home" },
     { href: "/reserve", label: "Rent a Bike" },
-    { href: "/my-rentals", label: "Dashboard" },
+    { href: "/dashboard", label: "Dashboard" },
     { href: "/about", label: "About" },
   ];
 

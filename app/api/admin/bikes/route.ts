@@ -93,3 +93,26 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
   }
 } 
+
+export async function DELETE(req: Request) {
+  try {
+    const { id } = await req.json();
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Bike id is required.' }, { status: 400 });
+    }
+    // Delete the bike
+    await prisma.bike.delete({ where: { id } });
+    // Log activity (replace with real admin info in the future)
+    await prisma.activityLog.create({
+      data: {
+        type: 'Delete Bike',
+        adminName: 'Admin',
+        adminEmail: 'admin@example.com',
+        description: `Deleted bike ID ${id} from inventory`,
+      },
+    });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+  }
+} 

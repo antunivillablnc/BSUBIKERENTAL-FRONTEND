@@ -53,8 +53,8 @@ export default function LoginPage() {
           console.log('Redirecting admin to /admin/applications');
           router.push("/admin/applications");
         } else {
-          console.log('Redirecting user to /dashboard');
-          router.push("/dashboard");
+          console.log('Redirecting user to /home');
+          router.push("/home");
         }
       }
     } else {
