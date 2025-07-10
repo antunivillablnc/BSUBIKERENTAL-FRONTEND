@@ -1,8 +1,16 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+
+// Extend Window interface to include Chart
+declare global {
+  interface Window {
+    Chart?: any;
+    myTrendsChart?: any;
+  }
+}
+
 // Import Chart.js via CDN for simplicity (in real app, use a package)
-// @ts-ignore
-const ChartJSLoaded = typeof window !== 'undefined' && (window as any).Chart;
+const ChartJSLoaded = typeof window !== 'undefined' && window.Chart;
 
 function loadChartJsScript() {
   if (typeof window !== 'undefined' && !window.Chart) {
@@ -94,7 +102,7 @@ export default function MyRentalsPage() {
     if (!chartLoaded) {
       loadChartJsScript();
       const check = setInterval(() => {
-        if ((window as any).Chart) {
+        if (window.Chart) {
           setChartLoaded(true);
           clearInterval(check);
         }
@@ -105,12 +113,11 @@ export default function MyRentalsPage() {
 
   // Render trends chart
   useEffect(() => {
-    if (chartLoaded && chartRef.current && (window as any).Chart) {
+    if (chartLoaded && chartRef.current && window.Chart) {
       const ctx = chartRef.current.getContext('2d');
       if (ctx) {
-        if ((window as any).myTrendsChart) (window as any).myTrendsChart.destroy();
-        // @ts-ignore
-        (window as any).myTrendsChart = new (window as any).Chart(ctx, {
+        if (window.myTrendsChart) window.myTrendsChart.destroy();
+        window.myTrendsChart = new window.Chart(ctx, {
           type: 'line',
           data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
