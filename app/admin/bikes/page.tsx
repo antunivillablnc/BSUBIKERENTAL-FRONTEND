@@ -22,6 +22,7 @@ export default function AdminBikesPage() {
   const [sortField, setSortField] = useState<'status' | 'name' | 'date'>('status');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'rented'>('all');
+  const [plateFilter, setPlateFilter] = useState("");
 
   // Custom dropdown for status filter
   const [showDropdown, setShowDropdown] = useState(false);
@@ -160,8 +161,9 @@ export default function AdminBikesPage() {
     return 0;
   });
 
-  // Filter bikes by status
-  const filteredBikes = statusFilter === 'all' ? sortedBikes : sortedBikes.filter(b => b.status === statusFilter);
+  // Filter bikes by status and plate number
+  const filteredBikes = (statusFilter === 'all' ? sortedBikes : sortedBikes.filter(b => b.status === statusFilter))
+    .filter(bike => bike.name.toLowerCase().includes(plateFilter.toLowerCase()));
 
   // Modal state for renter info
   const [modalBike, setModalBike] = useState<Bike | null>(null);
@@ -345,6 +347,23 @@ export default function AdminBikesPage() {
 
           {/* Filter and Sorting Controls - aligned horizontally */}
           <div style={{ display: 'flex', gap: 32, alignItems: 'center', marginBottom: 24, marginTop: 8, flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              placeholder="Search by plate number..."
+              value={plateFilter}
+              onChange={e => setPlateFilter(e.target.value)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: '1.5px solid #e0e0e0',
+                fontSize: 16,
+                minWidth: 220,
+                outline: 'none',
+                fontFamily: 'inherit',
+                background: '#fff',
+                color: '#222',
+              }}
+            />
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative' }}>
               <label style={{ fontWeight: 700, color: '#1976d2', fontSize: 16 }}>Show:</label>
               {/* Custom Dropdown */}

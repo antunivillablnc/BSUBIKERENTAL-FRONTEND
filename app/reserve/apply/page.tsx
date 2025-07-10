@@ -101,6 +101,8 @@ export default function BikeRentalApplication() {
   const [municipalityList, setMunicipalityList] = useState<string[]>([]);
   const [barangayList, setBarangayList] = useState<string[]>([]);
   const [agreed, setAgreed] = useState(false);
+  const [indigencyFile, setIndigencyFile] = useState<File | null>(null);
+  const [indigencyPreview, setIndigencyPreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/philippines.json")
@@ -155,6 +157,16 @@ export default function BikeRentalApplication() {
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
       setForm(f => ({ ...f, [name]: checked ? value : "" }));
+    } else if (type === "file" && name === "indigencyFile") {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      setIndigencyFile(file);
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => setIndigencyPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setIndigencyPreview(null);
+      }
     } else {
       setForm(f => ({ ...f, [name]: value }));
     }
@@ -175,15 +187,24 @@ export default function BikeRentalApplication() {
       setSubmitting(false);
       return;
     }
+    if (!indigencyFile) {
+      setError("Please upload your Certificate of Indigency.");
+      setSubmitting(false);
+      return;
+    }
     try {
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => formData.append(key, value));
+      formData.append("indigencyFile", indigencyFile);
       const res = await fetch("/api/rental-application", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: formData,
       });
       if (res.ok) {
         setSuccess(true);
         setForm(initialForm);
+        setIndigencyFile(null);
+        setIndigencyPreview(null);
       } else {
         setError("Submission failed. Please try again.");
       }
@@ -249,7 +270,59 @@ export default function BikeRentalApplication() {
                 <option value="Female">Female</option>
               </select>
             </div>
-            <div></div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
+              <label style={labelStyle}>Certificate of Indigency </label>
+              <label htmlFor="indigencyFile" style={{
+                ...inputStyle,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                cursor: 'pointer',
+                marginBottom: 0,
+                height: 44,
+                background: '#f5f6fa',
+                border: '1.5px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                color: indigencyFile ? '#222' : '#888',
+                overflow: 'hidden',
+                position: 'relative',
+              }}>
+                <span style={{
+                  background: '#e0e0e0',
+                  color: '#444',
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  padding: '6px 16px',
+                  marginRight: 12,
+                  fontSize: 15,
+                  border: 'none',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}>Choose File</span>
+                <span style={{ fontSize: 15, color: indigencyFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {indigencyFile ? indigencyFile.name : 'No file chosen'}
+                </span>
+                <input
+                  id="indigencyFile"
+                  type="file"
+                  name="indigencyFile"
+                  accept="image/*"
+                  onChange={handleChange}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    cursor: 'pointer',
+                  }}
+                  required
+                />
+              </label>
+            </div>
           </div>
           <div style={grid3Style}>
             <div>

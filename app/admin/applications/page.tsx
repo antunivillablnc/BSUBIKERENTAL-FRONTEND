@@ -26,6 +26,7 @@ export default function AdminApplicationsPage() {
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState("");
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'assigned'>('all');
+  const [emailFilter, setEmailFilter] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -74,11 +75,17 @@ export default function AdminApplicationsPage() {
     setAssigning(null);
   }
 
-  // Filtered applications based on statusFilter
+  // Filtered applications based on statusFilter and emailFilter
   const filteredApplications = applications.filter(app => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'pending') return !app.bikeId;
-    if (statusFilter === 'assigned') return !!app.bikeId;
+    if (statusFilter === 'all') {
+      return app.email.toLowerCase().includes(emailFilter.toLowerCase());
+    }
+    if (statusFilter === 'pending') {
+      return !app.bikeId && app.email.toLowerCase().includes(emailFilter.toLowerCase());
+    }
+    if (statusFilter === 'assigned') {
+      return !!app.bikeId && app.email.toLowerCase().includes(emailFilter.toLowerCase());
+    }
     return true;
   });
 
@@ -130,8 +137,26 @@ export default function AdminApplicationsPage() {
               ))}
             </div>
           </div>
-          {/* Add a small margin below the tabs, above the table */}
-          <div style={{ height: 20 }} />
+          {/* Email filter input */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '10px 0 20px 0' }}>
+            <input
+              type="text"
+              placeholder="Search by email..."
+              value={emailFilter}
+              onChange={e => setEmailFilter(e.target.value)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: '1.5px solid #e0e0e0',
+                fontSize: 16,
+                minWidth: 220,
+                outline: 'none',
+                fontFamily: 'inherit',
+                background: '#fff',
+                color: '#222',
+              }}
+            />
+          </div>
           {error && <div style={{ color: '#b22222', fontWeight: 600, marginBottom: 18 }}>{error}</div>}
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
             <thead>
