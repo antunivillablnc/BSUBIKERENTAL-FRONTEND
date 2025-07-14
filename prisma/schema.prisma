@@ -8,49 +8,60 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String
-  createdAt DateTime @default(now())
-  passwordResetToken  String?   // nullable, for reset token
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  password            String
+  name                String
+  role                String
+  createdAt           DateTime  @default(now())
+  passwordResetToken  String? // nullable, for reset token
   passwordResetExpiry DateTime? // nullable, for expiry time
+
+  applications BikeRentalApplication[]
 }
 
 model Bike {
-  id        String   @id @default(uuid())
-  name      String
-  status    String   @default("available")
-  createdAt DateTime @default(now())
+  id           String                  @id @default(uuid())
+  name         String
+  plateNumber  String?                 @unique
+  amenities    String[]                @default([])
+  latitude     Float?
+  longitude    Float?
+  status       String                  @default("available")
+  createdAt    DateTime                @default(now())
   applications BikeRentalApplication[]
 }
 
 model BikeRentalApplication {
-  id            String   @id @default(uuid())
-  lastName      String
-  firstName     String
-  middleName    String?
-  srCode        String
-  sex           String
-  dateOfBirth   DateTime
-  phoneNumber   String
-  email         String
-  collegeProgram String
-  gwaLastSemester String
+  id                        String    @id @default(uuid())
+  lastName                  String
+  firstName                 String
+  middleName                String?
+  srCode                    String
+  sex                       String
+  dateOfBirth               DateTime
+  phoneNumber               String
+  email                     String
+  collegeProgram            String
+  gwaLastSemester           String
   extracurricularActivities String?
-  houseNo       String
-  streetName    String
-  barangay      String
-  municipality  String
-  province      String
-  distanceFromCampus String
-  familyIncome  String
-  intendedDuration String
-  intendedDurationOther String?
-  bike          Bike?    @relation(fields: [bikeId], references: [id])
-  bikeId        String?
-  createdAt     DateTime @default(now())
+  houseNo                   String
+  streetName                String
+  barangay                  String
+  municipality              String
+  province                  String
+  distanceFromCampus        String
+  familyIncome              String
+  intendedDuration          String
+  intendedDurationOther     String?
+  bike                      Bike?     @relation(fields: [bikeId], references: [id])
+  bikeId                    String?
+  certificatePath           String?
+  status                    String    @default("pending")
+  dueDate                   DateTime?
+  userId                    String
+  user                      User      @relation(fields: [userId], references: [id])
+  createdAt                 DateTime  @default(now())
 }
 
 model ActivityLog {
@@ -61,4 +72,3 @@ model ActivityLog {
   description String
   createdAt   DateTime @default(now())
 }
-

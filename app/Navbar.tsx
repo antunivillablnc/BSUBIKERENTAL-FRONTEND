@@ -74,7 +74,7 @@ export default function Navbar() {
     { href: "/home", label: "Home" },
     { href: "/reserve", label: "Rent a Bike" },
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/about", label: "About" },
+    { href: "/my-bike", label: "My Bike" },
   ];
 
   return (

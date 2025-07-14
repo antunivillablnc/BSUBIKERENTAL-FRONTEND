@@ -194,7 +194,27 @@ export default function BikeRentalApplication() {
     }
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => formData.append(key, value));
+      Object.entries(form).forEach(([key, value]) => {
+        if (key === "familyIncome") {
+          formData.append(key, String(Number(value)));
+        } else {
+          formData.append(key, value);
+        }
+      });
+      // Get userId from localStorage (set at login)
+      let userId = undefined;
+      if (typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            userId = user.id;
+          } catch {}
+        }
+      }
+      if (userId) {
+        formData.append("userId", userId);
+      }
       formData.append("indigencyFile", indigencyFile);
       const res = await fetch("/api/rental-application", {
         method: "POST",
@@ -287,6 +307,7 @@ export default function BikeRentalApplication() {
                 color: indigencyFile ? '#222' : '#888',
                 overflow: 'hidden',
                 position: 'relative',
+                maxWidth: 320, // Prevents the input from stretching
               }}>
                 <span style={{
                   background: '#e0e0e0',
@@ -301,7 +322,7 @@ export default function BikeRentalApplication() {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}>Choose File</span>
-                <span style={{ fontSize: 15, color: indigencyFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 15, color: indigencyFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
                   {indigencyFile ? indigencyFile.name : 'No file chosen'}
                 </span>
                 <input

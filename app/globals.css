@@ -40,3 +40,25 @@ a {
     color-scheme: dark;
   }
 }
+
+.animated-bike-marker {
+  animation: bounce 1.2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    transform: translateY(-10px) scale(1.1);
+  }
+  40% {
+    transform: translateY(-20px) scale(1.15);
+  }
+  60% {
+    transform: translateY(-10px) scale(1.1);
+  }
+  80% {
+    transform: translateY(0) scale(1);
+  }
+}
