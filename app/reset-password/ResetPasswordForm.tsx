@@ -22,7 +22,7 @@ export default function ResetPasswordForm() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const token = searchParams?.get("token") || "";
   const router = useRouter();
 
   const inputGroupStyle = {
