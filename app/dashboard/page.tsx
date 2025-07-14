@@ -62,6 +62,11 @@ export default function DashboardPage() {
   const monthlyCO2Goal = 20;
   const [chartLoaded, setChartLoaded] = useState(ChartJSLoaded);
   const chartRef = useRef<HTMLCanvasElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Mock leaderboard
   const leaderboard = [
@@ -172,9 +177,11 @@ export default function DashboardPage() {
           <h1 style={{ color: '#1976d2', fontWeight: 800, fontSize: 32, marginBottom: 32, textAlign: 'center' }}>
             Dashboard
           </h1>
-          <div style={{ textAlign: 'right', color: '#888', fontSize: 13, marginBottom: 10 }}>
-            Last updated: {lastUpdated.toLocaleTimeString()}
-          </div>
+          {mounted && (
+            <div style={{ textAlign: 'right', color: '#888', fontSize: 13, marginBottom: 10 }}>
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </div>
+          )}
           {/* Trends Chart */}
           <div style={{ margin: '0 auto 32px', maxWidth: 700, background: '#f8fafc', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(25, 118, 210, 0.04)' }}>
             <h2 style={{ color: '#1976d2', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>Weekly Trends</h2>
