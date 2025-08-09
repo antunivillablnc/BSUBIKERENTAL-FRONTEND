@@ -6,6 +6,17 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   try {
     const { applicationId, bikeId } = await req.json();
+    // Validate application is not completed and not already assigned
+    const application = await prisma.bikeRentalApplication.findUnique({ where: { id: applicationId } });
+    if (!application) {
+      return NextResponse.json({ success: false, error: 'Application not found.' }, { status: 404 });
+    }
+    if (application.status === 'completed') {
+      return NextResponse.json({ success: false, error: 'This application has already been completed and cannot be reused.' }, { status: 400 });
+    }
+    if (application.bikeId) {
+      return NextResponse.json({ success: false, error: 'Application already has a bike assigned.' }, { status: 400 });
+    }
     // Check if bike is available
     const bike = await prisma.bike.findUnique({ where: { id: bikeId } });
     if (!bike || bike.status !== 'available') {
@@ -14,7 +25,7 @@ export async function POST(req: Request) {
     // Assign bike to application and mark bike as rented
     await prisma.bikeRentalApplication.update({
       where: { id: applicationId },
-      data: { bikeId },
+      data: { bikeId, status: 'assigned', assignedAt: new Date() },
     });
     await prisma.bike.update({
       where: { id: bikeId },

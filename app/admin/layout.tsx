@@ -58,6 +58,7 @@ export default function AdminLayout({
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/applications", label: "Applications", icon: "📋" },
     { href: "/admin/bikes", label: "Bikes", icon: "🚲" },
+    { href: "/admin/rental-history", label: "Rental History", icon: "📜" },
     { href: "/admin/activity-log", label: "Activity Log", icon: "📝" },
   ];
 
@@ -109,7 +110,7 @@ export default function AdminLayout({
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    color: pathname === item.href ? "#1976d2" : "#6b7280",
+                    color: pathname === item.href ? "#1976d2" : "#111111",
                     background: pathname === item.href ? "#e3f2fd" : "transparent",
                     border: pathname === item.href ? "1px solid #1976d2" : "1px solid transparent",
                   }}

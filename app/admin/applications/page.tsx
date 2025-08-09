@@ -25,7 +25,7 @@ export default function AdminApplicationsPage() {
   const [error, setError] = useState("");
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState("");
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'assigned'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'assigned' | 'completed'>('all');
   const [emailFilter, setEmailFilter] = useState("");
 
   useEffect(() => {
@@ -75,18 +75,25 @@ export default function AdminApplicationsPage() {
     setAssigning(null);
   }
 
+  // End rental handled on Bikes page; no action here
+
   // Filtered applications based on statusFilter and emailFilter
   const filteredApplications = applications.filter(app => {
-    if (statusFilter === 'all') {
-      return app.email.toLowerCase().includes(emailFilter.toLowerCase());
-    }
-    if (statusFilter === 'pending') {
-      return !app.bikeId && app.email.toLowerCase().includes(emailFilter.toLowerCase());
-    }
-    if (statusFilter === 'assigned') {
-      return !!app.bikeId && app.email.toLowerCase().includes(emailFilter.toLowerCase());
-    }
+    const matchesEmail = app.email.toLowerCase().includes(emailFilter.toLowerCase());
+    if (!matchesEmail) return false;
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'pending') return app.status === 'pending';
+    if (statusFilter === 'assigned') return app.status === 'assigned' || !!app.bikeId;
+    if (statusFilter === 'completed') return app.status === 'completed';
     return true;
+  });
+
+  // Sort with completed at the bottom, then by newest first within each group
+  const sortedApplications = [...filteredApplications].sort((a, b) => {
+    const rank = (app: Application) => (app.status === 'completed' ? 2 : (app.status === 'assigned' || app.bikeId ? 1 : 0));
+    const diff = rank(a) - rank(b);
+    if (diff !== 0) return diff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   if (loading) {
@@ -115,6 +122,7 @@ export default function AdminApplicationsPage() {
                 { label: 'All', value: 'all' },
                 { label: 'Pending', value: 'pending' },
                 { label: 'Assigned', value: 'assigned' },
+                { label: 'Completed', value: 'completed' },
               ].map(opt => (
                 <button
                   key={opt.value}
@@ -170,16 +178,20 @@ export default function AdminApplicationsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredApplications.map(app => (
+              {sortedApplications.map(app => (
                 <tr key={app.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: 10, color: '#111' }}>{app.lastName}, {app.firstName}</td>
                   <td style={{ padding: 10, color: '#111' }}>{app.email}</td>
-                  <td style={{ padding: 10, color: '#111' }}>{app.bikeId ? 'Assigned' : 'Pending'}</td>
+                  <td style={{ padding: 10, color: '#111' }}>
+                    {app.bikeId ? 'Assigned' : (app.status === 'completed' ? 'Completed' : 'Pending')}
+                  </td>
                   <td style={{ padding: 10, color: '#111' }}>{app.bike ? app.bike.name : '-'}</td>
                   <td style={{ padding: 10, color: '#111' }}>{new Date(app.createdAt).toLocaleDateString()}</td>
                   <td style={{ padding: 10 }}>
                     {app.bikeId ? (
                       <span style={{ color: '#22c55e', fontWeight: 600 }}>Assigned</span>
+                    ) : app.status === 'completed' ? (
+                      <span style={{ color: '#6b7280', fontWeight: 600 }}>Completed</span>
                     ) : (
                       <>
                         <select

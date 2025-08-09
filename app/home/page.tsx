@@ -68,7 +68,7 @@ export default function HomePage() {
           <div style={{ color: '#ccc', fontWeight: 600, fontSize: 18, marginBottom: 8 }}>BATANGAS STATE UNIVERSITY - TNEU</div>
           <h1 style={{ fontSize: 48, fontWeight: 800, color: '#fff', margin: '16px 0 8px 0', textShadow: '1px 2px 8px #444' }}>University Bike Rental</h1>
           <p style={{ fontSize: 22, color: '#eee', marginBottom: 28, textShadow: '1px 2px 8px #444' }}>
-            Sustainable, affordable, and fun bike rentals for Batangas State University - TNEU.
+            Sustainable, cost-free, and fun bike rentals for Batangas State University - TNEU.
           </p>
           <a href="/reserve" style={{ background: '#1976d2', color: '#fff', fontWeight: 700, padding: '16px 38px', borderRadius: 8, fontSize: 20, textDecoration: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>Get Started</a>
         </div>
@@ -86,9 +86,9 @@ export default function HomePage() {
           {/* Affordable */}
           <div style={{ background: '#f7f7f7', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
             <div style={{ fontSize: 48, color: '#1976d2', marginBottom: 8 }}>💸</div>
-            <div style={{ fontWeight: 700, fontSize: 22, color: '#1976d2', marginBottom: 8 }}>Affordable</div>
+            <div style={{ fontWeight: 700, fontSize: 22, color: '#1976d2', marginBottom: 8 }}>Cost-Free</div>
             <div style={{ color: '#555', fontSize: 17 }}>
-              Enjoy low-cost rentals designed for students and staff. No hidden fees, just easy rides.
+              Enjoy zero-cost rentals designed for students and staff. No hidden fees, just easy rides.
             </div>
           </div>
           {/* Convenient */}

@@ -17,23 +17,25 @@ model User {
   passwordResetToken  String? // nullable, for reset token
   passwordResetExpiry DateTime? // nullable, for expiry time
 
-  applications BikeRentalApplication[]
+  applications  BikeRentalApplication[]
+  RentalHistory RentalHistory[]
 }
 
 model Bike {
-  id           String                  @id @default(uuid())
-  name         String
-  plateNumber  String?                 @unique
-  amenities    String[]                @default([])
-  latitude     Float?
-  longitude    Float?
-  status       String                  @default("available")
-  createdAt    DateTime                @default(now())
-  applications BikeRentalApplication[]
+  id            String                  @id @default(uuid())
+  name          String
+  plateNumber   String?                 @unique
+  amenities     String[]                @default([])
+  latitude      Float?
+  longitude     Float?
+  status        String                  @default("available")
+  createdAt     DateTime                @default(now())
+  applications  BikeRentalApplication[]
+  RentalHistory RentalHistory[]
 }
 
 model BikeRentalApplication {
-  id                        String    @id @default(uuid())
+  id                        String          @id @default(uuid())
   lastName                  String
   firstName                 String
   middleName                String?
@@ -54,14 +56,16 @@ model BikeRentalApplication {
   familyIncome              String
   intendedDuration          String
   intendedDurationOther     String?
-  bike                      Bike?     @relation(fields: [bikeId], references: [id])
+  bike                      Bike?           @relation(fields: [bikeId], references: [id])
   bikeId                    String?
   certificatePath           String?
-  status                    String    @default("pending")
+  status                    String          @default("pending")
   dueDate                   DateTime?
+  assignedAt                DateTime?
   userId                    String
-  user                      User      @relation(fields: [userId], references: [id])
-  createdAt                 DateTime  @default(now())
+  user                      User            @relation(fields: [userId], references: [id])
+  createdAt                 DateTime        @default(now())
+  RentalHistory             RentalHistory[]
 }
 
 model ActivityLog {
@@ -71,4 +75,17 @@ model ActivityLog {
   adminEmail  String
   description String
   createdAt   DateTime @default(now())
+}
+
+model RentalHistory {
+  id            String                 @id @default(uuid())
+  applicationId String?
+  application   BikeRentalApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id])
+  bikeId        String
+  bike          Bike                   @relation(fields: [bikeId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  createdAt     DateTime               @default(now())
 }

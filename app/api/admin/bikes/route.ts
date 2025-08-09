@@ -68,17 +68,37 @@ export async function PATCH(req: Request) {
     if (!id || !status) {
       return NextResponse.json({ success: false, error: 'Bike id and status are required.' }, { status: 400 });
     }
+    // If setting to available, finalize any active rentals and write to history
+    if (status === 'available') {
+      const activeApps = await prisma.bikeRentalApplication.findMany({
+        where: { bikeId: id },
+        select: { id: true, userId: true, bikeId: true, createdAt: true, assignedAt: true },
+      });
+      if (activeApps.length > 0) {
+        const now = new Date();
+        for (const app of activeApps) {
+          if (app.bikeId) {
+            await prisma.rentalHistory.create({
+              data: {
+                applicationId: app.id,
+                userId: app.userId,
+                bikeId: app.bikeId,
+                startDate: app.assignedAt ?? app.createdAt,
+                endDate: now,
+              }
+            });
+          }
+        }
+        await prisma.bikeRentalApplication.updateMany({
+          where: { bikeId: id },
+          data: { bikeId: null, status: 'completed' },
+        });
+      }
+    }
     const bike = await prisma.bike.update({
       where: { id },
       data: { status },
     });
-    // Optionally, unassign the bike from any application (end rental)
-    if (status === 'available') {
-      await prisma.bikeRentalApplication.updateMany({
-        where: { bikeId: id },
-        data: { bikeId: null },
-      });
-    }
     // Log activity (replace with real admin info in the future)
     await prisma.activityLog.create({
       data: {
