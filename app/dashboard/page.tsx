@@ -107,13 +107,34 @@ export default function DashboardPage() {
     else alert('Please enter a valid positive number.');
   }
 
-  // Mock leaderboard
-  const leaderboard = [
-    { name: 'You', distance: travelDistanceKm },
-    { name: 'Alex', distance: 38 },
-    { name: 'Sam', distance: 35 },
-    { name: 'Jamie', distance: 30 },
-  ];
+  // Real leaderboard from API
+  type LeaderboardEntry = { id: string; name: string; distanceKm: number; co2SavedKg: number; userId?: string | null };
+  const [leaderboardEntries, setLeaderboardEntries] = useState<LeaderboardEntry[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ id?: string; name?: string; email?: string } | null>(null);
+
+  useEffect(() => {
+    // Load current user from localStorage
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (stored) setCurrentUser(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  async function fetchLeaderboard() {
+    try {
+      const res = await fetch('/api/leaderboard?limit=10');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.entries)) {
+        setLeaderboardEntries(data.entries);
+      }
+    } catch {}
+  }
+
+  useEffect(() => {
+    fetchLeaderboard();
+    const interval = setInterval(fetchLeaderboard, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Mock personal bests
   const personalBests = {
@@ -406,22 +427,36 @@ export default function DashboardPage() {
             </div>
           </div>
           {/* Leaderboard */}
-          <div style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: 16, padding: 24, maxWidth: 500, margin: '0 auto', boxShadow: '0 8px 24px rgba(25, 118, 210, 0.08)' }}>
-            <h3 style={{ color: '#1e3a8a', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>{`Leaderboard (Top Distance This ${timeFrame === 'week' ? 'Week' : timeFrame === 'month' ? 'Month' : 'Year'})`}</h3>
+          <div style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: 16, padding: 24, maxWidth: 700, margin: '0 auto', boxShadow: '0 8px 24px rgba(25, 118, 210, 0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h3 style={{ color: '#1e3a8a', fontWeight: 900, fontSize: 20, letterSpacing: 0.2 }}>Leaderboard</h3>
+              <button onClick={fetchLeaderboard} style={{ background: '#e5e7eb', color: '#111827', border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 10px', fontWeight: 700, cursor: 'pointer' }}>Refresh</button>
+            </div>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#eef2ff' }}>
+                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>Rank</th>
                   <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>User</th>
                   <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>Distance (km)</th>
+                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>CO₂ Saved (kg)</th>
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((entry, i) => (
-                  <tr key={entry.name} style={{ background: entry.name === 'You' ? '#bbf7d0' : 'transparent', fontWeight: entry.name === 'You' ? 800 : 500, color: '#222' }}>
-                    <td style={{ padding: 8 }}>{entry.name}</td>
-                    <td style={{ padding: 8, textAlign: 'right' }}>{entry.distance}</td>
-                  </tr>
-                ))}
+                {leaderboardEntries.length === 0 ? (
+                  <tr><td colSpan={4} style={{ padding: 10, textAlign: 'center', color: '#666' }}>No entries yet</td></tr>
+                ) : (
+                  leaderboardEntries.map((entry: LeaderboardEntry, i: number) => {
+                    const isYou = !!(currentUser && (entry.userId === currentUser.id || (entry.name || '').toLowerCase() === (currentUser.name || '').toLowerCase() || (entry.name || '').toLowerCase() === (currentUser.email || '').toLowerCase()));
+                    return (
+                      <tr key={entry.id} style={{ background: isYou ? '#bbf7d0' : 'transparent', fontWeight: isYou ? 800 : 500, color: '#222' }}>
+                        <td style={{ padding: 8 }}>{i + 1}</td>
+                        <td style={{ padding: 8 }}>{isYou ? 'You' : entry.name}</td>
+                        <td style={{ padding: 8, textAlign: 'right' }}>{entry.distanceKm}</td>
+                        <td style={{ padding: 8, textAlign: 'right' }}>{entry.co2SavedKg}</td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

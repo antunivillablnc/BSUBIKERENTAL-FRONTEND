@@ -53,6 +53,22 @@ export async function POST(req: Request) {
       },
     });
 
+    // Ensure leaderboard entry for non-admin users
+    if ((role || '').toLowerCase() !== 'admin') {
+      try {
+        await prisma.leaderboard.create({
+          data: {
+            userId: user.id,
+            name: name || email,
+            distanceKm: 0,
+            co2SavedKg: 0,
+          },
+        });
+      } catch (e) {
+        // Ignore if an entry already exists or any non-critical error
+      }
+    }
+
     // Log activity
     await prisma.activityLog.create({
       data: {

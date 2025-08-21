@@ -27,10 +27,23 @@ interface RecentBike {
   createdAt: string;
 }
 
+interface LeaderboardEntry {
+  id: string;
+  name: string;
+  distanceKm: number;
+  co2SavedKg: number;
+  userId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentApplications, setRecentApplications] = useState<RecentApplication[]>([]);
   const [recentBikes, setRecentBikes] = useState<RecentBike[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newEntry, setNewEntry] = useState({ name: '', distanceKm: '', co2SavedKg: '' } as { name: string; distanceKm: string; co2SavedKg: string });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -42,17 +55,20 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const [appsRes, bikesRes] = await Promise.all([
+      const [appsRes, bikesRes, lbRes] = await Promise.all([
         fetch("/api/admin/applications"),
         fetch("/api/admin/bikes"),
+        fetch("/api/leaderboard?limit=5"),
       ]);
       
       const appsData = await appsRes.json();
       const bikesData = await bikesRes.json();
+      const lbData = await lbRes.json();
       
-      if (appsData.success && bikesData.success) {
+      if (appsData.success && bikesData.success && lbData.success) {
         const applications = appsData.applications;
         const bikes = bikesData.bikes;
+        const fetchedLb: LeaderboardEntry[] = lbData.entries || [];
         
         // Calculate stats
         const totalApplications = applications.length;
@@ -76,6 +92,9 @@ export default function AdminDashboard() {
         
         // Get recent bikes (last 5)
         setRecentBikes(bikes.slice(0, 5));
+
+        // Leaderboard entries
+        setLeaderboard(Array.isArray(fetchedLb) ? fetchedLb : []);
       } else {
         setError("Failed to fetch dashboard data");
       }
@@ -323,6 +342,110 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <p style={{ color: '#6b7280', textAlign: 'center', fontStyle: 'italic' }}>No bikes yet</p>
+            )}
+          </div>
+
+          {/* Leaderboard */}
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ color: '#111827', fontWeight: 700, fontSize: 20, margin: 0 }}>Leaderboard</h3>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setShowAddForm(v => !v)}
+                  style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {showAddForm ? 'Cancel' : 'Add Entry'}
+                </button>
+                <button
+                  onClick={() => fetchDashboardData()}
+                  style={{ background: '#e5e7eb', color: '#111827', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Refresh
+                </button>
+              </div>
+            </div>
+            {showAddForm && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const payload = {
+                    name: newEntry.name.trim(),
+                    distanceKm: parseFloat(newEntry.distanceKm),
+                    co2SavedKg: parseFloat(newEntry.co2SavedKg),
+                  };
+                  if (!payload.name || Number.isNaN(payload.distanceKm) || Number.isNaN(payload.co2SavedKg)) {
+                    alert('Please provide valid name, distance, and CO2 values.');
+                    return;
+                  }
+                  const res = await fetch('/api/leaderboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setNewEntry({ name: '', distanceKm: '', co2SavedKg: '' });
+                    setShowAddForm(false);
+                    fetchDashboardData();
+                  } else {
+                    alert(data.error || 'Failed to add entry');
+                  }
+                }}
+                style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, marginBottom: 16 }}
+              >
+                <input placeholder="Name" value={newEntry.name} onChange={(e) => setNewEntry({ ...newEntry, name: e.target.value })} style={{ padding: 8, border: '1px solid #e5e7eb', borderRadius: 8 }} />
+                <input placeholder="Distance (km)" value={newEntry.distanceKm} onChange={(e) => setNewEntry({ ...newEntry, distanceKm: e.target.value })} style={{ padding: 8, border: '1px solid #e5e7eb', borderRadius: 8 }} />
+                <input placeholder="CO₂ Saved (kg)" value={newEntry.co2SavedKg} onChange={(e) => setNewEntry({ ...newEntry, co2SavedKg: e.target.value })} style={{ padding: 8, border: '1px solid #e5e7eb', borderRadius: 8 }} />
+                <button type="submit" style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>Save</button>
+              </form>
+            )}
+            {leaderboard.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f3f4f6' }}>
+                    <th style={{ padding: 10, textAlign: 'left', fontWeight: 800, color: '#374151' }}>Rank</th>
+                    <th style={{ padding: 10, textAlign: 'left', fontWeight: 800, color: '#374151' }}>Name</th>
+                    <th style={{ padding: 10, textAlign: 'right', fontWeight: 800, color: '#374151' }}>Distance (km)</th>
+                    <th style={{ padding: 10, textAlign: 'right', fontWeight: 800, color: '#374151' }}>CO₂ Saved (kg)</th>
+                    <th style={{ padding: 10, textAlign: 'right', fontWeight: 800, color: '#374151' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((entry, idx) => (
+                    <tr key={entry.id} style={{ background: idx === 0 ? '#ecfdf5' : 'transparent' }}>
+                      <td style={{ padding: 10, color: '#111827', fontWeight: 700 }}>{idx + 1}</td>
+                      <td style={{ padding: 10, fontWeight: idx === 0 ? 800 : 600, color: '#111827' }}>{entry.name}</td>
+                      <td style={{ padding: 10, textAlign: 'right', color: '#111827' }}>{entry.distanceKm}</td>
+                      <td style={{ padding: 10, textAlign: 'right', color: '#6b7280' }}>{entry.co2SavedKg}</td>
+                      <td style={{ padding: 10, textAlign: 'right' }}>
+                        <button
+                          onClick={async () => {
+                            const name = prompt('Name', entry.name) || entry.name;
+                            const distance = prompt('Distance (km)', String(entry.distanceKm));
+                            const co2 = prompt('CO₂ Saved (kg)', String(entry.co2SavedKg));
+                            const distanceKm = distance == null ? entry.distanceKm : parseFloat(distance);
+                            const co2SavedKg = co2 == null ? entry.co2SavedKg : parseFloat(co2);
+                            if (Number.isNaN(distanceKm) || Number.isNaN(co2SavedKg)) return alert('Invalid numbers');
+                            const res = await fetch('/api/leaderboard', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: entry.id, name, distanceKm, co2SavedKg }),
+                            });
+                            const data = await res.json();
+                            if (data.success) fetchDashboardData();
+                            else alert(data.error || 'Failed to update');
+                          }}
+                          style={{ background: '#e5e7eb', color: '#111827', border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 10px', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ color: '#6b7280', textAlign: 'center', fontStyle: 'italic' }}>No entries yet</p>
             )}
           </div>
         </div>
