@@ -3,11 +3,40 @@ import { useEffect, useState } from "react";
 
 interface Application {
   id: string;
+  // Basic identity
   lastName: string;
   firstName: string;
+  middleName?: string | null;
+  srCode?: string;
+  sex?: string;
+  dateOfBirth?: string;
+
+  // Contact
+  phoneNumber?: string;
   email: string;
+
+  // Academic
+  collegeProgram?: string;
+  gwaLastSemester?: string;
+  extracurricularActivities?: string | null;
+
+  // Address
+  houseNo?: string;
+  streetName?: string;
+  barangay?: string;
+  municipality?: string;
+  province?: string;
+
+  // Other details
+  distanceFromCampus?: string;
+  familyIncome?: string;
+  intendedDuration?: string;
+  intendedDurationOther?: string | null;
+  certificatePath?: string | null;
+
+  // Status / relations
   status: string;
-  bikeId?: string;
+  bikeId?: string | null;
   bike?: { id: string; name: string } | null;
   createdAt: string;
 }
@@ -27,6 +56,7 @@ export default function AdminApplicationsPage() {
   const [assignError, setAssignError] = useState("");
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'assigned' | 'completed'>('all');
   const [emailFilter, setEmailFilter] = useState("");
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -95,6 +125,12 @@ export default function AdminApplicationsPage() {
     if (diff !== 0) return diff;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  function formatDate(value?: string) {
+    if (!value) return '-';
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+  }
 
   if (loading) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
@@ -174,6 +210,7 @@ export default function AdminApplicationsPage() {
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Status</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Bike</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Applied</th>
+                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Details</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Assign Bike</th>
               </tr>
             </thead>
@@ -187,6 +224,22 @@ export default function AdminApplicationsPage() {
                   </td>
                   <td style={{ padding: 10, color: '#111' }}>{app.bike ? app.bike.name : '-'}</td>
                   <td style={{ padding: 10, color: '#111' }}>{new Date(app.createdAt).toLocaleDateString()}</td>
+                  <td style={{ padding: 10 }}>
+                    <button
+                      onClick={() => setSelectedApp(app)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        border: '1.5px solid #e0e0e0',
+                        background: '#fff',
+                        cursor: 'pointer',
+                        color: '#1976d2',
+                        fontWeight: 700
+                      }}
+                    >
+                      View
+                    </button>
+                  </td>
                   <td style={{ padding: 10 }}>
                     {app.bikeId ? (
                       <span style={{ color: '#22c55e', fontWeight: 600 }}>Assigned</span>
@@ -214,6 +267,152 @@ export default function AdminApplicationsPage() {
               ))}
             </tbody>
           </table>
+          {selectedApp && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 16,
+                zIndex: 1000,
+              }}
+              onClick={() => setSelectedApp(null)}
+            >
+              <div
+                style={{
+                  background: '#fff',
+                  borderRadius: 12,
+                  width: 'min(100%, 980px)',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                  color: '#111827',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottom: '1px solid #e5e7eb' }}>
+                  <h2 style={{ margin: 0, color: '#111827' }}>Application Details</h2>
+                  <button onClick={() => setSelectedApp(null)} style={{ border: 'none', background: 'transparent', fontSize: 18, cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Last Name</div>
+                      <div style={{ fontWeight: 600 }}>{selectedApp.lastName}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>First Name</div>
+                      <div style={{ fontWeight: 600 }}>{selectedApp.firstName}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Middle Name</div>
+                      <div>{selectedApp.middleName || '-'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>SR Code</div>
+                      <div>{selectedApp.srCode || '-'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Sex</div>
+                      <div>{selectedApp.sex || '-'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Date of Birth</div>
+                      <div>{formatDate(selectedApp.dateOfBirth)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Phone Number</div>
+                      <div>{selectedApp.phoneNumber || '-'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#6b7280' }}>Email Address</div>
+                      <div>{selectedApp.email}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1', height: 1, background: '#e5e7eb', margin: '8px 0' }} />
+
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>College/Program</div>
+                    <div>{selectedApp.collegeProgram || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>GWA Last Semester</div>
+                    <div>{selectedApp.gwaLastSemester || '-'}</div>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Extracurricular Activities</div>
+                    <div>{selectedApp.extracurricularActivities || '-'}</div>
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1', height: 1, background: '#e5e7eb', margin: '8px 0' }} />
+
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>House No.</div>
+                    <div>{selectedApp.houseNo || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Street</div>
+                    <div>{selectedApp.streetName || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Barangay</div>
+                    <div>{selectedApp.barangay || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Municipality</div>
+                    <div>{selectedApp.municipality || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Province</div>
+                    <div>{selectedApp.province || '-'}</div>
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1', height: 1, background: '#e5e7eb', margin: '8px 0' }} />
+
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Distance from Campus</div>
+                    <div>{selectedApp.distanceFromCampus || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Monthly Family Income</div>
+                    <div>{selectedApp.familyIncome || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Intended Duration</div>
+                    <div>{selectedApp.intendedDuration || '-'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>Intended Duration (Other)</div>
+                    <div>{selectedApp.intendedDurationOther || '-'}</div>
+                  </div>
+
+                  {selectedApp.certificatePath && (
+                    <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>Certificate of Indigency</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <img src={selectedApp.certificatePath} alt="Certificate" style={{ maxHeight: 200, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                        <a href={selectedApp.certificatePath} target="_blank" rel="noreferrer" style={{ color: '#1976d2', fontWeight: 600 }}>Open in new tab</a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: 16, display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid #e5e7eb' }}>
+                  <button
+                    onClick={() => setSelectedApp(null)}
+                    style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#fff', cursor: 'pointer' }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
