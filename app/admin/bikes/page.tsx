@@ -10,6 +10,8 @@ interface Bike {
   status: string;
   createdAt: string;
   applications?: any[];
+  latitude?: number;
+  longitude?: number;
 }
 
 export default function AdminBikesPage() {
@@ -685,6 +687,27 @@ export default function AdminBikesPage() {
                       </div>
                     </div>
                   )}
+                  <a
+                    href={`/admin/bikes/map?label=${encodeURIComponent(bike.name)}${typeof bike.latitude === 'number' && typeof bike.longitude === 'number' ? `&lat=${encodeURIComponent(bike.latitude)}&lng=${encodeURIComponent(bike.longitude)}` : ''}`}
+                    onClick={e => {
+                      e.stopPropagation();
+                    }}
+                    style={{
+                      background: '#1976d2',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: 14,
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      display: 'inline-block'
+                    }}
+                    title={'View on Map'}
+                  >
+                    View Map
+                  </a>
                 </div>
               </div>
               );
