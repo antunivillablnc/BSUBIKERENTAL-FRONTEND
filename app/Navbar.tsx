@@ -17,6 +17,30 @@ export default function Navbar() {
   const [notifModalOpen, setNotifModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [seenIdsSnapshot, setSeenIdsSnapshot] = useState<string>("");
+
+  const dismissedKey = (email: string) => `dismissedNotifications:${email}`;
+  const loadDismissed = (email: string): string[] => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(dismissedKey(email)) : null;
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((x: any) => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  };
+  const saveDismissed = (email: string, ids: string[]) => {
+    try { if (typeof window !== 'undefined') localStorage.setItem(dismissedKey(email), JSON.stringify(ids)); } catch {}
+  };
+  const seenKey = (email: string) => `seenNotificationIds:${email}`;
+  const loadSeenSnapshot = (email: string): string => {
+    try { return (typeof window !== 'undefined' ? localStorage.getItem(seenKey(email)) : '') || ''; } catch { return ''; }
+  };
+  const saveSeenSnapshot = (email: string, snapshot: string) => {
+    try { if (typeof window !== 'undefined') localStorage.setItem(seenKey(email), snapshot); } catch {}
+  };
   useEffect(() => {
     // Get user from localStorage
     const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
@@ -38,26 +62,36 @@ export default function Navbar() {
       setLoadingNotifs(false);
       return;
     }
+    setUserEmail(user.email);
+    setSeenIdsSnapshot(loadSeenSnapshot(user.email));
     // Fetch real notifications
     fetch(`/api/dashboard?email=${encodeURIComponent(user.email)}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.applications)) {
-          // Map to notification format
-          const notifs = data.applications.map((app: any) => {
-            let status = 'pending';
-            if (app.bikeId) status = 'approved';
-            // If you add a status field, use that here
-            let message = '';
-            if (status === 'approved') message = 'Your bike rental was approved!';
-            else message = 'Your application is pending review.';
-            return {
-              id: app.id,
-              message,
-              date: app.createdAt ? app.createdAt.split('T')[0] : '',
-              status,
-            };
-          });
+          // Build one notification per application:
+          // - pending if not approved yet
+          // - approved if bike assigned/approved
+          // Use composite IDs (<appId>:pending|approved) so dismissing pending
+          // doesn't hide the later approved message.
+          const dismissed = loadDismissed(user.email);
+          const notifs = data.applications
+            .map((app: any) => {
+              const status: string = (app?.status || '').toLowerCase();
+              const isApproved = !!app?.bikeId || ['approved', 'active', 'assigned', 'assigned'].includes(status);
+              const isPending = !isApproved && ['pending', 'submitted', 'under review'].includes(status);
+              if (!isApproved && !isPending) return null;
+              const kind = isApproved ? 'approved' : 'pending';
+              const id = `${app.id}:${kind}`;
+              if (dismissed.includes(id)) return null;
+              return {
+                id,
+                message: isApproved ? 'Your bike rental was approved!' : 'Your application is pending review.',
+                date: app.createdAt ? app.createdAt.split('T')[0] : '',
+                status: kind,
+              } as Notification;
+            })
+            .filter(Boolean) as Notification[];
           setNotifications(notifs);
         } else {
           setNotifications([]);
@@ -70,6 +104,19 @@ export default function Navbar() {
       });
   }, []);
   const latestNotifications = notifications.slice(0, 3);
+  const clearAllNotifications = () => {
+    if (!userEmail) {
+      setNotifications([]);
+      return;
+    }
+    const existing = loadDismissed(userEmail);
+    const toDismiss = Array.from(new Set([...existing, ...notifications.map(n => n.id)]));
+    saveDismissed(userEmail, toDismiss);
+    setNotifications([]);
+  };
+
+  const currentIdsSnapshot = notifications.map(n => n.id).sort().join(',');
+  const showBadge = notifications.length > 0 && !notifDropdownOpen && (!!currentIdsSnapshot && currentIdsSnapshot !== seenIdsSnapshot);
 
   const navLinks = [
     { href: "/home", label: "Home" },
@@ -160,12 +207,19 @@ export default function Navbar() {
                   position: 'relative',
                 }}
                 aria-label="Notifications"
-                onClick={() => setNotifModalOpen(true)}
+                onClick={() => {
+                  setNotifModalOpen(true);
+                  if (userEmail) {
+                    const snapshot = currentIdsSnapshot;
+                    saveSeenSnapshot(userEmail, snapshot);
+                    setSeenIdsSnapshot(snapshot);
+                  }
+                }}
               >
                 <svg width="24" height="24" fill="none" stroke="#b22222" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11c0-3.07-1.64-5.64-5-5.958V4a1 1 0 1 0-2 0v1.042C6.64 5.36 5 7.929 5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 1 1-6 0v-1m6 0H9"/>
                 </svg>
-                {notifications.length > 0 && !notifDropdownOpen && (
+                {showBadge && (
                   <span style={{
                     position: 'absolute',
                     top: 6,
@@ -232,7 +286,8 @@ export default function Navbar() {
                       ))}
                     </div>
                   )}
-                  <div style={{ textAlign: 'center', padding: '10px 0 14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px 14px 12px', gap: 8 }}>
+                    <button style={{ background: 'none', color: '#1976d2', border: '1px solid #1976d2', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 13, padding: '6px 10px' }} onClick={() => { clearAllNotifications(); }}>Clear</button>
                     <button style={{ background: 'none', color: '#1976d2', border: 'none', fontWeight: 700, cursor: 'pointer', fontSize: 14 }} onClick={() => { setNotifModalOpen(true); setNotifDropdownOpen(false); }}>View all</button>
                   </div>
                 </div>
@@ -395,7 +450,10 @@ export default function Navbar() {
             >
               ×
             </button>
-            <div style={{ fontWeight: 800, color: '#1976d2', fontSize: 22, marginBottom: 18 }}>All Notifications</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <div style={{ fontWeight: 800, color: '#1976d2', fontSize: 22 }}>All Notifications</div>
+              <button onClick={clearAllNotifications} style={{ background: 'none', border: '1px solid #1976d2', color: '#1976d2', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 13, padding: '6px 10px' }}>Clear</button>
+            </div>
             {loadingNotifs ? (
               <div style={{ color: '#888', padding: '8px 0' }}>Loading...</div>
             ) : notifications.length === 0 ? (
