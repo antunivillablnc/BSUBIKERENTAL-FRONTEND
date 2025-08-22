@@ -114,7 +114,7 @@ export default function BikeRentalPage() {
             </button>
             <div style={{
               textAlign: 'center',
-              color: '#1976d2',
+              color: '#0f0f0f',
               fontWeight: 500,
               fontSize: 15,
               marginTop: 4,

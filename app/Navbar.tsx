@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 type Notification = {
   id: string;
@@ -78,90 +79,188 @@ export default function Navbar() {
   ];
 
   return (
-    <nav style={{ background: '#fff', padding: '0 12px', display: 'flex', alignItems: 'center', height: 80, boxShadow: '0 2px 8px rgba(0,0,0,0.03)', position: 'relative', zIndex: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'transparent' }}>
-        <img src="/logo-spartan.png" alt="Sparta Logo" style={{ height: 60, width: 'auto', background: 'transparent' }} />
-        <span style={{ fontWeight: 700, color: '#b22222', fontSize: 22, letterSpacing: 1, marginLeft: 8, background: 'transparent' }}>SPARTA</span>
-      </div>
-      {/* Desktop nav links */}
-      <div className="navbar-links" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, background: 'transparent' }}>
-        {navLinks.map(link => (
-          <a
-            key={link.href}
-            href={link.href}
-            style={{
-              color: pathname === link.href ? '#1976d2' : '#444',
-              fontWeight: pathname === link.href ? 600 : 500,
-              textDecoration: 'none',
-              fontSize: 18,
-              background: 'transparent',
-              display: 'inline-block',
-            }}
-          >
-            {link.label}
-          </a>
-        ))}
-      </div>
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 28,
-          marginLeft: 18,
-          cursor: 'pointer',
-          background: 'none',
-          border: 'none',
-          outline: 'none',
-          position: 'relative',
-        }}
-        tabIndex={0}
-        aria-label="Notifications"
-        title="Notifications"
-        onMouseEnter={() => setNotifDropdownOpen(true)}
-        onMouseLeave={() => setNotifDropdownOpen(false)}
-        onClick={() => setNotifModalOpen(true)}
-      >
-        <svg width="24" height="24" fill="none" stroke="#b22222" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11c0-3.07-1.64-5.64-5-5.958V4a1 1 0 1 0-2 0v1.042C6.64 5.36 5 7.929 5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 1 1-6 0v-1m6 0H9"/>
-        </svg>
-        {/* Dropdown on hover */}
-        {notifDropdownOpen && (
-          <div style={{
-            position: 'absolute',
-            top: 36,
-            right: 0,
-            minWidth: 260,
-            background: '#fff',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            borderRadius: 10,
-            zIndex: 100,
-            padding: '10px 0',
-            fontSize: 15,
-          }}
-            onMouseEnter={() => setNotifDropdownOpen(true)}
-            onMouseLeave={() => setNotifDropdownOpen(false)}
-          >
-            <div style={{ fontWeight: 700, color: '#1976d2', padding: '0 16px 8px' }}>Notifications</div>
-            {loadingNotifs ? (
-              <div style={{ color: '#888', padding: '8px 16px' }}>Loading...</div>
-            ) : latestNotifications.length === 0 ? (
-              <div style={{ color: '#888', padding: '8px 16px' }}>No notifications</div>
-            ) : (
-              latestNotifications.map(n => (
-                <div key={n.id} style={{ padding: '8px 16px', borderBottom: '1px solid #f0f0f0', color: '#444' }}>
-                  <div>{n.message}</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>{n.date}</div>
+    <>
+      <header style={{
+        background: '#fff',
+        borderBottom: '1px solid #e5e7eb',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+            {/* Logo/Brand */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Link href="/home" style={{ textDecoration: 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, objectFit: 'contain', marginRight: 4 }} />
+                  <span style={{
+                    color: '#b22222',
+                    fontWeight: 800,
+                    fontSize: 28,
+                    letterSpacing: 2,
+                    textTransform: 'uppercase',
+                    fontFamily: 'inherit',
+                  }}>
+                    SPARTA
+                  </span>
                 </div>
-              ))
-            )}
-            <div style={{ textAlign: 'center', marginTop: 6 }}>
-              <button style={{ background: 'none', color: '#1976d2', border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: 14 }} onClick={() => { setNotifModalOpen(true); setNotifDropdownOpen(false); }}>View all</button>
+              </Link>
+            </div>
+
+            {/* Navigation */}
+            <div className="navbar-links" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <nav style={{ display: 'flex', gap: 8 }}>
+                {navLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    style={{
+                      textDecoration: 'none',
+                      padding: '8px 16px',
+                      borderRadius: 8,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      color: pathname === item.href ? '#1976d2' : '#111111',
+                      background: pathname === item.href ? '#e3f2fd' : 'transparent',
+                      border: pathname === item.href ? '1px solid #1976d2' : '1px solid transparent',
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            {/* Right actions: notifications + logout */}
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <div
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setNotifDropdownOpen(true)}
+                onMouseLeave={() => setNotifDropdownOpen(false)}
+              >
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  borderRadius: 8,
+                  width: 40,
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.15s',
+                  position: 'relative',
+                }}
+                aria-label="Notifications"
+                onClick={() => setNotifModalOpen(true)}
+              >
+                <svg width="24" height="24" fill="none" stroke="#b22222" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11c0-3.07-1.64-5.64-5-5.958V4a1 1 0 1 0-2 0v1.042C6.64 5.36 5 7.929 5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 1 1-6 0v-1m6 0H9"/>
+                </svg>
+                {notifications.length > 0 && !notifDropdownOpen && (
+                  <span style={{
+                    position: 'absolute',
+                    top: 6,
+                    right: 6,
+                    background: '#ef4444',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    minWidth: 18,
+                    height: 18,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 5px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
+                  }}>
+                    {Math.min(notifications.length, 9)}
+                  </span>
+                )}
+              </button>
+              {notifDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: 44,
+                  right: 0,
+                  minWidth: 320,
+                  background: '#fff',
+                  border: '1.5px solid #e0e0e0',
+                  borderRadius: 12,
+                  boxShadow: '0 8px 32px 0 rgba(31,38,135,0.12)',
+                  zIndex: 1001,
+                  padding: 0,
+                }}
+                  onMouseEnter={() => setNotifDropdownOpen(true)}
+                  onMouseLeave={() => setNotifDropdownOpen(false)}
+                >
+                  <div style={{ padding: '14px 18px', borderBottom: '1.5px solid #f3f4f6', fontWeight: 700, color: '#b22222', fontSize: 16 }}>
+                    Notifications
+                  </div>
+                  {loadingNotifs ? (
+                    <div style={{ padding: '18px', color: '#6b7280', textAlign: 'center', fontSize: 15 }}>
+                      Loading...
+                    </div>
+                  ) : latestNotifications.length === 0 ? (
+                    <div style={{ padding: '18px', color: '#6b7280', textAlign: 'center', fontSize: 15 }}>
+                      No notifications
+                    </div>
+                  ) : (
+                    <div style={{ maxHeight: 320, overflowY: 'auto', padding: '12px 0' }}>
+                      {latestNotifications.map(n => (
+                        <div key={n.id} style={{
+                          padding: '12px 18px',
+                          margin: '0 8px 12px 8px',
+                          background: '#f6fafd',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 4px 0 rgba(31,38,135,0.06)',
+                          border: '1px solid #e0e0e0',
+                          color: '#444',
+                        }}>
+                          <div>{n.message}</div>
+                          <div style={{ fontSize: 12, color: '#888' }}>{n.date}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ textAlign: 'center', padding: '10px 0 14px' }}>
+                    <button style={{ background: 'none', color: '#1976d2', border: 'none', fontWeight: 700, cursor: 'pointer', fontSize: 14 }} onClick={() => { setNotifModalOpen(true); setNotifDropdownOpen(false); }}>View all</button>
+                  </div>
+                </div>
+              )}
+              </div>
+              <button
+                onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: '#fff',
+                  background: '#b22222',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#a11d1d')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#b22222')}
+              >
+                Log Out
+              </button>
             </div>
           </div>
-        )}
-      </span>
-      <button style={{ background: '#e0e0e0', color: '#222', fontWeight: 600, border: 'none', borderRadius: 8, padding: '8px 22px', fontSize: 16, cursor: 'pointer', marginLeft: 24, backgroundClip: 'padding-box', zIndex: 11 }} onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}>Logout</button>
+        </div>
+      </header>
+
       {/* Hamburger icon for mobile */}
       <button
         className="hamburger"
@@ -174,11 +273,12 @@ export default function Navbar() {
           fontSize: 32,
           marginLeft: 16,
           cursor: 'pointer',
-          zIndex: 12,
+          zIndex: 120,
         }}
       >
         &#9776;
       </button>
+
       {/* Mobile menu overlay */}
       {menuOpen && (
         <div
@@ -244,11 +344,12 @@ export default function Navbar() {
                   {link.label}
                 </a>
               ))}
-              <button style={{ background: '#e0e0e0', color: '#222', fontWeight: 600, border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 18, cursor: 'pointer', marginTop: 24 }} onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}>Logout</button>
+              <button style={{ background: '#b22222', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 18, cursor: 'pointer', marginTop: 24 }} onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}>Log Out</button>
             </div>
           </div>
         </div>
       )}
+
       {/* Modal for all notifications */}
       {notifModalOpen && (
         <div style={{
@@ -310,6 +411,7 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
       {/* Responsive styles */}
       <style>{`
         @media (max-width: 700px) {
@@ -321,6 +423,6 @@ export default function Navbar() {
           }
         }
       `}</style>
-    </nav>
+    </>
   );
 } 
