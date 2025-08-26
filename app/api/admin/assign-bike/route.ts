@@ -14,6 +14,9 @@ export async function POST(req: Request) {
     if (application.status === 'completed') {
       return NextResponse.json({ success: false, error: 'This application has already been completed and cannot be reused.' }, { status: 400 });
     }
+    if (!['approved', 'assigned', 'active'].includes(application.status)) {
+      return NextResponse.json({ success: false, error: 'Application must be approved before assigning a bike.' }, { status: 400 });
+    }
     if (application.bikeId) {
       return NextResponse.json({ success: false, error: 'Application already has a bike assigned.' }, { status: 400 });
     }

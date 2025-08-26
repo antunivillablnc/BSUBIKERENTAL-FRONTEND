@@ -7,11 +7,13 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
-    if (!email) {
-      return NextResponse.json({ success: false, error: 'Email is required.' }, { status: 400 });
+    const userId = searchParams.get('userId');
+    if (!email && !userId) {
+      return NextResponse.json({ success: false, error: 'Email or userId is required.' }, { status: 400 });
     }
+    const where: any = userId ? { userId } : { email };
     const applications = await prisma.bikeRentalApplication.findMany({
-      where: { email },
+      where,
       orderBy: { createdAt: 'desc' },
       include: { bike: true },
     });
