@@ -63,7 +63,7 @@ export default function AdminLayout({
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7f8fa" }}>
+    <div style={{ minHeight: "100vh", background: "#f7f8fa", display: "flex", flexDirection: "column" }}>
       {/* Admin Navigation Header */}
       <header style={{
         background: "#fff",
@@ -87,6 +87,7 @@ export default function AdminLayout({
                     letterSpacing: 2,
                     textTransform: 'uppercase',
                     fontFamily: 'inherit',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                   }}>
                     SPARTA
                   </span>
@@ -288,7 +289,7 @@ export default function AdminLayout({
       </header>
 
       {/* Main Content */}
-      <main>
+      <main style={{ flex: 1 }}>
         {children}
       </main>
 
@@ -301,7 +302,7 @@ export default function AdminLayout({
       }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", textAlign: "center" }}>
           <p style={{ color: "#6b7280", fontSize: 14, margin: 0 }}>
-            © 2024 Bike Rental Admin Panel. All rights reserved.
+            © 2025 Bike Rental Admin Panel. All rights reserved.
           </p>
         </div>
       </footer>

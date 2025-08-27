@@ -120,10 +120,10 @@ export default function Navbar() {
   const showBadge = notifications.length > 0 && !notifDropdownOpen && (!!currentIdsSnapshot && currentIdsSnapshot !== seenIdsSnapshot);
 
   const navLinks = [
-    { href: "/home", label: "Home" },
-    { href: "/reserve", label: "Rent a Bike" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/my-bike", label: "My Bike" },
+    { href: "/home", label: "Home", icon: "🏠" },
+    { href: "/reserve", label: "Rent a Bike", icon: "🚲" },
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/my-bike", label: "My Bike", icon: "🚴" },
   ];
 
   return (
@@ -150,6 +150,7 @@ export default function Navbar() {
                     letterSpacing: 2,
                     textTransform: 'uppercase',
                     fontFamily: 'inherit',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
                   }}>
                     SPARTA
                   </span>
@@ -179,7 +180,8 @@ export default function Navbar() {
                       border: pathname === item.href ? '1px solid #1976d2' : '1px solid transparent',
                     }}
                   >
-                    {item.label}
+                    <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
+                    <span>{item.label}</span>
                   </Link>
                 ))}
               </nav>
@@ -397,7 +399,8 @@ export default function Navbar() {
                   }}
                   onClick={() => setMenuOpen(false)}
                 >
-                  {link.label}
+                  <span aria-hidden="true" style={{ marginRight: 10 }}>{link.icon}</span>
+                  <span>{link.label}</span>
                 </a>
               ))}
               <button style={{ background: '#b22222', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 18, cursor: 'pointer', marginTop: 24 }} onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}>Log Out</button>
