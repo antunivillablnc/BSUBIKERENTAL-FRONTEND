@@ -138,9 +138,14 @@ export default function AdminApplicationsPage() {
     return true;
   });
 
-  // Sort with completed at the bottom, then by newest first within each group
+  // Sort with rejected at the very bottom, then completed, then assigned, then others; newest first within each group
   const sortedApplications = [...filteredApplications].sort((a, b) => {
-    const rank = (app: Application) => (app.status === 'completed' ? 2 : (app.status === 'assigned' || app.bikeId ? 1 : 0));
+    const rank = (app: Application) => {
+      if (app.status === 'rejected') return 3;
+      if (app.status === 'completed') return 2;
+      if (app.status === 'assigned' || app.bikeId) return 1;
+      return 0;
+    };
     const diff = rank(a) - rank(b);
     if (diff !== 0) return diff;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -153,9 +158,25 @@ export default function AdminApplicationsPage() {
   }
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
-      <h2 style={{ color: '#1976d2' }}>Loading applications...</h2>
-    </div>;
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div className="flash-spinner" />
+          <h2 style={{ color: '#1976d2', margin: 0 }}>Loading applications...</h2>
+        </div>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+          .flash-spinner {
+            width: 74px; height: 74px; border-radius: 50%;
+            background: conic-gradient(#00e5ff, #00ff95, #ffd54f, #ff4081, #00e5ff);
+            -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
+                    mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 22px rgba(0,0,0,0.06), 0 0 30px rgba(33,150,243,0.20);
+          }
+        `}</style>
+      </div>
+    );
   }
 
   return (
@@ -227,7 +248,6 @@ export default function AdminApplicationsPage() {
               <tr style={{ background: '#f1f5f9' }}>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Name</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Email</th>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Status</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Bike</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Applied</th>
                 <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Details</th>
@@ -239,17 +259,6 @@ export default function AdminApplicationsPage() {
                 <tr key={app.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: 10, color: '#111' }}>{app.lastName}, {app.firstName}</td>
                   <td style={{ padding: 10, color: '#111' }}>{app.email}</td>
-                  <td style={{ padding: 10, color: '#111' }}>
-                    {app.bikeId
-                      ? 'Assigned'
-                      : app.status === 'completed'
-                        ? 'Completed'
-                        : app.status === 'approved'
-                          ? 'Approved'
-                          : app.status === 'rejected'
-                            ? 'Rejected'
-                            : 'Pending'}
-                  </td>
                   <td style={{ padding: 10, color: '#111' }}>{app.bike ? app.bike.name : '-'}</td>
                   <td style={{ padding: 10, color: '#111' }}>{new Date(app.createdAt).toLocaleDateString()}</td>
                   <td style={{ padding: 10 }}>
@@ -283,14 +292,11 @@ export default function AdminApplicationsPage() {
                           defaultValue=""
                           onChange={e => handleAssign(app.id, e.target.value)}
                         >
-                          <option value="" disabled>{app.status !== 'approved' ? 'Approve application first' : 'Select bike'}</option>
+                          <option value="" disabled>{app.status !== 'approved' ? 'Approval First' : 'Select bike'}</option>
                           {bikes.filter(b => b.status === 'available').map(bike => (
                             <option key={bike.id} value={bike.id}>{bike.name}</option>
                           ))}
                         </select>
-                        {app.status !== 'approved' && (
-                          <span style={{ color: '#6b7280', fontWeight: 500 }}>Approve first</span>
-                        )}
                         {assigning === app.id && <span style={{ color: '#1976d2' }}>Assigning...</span>}
                         {assignError && <span style={{ color: '#b22222', fontWeight: 500 }}>{assignError}</span>}
                       </>
@@ -437,18 +443,22 @@ export default function AdminApplicationsPage() {
                 </div>
                 <div style={{ padding: 16, display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', borderTop: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      onClick={() => handleUpdateStatus(selectedApp.id, 'approved')}
-                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#22c55e', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => handleUpdateStatus(selectedApp.id, 'rejected')}
-                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      Reject
-                    </button>
+                    {selectedApp.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleUpdateStatus(selectedApp.id, 'approved')}
+                          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#22c55e', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(selectedApp.id, 'rejected')}
+                          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
                     <div style={{ marginLeft: 8, color: '#6b7280', fontSize: 14 }}>
                       Status: <span style={{ fontWeight: 700, color: selectedApp.status === 'approved' ? '#22c55e' : selectedApp.status === 'rejected' ? '#ef4444' : '#6b7280' }}>{selectedApp.status}</span>
                     </div>

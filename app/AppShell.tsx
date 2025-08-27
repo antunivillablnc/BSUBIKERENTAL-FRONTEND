@@ -21,8 +21,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {!shouldHideNavbar && <Navbar />}
-      {children}
+      {isAdmin ? (
+        <>{children}</>
+      ) : (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {!shouldHideNavbar && <Navbar />}
+          <main style={{ flex: 1 }}>
+            {children}
+          </main>
+          <footer style={{ background: '#fff', borderTop: '1px solid #e5e7eb', padding: '24px' }}>
+            <div style={{ maxWidth: 1400, margin: '0 auto', textAlign: 'center' }}>
+              <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
+                © 2025 Bike Rental Website. All rights reserved.
+              </p>
+            </div>
+          </footer>
+        </div>
+      )}
     </>
   );
 } 

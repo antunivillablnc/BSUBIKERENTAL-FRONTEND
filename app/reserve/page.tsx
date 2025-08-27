@@ -66,9 +66,23 @@ export default function BikeRentalPage() {
         pointerEvents: 'none',
       }} />
       {/* Hero Section */}
-      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 8px' }}>
+      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 8px', position: 'relative', zIndex: 1 }}>
         {loading ? (
-          <div style={{ color: '#1976d2', fontWeight: 700, fontSize: 24, marginTop: 40 }}>Loading bikes...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
+            <div className="flash-spinner" />
+            <div style={{ color: '#ffffff', fontWeight: 800, fontSize: 18, letterSpacing: 1, textShadow: '0 2px 8px rgba(0,0,0,0.45)' }}>Loading bikes...</div>
+            <style>{`
+              @keyframes spin { to { transform: rotate(360deg); } }
+              .flash-spinner {
+                width: 74px; height: 74px; border-radius: 50%;
+                background: conic-gradient(#00e5ff, #00ff95, #ffd54f, #ff4081, #00e5ff);
+                -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
+                        mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
+                animation: spin 1s linear infinite;
+                box-shadow: 0 0 22px rgba(255,255,255,0.75), 0 0 44px rgba(0,229,255,0.45);
+              }
+            `}</style>
+          </div>
         ) : bikes.length === 0 ? (
           <div style={{ color: '#b22222', fontWeight: 700, fontSize: 22, marginTop: 40 }}>No bikes available at the moment.</div>
         ) : (
@@ -76,17 +90,17 @@ export default function BikeRentalPage() {
             {/* Move the Rent a bike button above the Swiper carousel */}
             <button
               style={{
-                background: 'linear-gradient(90deg, #1976d2 60%, #2196f3 100%)',
+                background: 'linear-gradient(90deg, #2196f3 0%, #64b5f6 100%)',
                 color: '#fff',
                 fontWeight: 800,
                 padding: '18px 0',
                 borderRadius: 12,
                 fontSize: 22,
-                border: '2px solid #1565c0',
+                border: '2px solid #1e88e5',
                 cursor: 'pointer',
                 width: 320,
                 maxWidth: '90vw',
-                boxShadow: '0 8px 32px rgba(25, 118, 210, 0.25), 0 2px 8px rgba(0,0,0,0.10)',
+                boxShadow: '0 8px 32px rgba(33, 150, 243, 0.20), 0 2px 8px rgba(0,0,0,0.08)',
                 outline: 'none',
                 transition: 'background 0.2s, box-shadow 0.2s, transform 0.15s',
                 letterSpacing: 1,
@@ -98,14 +112,14 @@ export default function BikeRentalPage() {
               }}
               onClick={() => router.push('/reserve/apply')}
               onMouseOver={e => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #2196f3 60%, #42a5f5 100%)';
-                e.currentTarget.style.boxShadow = '0 12px 36px rgba(33, 150, 243, 0.30), 0 4px 16px rgba(0,0,0,0.12)';
-                e.currentTarget.style.transform = 'scale(1.04)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #64b5f6 0%, #90caf9 100%)';
+                e.currentTarget.style.boxShadow = '0 14px 40px rgba(33,150,243,0.35), 0 6px 14px rgba(0,0,0,0.12)';
+                e.currentTarget.style.transform = 'translateY(-1px) scale(1.03)';
               }}
               onMouseOut={e => {
-                e.currentTarget.style.background = 'linear-gradient(90deg, #1976d2 60%, #2196f3 100%)';
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(25, 118, 210, 0.25), 0 2px 8px rgba(0,0,0,0.10)';
-                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.background = 'linear-gradient(90deg, #2196f3 0%, #64b5f6 100%)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(33,150,243,0.20), 0 2px 8px rgba(0,0,0,0.08)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
               }}
               tabIndex={0}
               aria-label="Rent a bike"
@@ -114,13 +128,19 @@ export default function BikeRentalPage() {
             </button>
             <div style={{
               textAlign: 'center',
-              color: '#0f0f0f',
-              fontWeight: 500,
-              fontSize: 15,
-              marginTop: 4,
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: 18,
+              marginTop: 8,
               marginBottom: 10,
               letterSpacing: 0.1,
-              textShadow: '0 1px 2px #fff',
+              textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+              background: 'transparent',
+              padding: 0,
+              borderRadius: 0,
+              display: 'inline-block',
+              position: 'relative',
+              zIndex: 1,
             }}>
               Swipe or scroll the bikes left and right
             </div>
