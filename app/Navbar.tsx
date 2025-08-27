@@ -57,36 +57,37 @@ export default function Navbar() {
       setLoadingNotifs(false);
       return;
     }
-    if (!user?.email) {
+    if (!user?.email && !user?.id) {
       setNotifications([]);
       setLoadingNotifs(false);
       return;
     }
-    setUserEmail(user.email);
-    setSeenIdsSnapshot(loadSeenSnapshot(user.email));
+    setUserEmail(user.email || null);
+    setSeenIdsSnapshot(loadSeenSnapshot(user.email || '')); 
     // Fetch real notifications
-    fetch(`/api/dashboard?email=${encodeURIComponent(user.email)}`)
+    const query = user?.id ? `userId=${encodeURIComponent(user.id)}` : `email=${encodeURIComponent(user.email)}`;
+    fetch(`/api/dashboard?${query}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.applications)) {
           // Build one notification per application:
           // - pending if not approved yet
           // - approved if bike assigned/approved
-          // Use composite IDs (<appId>:pending|approved) so dismissing pending
-          // doesn't hide the later approved message.
-          const dismissed = loadDismissed(user.email);
+          // Include rejected
+          const dismissed = loadDismissed(user.email || '');
           const notifs = data.applications
             .map((app: any) => {
               const status: string = (app?.status || '').toLowerCase();
               const isApproved = !!app?.bikeId || ['approved', 'active', 'assigned', 'assigned'].includes(status);
-              const isPending = !isApproved && ['pending', 'submitted', 'under review'].includes(status);
-              if (!isApproved && !isPending) return null;
-              const kind = isApproved ? 'approved' : 'pending';
+              const isRejected = ['rejected', 'declined'].includes(status);
+              const isPending = !isApproved && !isRejected && ['pending', 'submitted', 'under review'].includes(status);
+              if (!isApproved && !isPending && !isRejected) return null;
+              const kind = isApproved ? 'approved' : isRejected ? 'rejected' : 'pending';
               const id = `${app.id}:${kind}`;
               if (dismissed.includes(id)) return null;
               return {
                 id,
-                message: isApproved ? 'Your bike rental was approved!' : 'Your application is pending review.',
+                message: isApproved ? 'Your bike rental was approved!' : isRejected ? 'Your application was rejected.' : 'Your application is pending review.',
                 date: app.createdAt ? app.createdAt.split('T')[0] : '',
                 status: kind,
               } as Notification;

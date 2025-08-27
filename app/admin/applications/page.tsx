@@ -105,6 +105,26 @@ export default function AdminApplicationsPage() {
     setAssigning(null);
   }
 
+  async function handleUpdateStatus(appId: string, status: 'approved' | 'rejected' | 'pending') {
+    setError("");
+    try {
+      const res = await fetch('/api/admin/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId: appId, status }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedApp(prev => (prev && prev.id === appId ? { ...prev, status } : prev));
+        fetchData();
+      } else {
+        setError(data.error || 'Failed to update application status.');
+      }
+    } catch {
+      setError('Failed to update application status.');
+    }
+  }
+
   // End rental handled on Bikes page; no action here
 
   // Filtered applications based on statusFilter and emailFilter
@@ -220,7 +240,15 @@ export default function AdminApplicationsPage() {
                   <td style={{ padding: 10, color: '#111' }}>{app.lastName}, {app.firstName}</td>
                   <td style={{ padding: 10, color: '#111' }}>{app.email}</td>
                   <td style={{ padding: 10, color: '#111' }}>
-                    {app.bikeId ? 'Assigned' : (app.status === 'completed' ? 'Completed' : 'Pending')}
+                    {app.bikeId
+                      ? 'Assigned'
+                      : app.status === 'completed'
+                        ? 'Completed'
+                        : app.status === 'approved'
+                          ? 'Approved'
+                          : app.status === 'rejected'
+                            ? 'Rejected'
+                            : 'Pending'}
                   </td>
                   <td style={{ padding: 10, color: '#111' }}>{app.bike ? app.bike.name : '-'}</td>
                   <td style={{ padding: 10, color: '#111' }}>{new Date(app.createdAt).toLocaleDateString()}</td>
@@ -245,19 +273,24 @@ export default function AdminApplicationsPage() {
                       <span style={{ color: '#22c55e', fontWeight: 600 }}>Assigned</span>
                     ) : app.status === 'completed' ? (
                       <span style={{ color: '#6b7280', fontWeight: 600 }}>Completed</span>
+                    ) : app.status === 'rejected' ? (
+                      <span style={{ color: '#ef4444', fontWeight: 700 }}>Rejected</span>
                     ) : (
                       <>
                         <select
                           style={{ padding: '6px 12px', borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15, marginRight: 8 }}
-                          disabled={assigning === app.id}
+                          disabled={assigning === app.id || app.status !== 'approved'}
                           defaultValue=""
                           onChange={e => handleAssign(app.id, e.target.value)}
                         >
-                          <option value="" disabled>Select bike</option>
+                          <option value="" disabled>{app.status !== 'approved' ? 'Approve application first' : 'Select bike'}</option>
                           {bikes.filter(b => b.status === 'available').map(bike => (
                             <option key={bike.id} value={bike.id}>{bike.name}</option>
                           ))}
                         </select>
+                        {app.status !== 'approved' && (
+                          <span style={{ color: '#6b7280', fontWeight: 500 }}>Approve first</span>
+                        )}
                         {assigning === app.id && <span style={{ color: '#1976d2' }}>Assigning...</span>}
                         {assignError && <span style={{ color: '#b22222', fontWeight: 500 }}>{assignError}</span>}
                       </>
@@ -402,12 +435,29 @@ export default function AdminApplicationsPage() {
                     </div>
                   )}
                 </div>
-                <div style={{ padding: 16, display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid #e5e7eb' }}>
+                <div style={{ padding: 16, display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', borderTop: '1px solid #e5e7eb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={() => handleUpdateStatus(selectedApp.id, 'approved')}
+                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#22c55e', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleUpdateStatus(selectedApp.id, 'rejected')}
+                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Reject
+                    </button>
+                    <div style={{ marginLeft: 8, color: '#6b7280', fontSize: 14 }}>
+                      Status: <span style={{ fontWeight: 700, color: selectedApp.status === 'approved' ? '#22c55e' : selectedApp.status === 'rejected' ? '#ef4444' : '#6b7280' }}>{selectedApp.status}</span>
+                    </div>
+                  </div>
                   <button
                     onClick={() => setSelectedApp(null)}
-                    style={{ padding: '8px 14px', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#fff', cursor: 'pointer' }}
+                    style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#1976d2', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
                   >
-                    Close
+                    Back
                   </button>
                 </div>
               </div>

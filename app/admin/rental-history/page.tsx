@@ -9,6 +9,8 @@ interface HistoryItem {
   user: { id: string; name: string; email: string };
   bike: { id: string; name: string };
   application: { id: string; firstName: string; lastName: string; email: string };
+  type?: 'rental' | 'rejected';
+  status?: 'Completed' | 'Rejected' | 'Approved' | 'Rented';
 }
 
 export default function AdminRentalHistoryPage() {
@@ -85,6 +87,7 @@ export default function AdminRentalHistoryPage() {
                 <th style={{ padding: 12, textAlign: 'left' }}>Bike</th>
                 <th style={{ padding: 12, textAlign: 'left' }}>Start</th>
                 <th style={{ padding: 12, textAlign: 'left' }}>End</th>
+                <th style={{ padding: 12, textAlign: 'left' }}>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -92,9 +95,10 @@ export default function AdminRentalHistoryPage() {
                 <tr key={h.id} style={{ borderBottom: '1px solid #e5e7eb', color: '#111111' }}>
                   <td style={{ padding: 10 }}>{h.user?.name || `${h.application?.firstName} ${h.application?.lastName}`}</td>
                   <td style={{ padding: 10 }}>{h.user?.email || h.application?.email}</td>
-                  <td style={{ padding: 10 }}>{h.bike?.name}</td>
-                  <td style={{ padding: 10 }}>{new Date(h.startDate).toLocaleString()}</td>
-                  <td style={{ padding: 10 }}>{new Date(h.endDate).toLocaleString()}</td>
+                  <td style={{ padding: 10 }}>{h.bike?.name || '-'}</td>
+                  <td style={{ padding: 10 }}>{h.startDate ? new Date(h.startDate).toLocaleString() : '-'}</td>
+                  <td style={{ padding: 10 }}>{h.endDate ? new Date(h.endDate).toLocaleString() : '-'}</td>
+                  <td style={{ padding: 10, fontWeight: 700, color: h.status === 'Rejected' ? '#ef4444' : h.status === 'Approved' ? '#22c55e' : h.status === 'Rented' ? '#1976d2' : '#111111' }}>{h.status || 'Completed'}</td>
                 </tr>
               ))}
             </tbody>
