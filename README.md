@@ -47,3 +47,15 @@ This project uses Google Maps for displaying bike locations. To set up Google Ma
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Cloudinary Setup
+
+To store uploaded certificates in Cloudinary, add the following to `.env.local`:
+
+```
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+The API uploads files to the `bike-rental/certificates` folder and stores the secure URL in `BikeRentalApplication.certificatePath`.
