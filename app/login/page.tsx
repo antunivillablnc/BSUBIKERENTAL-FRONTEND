@@ -246,7 +246,7 @@ export default function LoginPage() {
                   sitekey={siteKey}
                   onChange={onRecaptchaChange}
                   onErrored={() => {
-                    setError("reCAPTCHA failed to load");
+                    setError("reCAPTCHA failed to load. Please allow Google reCAPTCHA and try again.");
                     setIsSubmitting(false);
                   }}
                   onExpired={() => {
