@@ -435,7 +435,22 @@ export default function AdminApplicationsPage() {
                     <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
                       <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>Certificate of Indigency</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        <img src={selectedApp.certificatePath} alt="Certificate" style={{ maxHeight: 200, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                        {(() => {
+                          const url = selectedApp.certificatePath as string;
+                          const isPdf = url.toLowerCase().endsWith('.pdf');
+                          if (isPdf) {
+                            return (
+                              <iframe
+                                src={url}
+                                title="Certificate PDF Preview"
+                                style={{ width: 320, height: 200, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                              />
+                            );
+                          }
+                          return (
+                            <img src={url} alt="Certificate" style={{ maxHeight: 200, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                          );
+                        })()}
                         <a href={selectedApp.certificatePath} target="_blank" rel="noreferrer" style={{ color: '#1976d2', fontWeight: 600 }}>Open in new tab</a>
                       </div>
                     </div>
