@@ -59,3 +59,15 @@ CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 The API uploads files to the `bike-rental/certificates` folder and stores the secure URL in `BikeRentalApplication.certificatePath`.
+
+## Google reCAPTCHA (Invisible v2) Setup
+
+Use Invisible reCAPTCHA to protect the login endpoint:
+
+1. In the reCAPTCHA Admin Console, create keys for "reCAPTCHA v2" → "Invisible reCAPTCHA badge".
+2. Add to `.env.local`:
+   ```
+   NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_site_key_here
+   RECAPTCHA_SECRET_KEY=your_secret_key_here
+   ```
+3. Restart the dev server after changing env variables.

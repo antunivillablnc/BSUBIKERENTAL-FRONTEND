@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 function Icon({ type }: { type: string }) {
   switch (type) {
@@ -24,46 +25,81 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [notRobot, setNotRobot] = useState(false);
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+  const recaptchaTimerRef = useRef<number | null>(null);
   const [savedUser, setSavedUser] = useState<any>(null);
+
+  const onRecaptchaChange = async (token: string | null) => {
+    if (!token) {
+      setIsSubmitting(false);
+      return;
+    }
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, recaptchaToken: token }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSuccess("Login successful!");
+        if (data.user) {
+          console.log('Saving user to localStorage:', data.user);
+          console.log('User role:', data.user.role);
+          console.log('Is admin?', data.user.role === "admin");
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setSavedUser(data.user);
+          if (data.user.role === "admin") {
+            console.log('Redirecting admin to /admin/applications');
+            router.push("/admin/applications");
+          } else {
+            console.log('Redirecting user to /home');
+            router.push("/home");
+          }
+        }
+      } else {
+        let data = null;
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          data = await res.json();
+        }
+        setError((data && data.error) || "Login failed");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(`Login request failed: ${message}`);
+    } finally {
+      recaptchaRef.current?.reset();
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError("");
     setSuccess("");
-    if (!notRobot) {
-      setError("Please confirm you are not a robot.");
+    setIsSubmitting(true);
+    if (!siteKey) {
+      setError("reCAPTCHA not configured");
+      setIsSubmitting(false);
       return;
     }
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setSuccess("Login successful!");
-      if (data.user) {
-        console.log('Saving user to localStorage:', data.user);
-        console.log('User role:', data.user.role);
-        console.log('Is admin?', data.user.role === "admin");
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setSavedUser(data.user);
-        if (data.user.role === "admin") {
-          console.log('Redirecting admin to /admin/applications');
-          router.push("/admin/applications");
-        } else {
-          console.log('Redirecting user to /home');
-          router.push("/home");
-        }
+    if (recaptchaRef.current) {
+      recaptchaRef.current.execute();
+      if (recaptchaTimerRef.current) {
+        clearTimeout(recaptchaTimerRef.current);
       }
+      recaptchaTimerRef.current = window.setTimeout(() => {
+        setError("reCAPTCHA timed out. Please try again.");
+        setIsSubmitting(false);
+        recaptchaRef.current?.reset();
+      }, 20000);
     } else {
-      let data = null;
-      const contentType = res.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      }
-      setError((data && data.error) || "Login failed");
+      setError("reCAPTCHA not ready. Please refresh the page.");
+      setIsSubmitting(false);
     }
   };
 
@@ -202,16 +238,29 @@ export default function LoginPage() {
                 <Icon type={showPassword ? "eye-off" : "eye"} />
               </button>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={notRobot}
-                  onChange={e => setNotRobot(e.target.checked)}
-                  style={{ marginRight: 8 }}
+            <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+              {siteKey ? (
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  size="invisible"
+                  sitekey={siteKey}
+                  onChange={onRecaptchaChange}
+                  onErrored={() => {
+                    setError("reCAPTCHA failed to load");
+                    setIsSubmitting(false);
+                  }}
+                  onExpired={() => {
+                    if (recaptchaTimerRef.current) {
+                      clearTimeout(recaptchaTimerRef.current);
+                      recaptchaTimerRef.current = null;
+                    }
+                    setError("reCAPTCHA expired. Please try again.");
+                    setIsSubmitting(false);
+                  }}
                 />
-                <span style={{ fontSize: 14, color: "#666" }}>I am not a robot</span>
-              </label>
+              ) : (
+                <div style={{ fontSize: 12, color: "#b22222" }}>reCAPTCHA not configured</div>
+              )}
             </div>
             {error && (
               <div style={{ color: "#d32f2f", fontSize: 14, marginBottom: 16, textAlign: "center" }}>
@@ -238,7 +287,7 @@ export default function LoginPage() {
                 marginBottom: 16,
               }}
             >
-              Sign In
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
           <div style={{ textAlign: "center", fontSize: 14, color: "#666" }}>
