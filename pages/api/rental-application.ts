@@ -56,7 +56,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         folder: 'bike-rental/certificates',
         public_id: publicId,
         overwrite: true,
-        resource_type: 'image',
+        // Use 'auto' so non-images like PDFs are handled as raw assets
+        resource_type: 'auto',
+        type: 'upload',
       });
       certificatePath = upload.secure_url;
     }
