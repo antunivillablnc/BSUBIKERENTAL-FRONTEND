@@ -12,6 +12,44 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  // Enforce admin authentication and handle BFCache back navigation
+  useEffect(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (!raw) {
+        router.replace('/');
+        return;
+      }
+      const user = JSON.parse(raw);
+      if (!user || user.role !== 'admin') {
+        router.replace('/home');
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if ((e as any).persisted) {
+        try {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+          const isAdmin = !!raw && (() => { try { return JSON.parse(raw as string)?.role === 'admin'; } catch { return false; } })();
+          if (!isAdmin) {
+            router.replace('/');
+          }
+        } catch {}
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pageshow', onPageShow as any);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('pageshow', onPageShow as any);
+      }
+    };
+  }, [router]);
+
   // Notification badge and dropdown for pending applications
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingApps, setPendingApps] = useState<any[]>([]);
@@ -265,7 +303,7 @@ export default function AdminLayout({
               <button
                 onClick={() => {
                   localStorage.removeItem('user');
-                  router.push('/');
+                  router.replace('/');
                 }}
                 style={{
                   padding: '8px 16px',
