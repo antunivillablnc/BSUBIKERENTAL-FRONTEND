@@ -1,6 +1,3 @@
-/*
-  This file is intentionally kept but disabled. All code is commented out per request.
-
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,9 +18,6 @@ function Icon({ type }: { type: string }) {
 }
 
 export default function LoginPage() {
-  // If uncommenting this page in the future, consider adding:
-  // - an initial redirect if localStorage has a user (avoid showing login)
-  // - a pageshow handler to handle BFCache back navigation
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -56,11 +50,11 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
         setSavedUser(data.user);
         if (data.user.role === "admin") {
-          console.log('Redirecting admin to /admin');
-          window.location.replace("/admin");
+          console.log('Redirecting admin to /admin/applications');
+          router.push("/admin/applications");
         } else {
           console.log('Redirecting user to /home');
-          window.location.replace("/home");
+          router.push("/home");
         }
       }
     } else {
@@ -262,7 +256,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
-*/
-
-
+} 

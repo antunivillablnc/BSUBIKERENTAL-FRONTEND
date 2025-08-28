@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 function Icon({ type }: { type: string }) {
   switch (type) {
@@ -26,47 +26,6 @@ export default function LoginPage() {
   const [success, setSuccess] = useState("");
   const [notRobot, setNotRobot] = useState(false);
 
-  // If already logged in, redirect away from login (including BFCache back navigation)
-  useEffect(() => {
-    try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      if (raw) {
-        const user = JSON.parse(raw);
-        if (user?.role === 'admin') {
-          window.location.replace('/admin');
-        } else {
-          window.location.replace('/home');
-        }
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    function onPageShow(e: PageTransitionEvent) {
-      if ((e as any).persisted) {
-        try {
-          const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-          if (raw) {
-            const user = JSON.parse(raw);
-            if (user?.role === 'admin') {
-              window.location.replace('/admin');
-            } else {
-              window.location.replace('/home');
-            }
-          }
-        } catch {}
-      }
-    }
-    if (typeof window !== 'undefined') {
-      window.addEventListener('pageshow', onPageShow as any);
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('pageshow', onPageShow as any);
-      }
-    };
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -90,10 +49,10 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
         if (data.user.role === "admin") {
           console.log('Redirecting admin to /admin');
-          window.location.replace("/admin");
+          router.push("/admin");
         } else {
           console.log('Redirecting user to /home');
-          window.location.replace("/home");
+          router.push("/home");
         }
       }
     } else {

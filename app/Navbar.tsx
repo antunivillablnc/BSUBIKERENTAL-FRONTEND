@@ -297,7 +297,7 @@ export default function Navbar() {
               )}
               </div>
               <button
-                onClick={() => { localStorage.removeItem('user'); window.location.replace('/'); }}
+                onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}
                 style={{
                   padding: '8px 16px',
                   borderRadius: 8,
@@ -403,7 +403,7 @@ export default function Navbar() {
                   <span>{link.label}</span>
                 </a>
               ))}
-              <button style={{ background: '#b22222', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 18, cursor: 'pointer', marginTop: 24 }} onClick={() => { localStorage.removeItem('user'); window.location.replace('/'); }}>Log Out</button>
+              <button style={{ background: '#b22222', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 18, cursor: 'pointer', marginTop: 24 }} onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}>Log Out</button>
             </div>
           </div>
         </div>
