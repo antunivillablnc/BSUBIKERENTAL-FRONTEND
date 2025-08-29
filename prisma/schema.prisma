@@ -45,8 +45,10 @@ model BikeRentalApplication {
   dateOfBirth               DateTime
   phoneNumber               String
   email                     String
-  collegeProgram            String
-  gwaLastSemester           String
+  collegeProgram            String?
+  college                   String?
+  program                   String?
+  gwaLastSemester           String?
   extracurricularActivities String?
   houseNo                   String
   streetName                String
@@ -60,6 +62,9 @@ model BikeRentalApplication {
   bike                      Bike?           @relation(fields: [bikeId], references: [id])
   bikeId                    String?
   certificatePath           String?
+  gwaDocumentPath           String?
+  ecaDocumentPath           String?
+  itrDocumentPath           String?
   status                    String          @default("pending")
   dueDate                   DateTime?
   assignedAt                DateTime?

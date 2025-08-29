@@ -11,6 +11,8 @@ const initialForm = {
   phoneNumber: "",
   email: "",
   collegeProgram: "",
+  college: "",
+  program: "",
   gwaLastSemester: "",
   extracurricularActivities: "",
   houseNo: "",
@@ -91,6 +93,14 @@ const grid4Style = {
   marginBottom: 18,
 } as React.CSSProperties;
 
+// Two-column grid specifically for the Required Documents section
+const docGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 16,
+  marginBottom: 18,
+} as React.CSSProperties;
+
 export default function BikeRentalApplication() {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -103,6 +113,12 @@ export default function BikeRentalApplication() {
   const [agreed, setAgreed] = useState(false);
   const [indigencyFile, setIndigencyFile] = useState<File | null>(null);
   const [indigencyPreview, setIndigencyPreview] = useState<string | null>(null);
+  const [gwaFile, setGwaFile] = useState<File | null>(null);
+  const [gwaPreview, setGwaPreview] = useState<string | null>(null);
+  const [ecaFile, setEcaFile] = useState<File | null>(null);
+  const [ecaPreview, setEcaPreview] = useState<string | null>(null);
+  const [itrFile, setItrFile] = useState<File | null>(null);
+  const [itrPreview, setItrPreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/philippines.json")
@@ -167,6 +183,36 @@ export default function BikeRentalApplication() {
       } else {
         setIndigencyPreview(null);
       }
+    } else if (type === "file" && name === "gwaFile") {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      setGwaFile(file);
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setGwaPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setGwaPreview(null);
+      }
+    } else if (type === "file" && name === "ecaFile") {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      setEcaFile(file);
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setEcaPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setEcaPreview(null);
+      }
+    } else if (type === "file" && name === "itrFile") {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      setItrFile(file);
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setItrPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setItrPreview(null);
+      }
     } else {
       setForm(f => ({ ...f, [name]: value }));
     }
@@ -182,13 +228,28 @@ export default function BikeRentalApplication() {
     setError("");
     setSuccess(false);
     // Basic validation
-    if (!form.lastName || !form.firstName || !form.srCode || !form.sex || !form.dateOfBirth || !form.phoneNumber || !form.email || !form.collegeProgram || !form.gwaLastSemester || !form.houseNo || !form.streetName || !form.barangay || !form.municipality || !form.province || !form.distanceFromCampus || !form.familyIncome || !form.intendedDuration) {
+    if (!form.lastName || !form.firstName || !form.srCode || !form.sex || !form.dateOfBirth || !form.phoneNumber || !form.email || !form.college || !form.program || !form.houseNo || !form.streetName || !form.barangay || !form.municipality || !form.province || !form.distanceFromCampus || !form.familyIncome || !form.intendedDuration) {
       setError("Please fill in all required fields.");
       setSubmitting(false);
       return;
     }
     if (!indigencyFile) {
       setError("Please upload your Certificate of Indigency.");
+      setSubmitting(false);
+      return;
+    }
+    if (!gwaFile) {
+      setError("Please upload your GWA (PDF or image).");
+      setSubmitting(false);
+      return;
+    }
+    if (!ecaFile) {
+      setError("Please upload your Extracurricular Activities proof (PDF or image).");
+      setSubmitting(false);
+      return;
+    }
+    if (!itrFile) {
+      setError("Please upload your ITR (PDF or image).");
       setSubmitting(false);
       return;
     }
@@ -216,6 +277,9 @@ export default function BikeRentalApplication() {
         formData.append("userId", userId);
       }
       formData.append("indigencyFile", indigencyFile);
+      formData.append("gwaFile", gwaFile);
+      formData.append("ecaFile", ecaFile);
+      formData.append("itrFile", itrFile);
       const res = await fetch("/api/rental-application", {
         method: "POST",
         body: formData,
@@ -225,6 +289,12 @@ export default function BikeRentalApplication() {
         setForm(initialForm);
         setIndigencyFile(null);
         setIndigencyPreview(null);
+        setGwaFile(null);
+        setGwaPreview(null);
+        setEcaFile(null);
+        setEcaPreview(null);
+        setItrFile(null);
+        setItrPreview(null);
       } else {
         setError("Submission failed. Please try again.");
       }
@@ -262,7 +332,9 @@ export default function BikeRentalApplication() {
         {/* Left: Application Form */}
         <form onSubmit={handleSubmit} style={{ ...cardStyle, flex: 1, maxWidth: 700, minWidth: 320, opacity: agreed ? 1 : 0.6, pointerEvents: agreed ? 'auto' : 'none' }}>
           <h1 style={{ color: '#1976d2', fontWeight: 800, fontSize: 30, marginBottom: 24, textAlign: 'center', letterSpacing: 0.2 }}>Bike Rental Application</h1>
-          
+          {/* Personal Information */}
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Personal Information</div>
+
           <div style={grid3Style}>
             <div>
               <label style={labelStyle}>Last Name*</label>
@@ -290,8 +362,41 @@ export default function BikeRentalApplication() {
                 <option value="Female">Female</option>
               </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
-              <label style={labelStyle}>Certificate of Indigency </label>
+          </div>
+          <div style={grid3Style}>
+            <div>
+              <label style={labelStyle}>Date of Birth*</label>
+              <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Phone Number*</label>
+              <input name="phoneNumber" value={form.phoneNumber} onChange={handleChange} required style={inputStyle} placeholder="Phone Number" />
+            </div>
+            <div>
+              <label style={labelStyle}>Email Address*</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} placeholder="Email Address" />
+            </div>
+          </div>
+          <div style={grid3Style}>
+            <div>
+              <label style={labelStyle}>College*</label>
+              <input name="college" value={form.college} onChange={handleChange} required style={inputStyle} placeholder="College" />
+            </div>
+            <div>
+              <label style={labelStyle}>Program*</label>
+              <input name="program" value={form.program} onChange={handleChange} required style={inputStyle} placeholder="Program" />
+            </div>
+            <div>
+              <label style={labelStyle}>Section</label>
+              <input name="collegeProgram" value={form.collegeProgram} onChange={handleChange} style={inputStyle} placeholder="Section" />
+            </div>
+          </div>
+
+          {/* Required Documents */}
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Required Documents</div>
+          <div style={docGridStyle}>
+            <div>
+              <label style={labelStyle}>Certificate of Indigency</label>
               <label htmlFor="indigencyFile" style={{
                 ...inputStyle,
                 display: 'flex',
@@ -329,7 +434,7 @@ export default function BikeRentalApplication() {
                   id="indigencyFile"
                   type="file"
                   name="indigencyFile"
-                  accept="image/*"
+                  accept="application/pdf,image/*"
                   onChange={handleChange}
                   style={{
                     position: 'absolute',
@@ -344,38 +449,149 @@ export default function BikeRentalApplication() {
                 />
               </label>
             </div>
+            <div>
+              <label style={labelStyle}>General Weighted Average</label>
+              <label htmlFor="gwaFile" style={{
+                ...inputStyle,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                cursor: 'pointer',
+                marginBottom: 0,
+                height: 44,
+                background: '#f5f6fa',
+                border: '1.5px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                color: gwaFile ? '#222' : '#888',
+                overflow: 'hidden',
+                position: 'relative',
+                maxWidth: 320,
+              }}>
+                <span style={{
+                  background: '#e0e0e0',
+                  color: '#444',
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  padding: '6px 16px',
+                  marginRight: 12,
+                  fontSize: 15,
+                  border: 'none',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}>Choose File</span>
+                <span style={{ fontSize: 15, color: gwaFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                  {gwaFile ? gwaFile.name : 'No file chosen'}
+                </span>
+                <input
+                  id="gwaFile"
+                  type="file"
+                  name="gwaFile"
+                  accept="application/pdf,image/*"
+                  onChange={handleChange}
+                  style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                  required
+                />
+              </label>
+            </div>
+            <div>
+              <label style={labelStyle}>Extra Curricular Activities</label>
+              <label htmlFor="ecaFile" style={{
+                ...inputStyle,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                cursor: 'pointer',
+                marginBottom: 0,
+                height: 44,
+                background: '#f5f6fa',
+                border: '1.5px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                color: ecaFile ? '#222' : '#888',
+                overflow: 'hidden',
+                position: 'relative',
+                maxWidth: 320,
+              }}>
+                <span style={{
+                  background: '#e0e0e0',
+                  color: '#444',
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  padding: '6px 16px',
+                  marginRight: 12,
+                  fontSize: 15,
+                  border: 'none',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}>Choose File</span>
+                <span style={{ fontSize: 15, color: ecaFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                  {ecaFile ? ecaFile.name : 'No file chosen'}
+                </span>
+                <input
+                  id="ecaFile"
+                  type="file"
+                  name="ecaFile"
+                  accept="application/pdf,image/*"
+                  onChange={handleChange}
+                  style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                  required
+                />
+              </label>
+            </div>
+            <div>
+              <label style={labelStyle}>Income Tax Return</label>
+              <label htmlFor="itrFile" style={{
+                ...inputStyle,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                cursor: 'pointer',
+                marginBottom: 0,
+                height: 44,
+                background: '#f5f6fa',
+                border: '1.5px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                color: itrFile ? '#222' : '#888',
+                overflow: 'hidden',
+                position: 'relative',
+                maxWidth: 320,
+              }}>
+                <span style={{
+                  background: '#e0e0e0',
+                  color: '#444',
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  padding: '6px 16px',
+                  marginRight: 12,
+                  fontSize: 15,
+                  border: 'none',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}>Choose File</span>
+                <span style={{ fontSize: 15, color: itrFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                  {itrFile ? itrFile.name : 'No file chosen'}
+                </span>
+                <input
+                  id="itrFile"
+                  type="file"
+                  name="itrFile"
+                  accept="application/pdf,image/*"
+                  onChange={handleChange}
+                  style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                  required
+                />
+              </label>
+            </div>
           </div>
-          <div style={grid3Style}>
-            <div>
-              <label style={labelStyle}>Date of Birth*</label>
-              <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Phone Number*</label>
-              <input name="phoneNumber" value={form.phoneNumber} onChange={handleChange} required style={inputStyle} placeholder="Phone Number" />
-            </div>
-            <div>
-              <label style={labelStyle}>Email Address*</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} placeholder="Email Address" />
-            </div>
-          </div>
-          <div style={grid3Style}>
-            <div>
-              <label style={labelStyle}>College/Program*</label>
-              <input name="collegeProgram" value={form.collegeProgram} onChange={handleChange} required style={inputStyle} placeholder="College/Program" />
-            </div>
-            <div>
-              <label style={labelStyle}>GWA Last Semester*</label>
-              <input name="gwaLastSemester" value={form.gwaLastSemester} onChange={handleChange} required style={inputStyle} placeholder="GWA Last Semester" />
-            </div>
-            <div>
-              <label style={labelStyle}>Extracurricular Activities</label>
-              <input name="extracurricularActivities" value={form.extracurricularActivities} onChange={handleChange} style={inputStyle} placeholder="Extracurricular Activities" />
-            </div>
-          </div>
-          <div style={{ marginBottom: 8 }}>
-            <label style={labelStyle}>Present Home Address*</label>
-          </div>
+          
+          {/* Documents consolidated under Required Documents section above */}
+          {/* Address */}
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Present Home Address</div>
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',

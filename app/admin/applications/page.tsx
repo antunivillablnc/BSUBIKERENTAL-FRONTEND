@@ -33,6 +33,9 @@ interface Application {
   intendedDuration?: string;
   intendedDurationOther?: string | null;
   certificatePath?: string | null;
+  gwaDocumentPath?: string | null;
+  ecaDocumentPath?: string | null;
+  itrDocumentPath?: string | null;
 
   // Status / relations
   status: string;
@@ -338,123 +341,71 @@ export default function AdminApplicationsPage() {
                   <h2 style={{ margin: 0, color: '#111827' }}>Application Details</h2>
                   <button onClick={() => setSelectedApp(null)} style={{ border: 'none', background: 'transparent', fontSize: 18, cursor: 'pointer' }}>✕</button>
                 </div>
-                <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Last Name</div>
-                      <div style={{ fontWeight: 600 }}>{selectedApp.lastName}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>First Name</div>
-                      <div style={{ fontWeight: 600 }}>{selectedApp.firstName}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Middle Name</div>
-                      <div>{selectedApp.middleName || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>SR Code</div>
-                      <div>{selectedApp.srCode || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Sex</div>
-                      <div>{selectedApp.sex || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Date of Birth</div>
-                      <div>{formatDate(selectedApp.dateOfBirth)}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Phone Number</div>
-                      <div>{selectedApp.phoneNumber || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Email Address</div>
-                      <div>{selectedApp.email}</div>
-                    </div>
-                  </div>
-
-                  <div style={{ gridColumn: '1 / -1', height: 1, background: '#e5e7eb', margin: '8px 0' }} />
-
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>College/Program</div>
-                    <div>{selectedApp.collegeProgram || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>GWA Last Semester</div>
-                    <div>{selectedApp.gwaLastSemester || '-'}</div>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Extracurricular Activities</div>
-                    <div>{selectedApp.extracurricularActivities || '-'}</div>
-                  </div>
-
-                  <div style={{ gridColumn: '1 / -1', height: 1, background: '#e5e7eb', margin: '8px 0' }} />
-
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>House No.</div>
-                    <div>{selectedApp.houseNo || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Street</div>
-                    <div>{selectedApp.streetName || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Barangay</div>
-                    <div>{selectedApp.barangay || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Municipality</div>
-                    <div>{selectedApp.municipality || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Province</div>
-                    <div>{selectedApp.province || '-'}</div>
-                  </div>
-
-                  <div style={{ gridColumn: '1 / -1', height: 1, background: '#e5e7eb', margin: '8px 0' }} />
-
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Distance from Campus</div>
-                    <div>{selectedApp.distanceFromCampus || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Monthly Family Income</div>
-                    <div>{selectedApp.familyIncome || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Intended Duration</div>
-                    <div>{selectedApp.intendedDuration || '-'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>Intended Duration (Other)</div>
-                    <div>{selectedApp.intendedDurationOther || '-'}</div>
-                  </div>
-
-                  {selectedApp.certificatePath && (
-                    <div style={{ gridColumn: '1 / -1', marginTop: 12 }}>
-                      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>Certificate of Indigency</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        {(() => {
-                          const url = selectedApp.certificatePath as string;
-                          const isPdf = url.toLowerCase().endsWith('.pdf');
-                          if (isPdf) {
-                            return (
-                              <iframe
-                                src={url}
-                                title="Certificate PDF Preview"
-                                style={{ width: 320, height: 200, borderRadius: 8, border: '1px solid #e5e7eb' }}
-                              />
-                            );
-                          }
-                          return (
-                            <img src={url} alt="Certificate" style={{ maxHeight: 200, borderRadius: 8, border: '1px solid #e5e7eb' }} />
-                          );
-                        })()}
-                        <a href={selectedApp.certificatePath} target="_blank" rel="noreferrer" style={{ color: '#1976d2', fontWeight: 600 }}>Open in new tab</a>
+                <div style={{ padding: 20 }}>
+                  {/* Sections */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Personal</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <Field label="Last Name" value={selectedApp.lastName} bold />
+                        <Field label="First Name" value={selectedApp.firstName} bold />
+                        <Field label="Middle Name" value={selectedApp.middleName || '-'} />
+                        <Field label="SR Code" value={selectedApp.srCode || '-'} />
+                        <Field label="Sex" value={selectedApp.sex || '-'} />
+                        <Field label="Date of Birth" value={formatDate(selectedApp.dateOfBirth)} />
+                        <Field label="Phone" value={selectedApp.phoneNumber || '-'} />
+                        <Field label="Email" value={selectedApp.email} />
                       </div>
                     </div>
-                  )}
+
+                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Academic</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <Field label="College" value={(selectedApp as any).college || selectedApp.collegeProgram || '-'} />
+                        <Field label="Program" value={(selectedApp as any).program || '-'} />
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Address</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <Field label="House No." value={selectedApp.houseNo || '-'} />
+                        <Field label="Street" value={selectedApp.streetName || '-'} />
+                        <Field label="Barangay" value={selectedApp.barangay || '-'} />
+                        <Field label="Municipality" value={selectedApp.municipality || '-'} />
+                        <Field label="Province" value={selectedApp.province || '-'} />
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Other Details</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <Field label="Distance from Campus" value={selectedApp.distanceFromCampus || '-'} />
+                        <Field label="Monthly Family Income" value={selectedApp.familyIncome || '-'} />
+                        <Field label="Intended Duration" value={selectedApp.intendedDuration || '-'} />
+                        <Field label="Intended Duration (Other)" value={selectedApp.intendedDurationOther || '-'} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Documents */}
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Documents</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+                      {selectedApp.certificatePath && (
+                        <DocCard title="Certificate of Indigency" url={selectedApp.certificatePath} />
+                      )}
+                      {selectedApp.gwaDocumentPath && (
+                        <DocCard title="GWA Document" url={selectedApp.gwaDocumentPath} />
+                      )}
+                      {selectedApp.ecaDocumentPath && (
+                        <DocCard title="ECA Proof" url={selectedApp.ecaDocumentPath} />
+                      )}
+                      {selectedApp.itrDocumentPath && (
+                        <DocCard title="ITR" url={selectedApp.itrDocumentPath} />
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div style={{ padding: 16, display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', borderTop: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -493,3 +444,29 @@ export default function AdminApplicationsPage() {
     </div>
   );
 } 
+
+function Field({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: '#6b7280' }}>{label}</div>
+      <div style={{ fontWeight: bold ? 600 as any : 400 }}>{value}</div>
+    </div>
+  );
+}
+
+function DocCard({ title, url }: { title: string; url: string }) {
+  const isPdf = url.toLowerCase().endsWith('.pdf');
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 12, background: '#fff' }}>
+      <div style={{ fontSize: 13, color: '#374151', fontWeight: 600, marginBottom: 8 }}>{title}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {isPdf ? (
+          <iframe src={url} title={`${title} PDF`} style={{ width: '100%', height: 220, borderRadius: 8, border: '1px solid #e5e7eb' }} />
+        ) : (
+          <img src={url} alt={title} style={{ maxHeight: 220, borderRadius: 8, border: '1px solid #e5e7eb', objectFit: 'contain' }} />
+        )}
+        <a href={url} target="_blank" rel="noreferrer" style={{ color: '#1976d2', fontWeight: 700, textDecoration: 'none' }}>Open in new tab</a>
+      </div>
+    </div>
+  );
+}

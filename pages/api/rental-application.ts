@@ -31,10 +31,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     });
 
-    // Access fields and file
+    // Access fields and files
     const fields = data.fields;
-    let file = data.files.indigencyFile as FormidableFile | FormidableFile[] | undefined;
-    if (Array.isArray(file)) file = file[0];
+    let indigencyFile = data.files.indigencyFile as FormidableFile | FormidableFile[] | undefined;
+    if (Array.isArray(indigencyFile)) indigencyFile = indigencyFile[0];
+    let gwaFile = data.files.gwaFile as FormidableFile | FormidableFile[] | undefined;
+    if (Array.isArray(gwaFile)) gwaFile = gwaFile[0];
+    let ecaFile = data.files.ecaFile as FormidableFile | FormidableFile[] | undefined;
+    if (Array.isArray(ecaFile)) ecaFile = ecaFile[0];
+    let itrFile = data.files.itrFile as FormidableFile | FormidableFile[] | undefined;
+    if (Array.isArray(itrFile)) itrFile = itrFile[0];
 
     // Prevent duplicate active/pending/approved applications
     const existing = await prisma.bikeRentalApplication.findFirst({
@@ -48,19 +54,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    // Upload the file to Cloudinary if it exists
-    let certificatePath = null;
-    if (file && file.filepath && file.originalFilename) {
-      const publicId = path.parse(file.originalFilename).name;
-      const upload = await cloudinary.uploader.upload(file.filepath, {
+    // Upload files to Cloudinary if present
+    let certificatePath: string | null = null;
+    let gwaDocumentPath: string | null = null;
+    let ecaDocumentPath: string | null = null;
+    let itrDocumentPath: string | null = null;
+
+    if (indigencyFile && indigencyFile.filepath && indigencyFile.originalFilename) {
+      const publicId = path.parse(indigencyFile.originalFilename).name;
+      const upload = await cloudinary.uploader.upload(indigencyFile.filepath, {
         folder: 'bike-rental/certificates',
         public_id: publicId,
         overwrite: true,
-        // Use 'auto' so non-images like PDFs are handled as raw assets
         resource_type: 'auto',
         type: 'upload',
       });
       certificatePath = upload.secure_url;
+    }
+    if (gwaFile && gwaFile.filepath && gwaFile.originalFilename) {
+      const publicId = path.parse(gwaFile.originalFilename).name;
+      const upload = await cloudinary.uploader.upload(gwaFile.filepath, {
+        folder: 'bike-rental/documents/gwa',
+        public_id: publicId,
+        overwrite: true,
+        resource_type: 'auto',
+        type: 'upload',
+      });
+      gwaDocumentPath = upload.secure_url;
+    }
+    if (ecaFile && ecaFile.filepath && ecaFile.originalFilename) {
+      const publicId = path.parse(ecaFile.originalFilename).name;
+      const upload = await cloudinary.uploader.upload(ecaFile.filepath, {
+        folder: 'bike-rental/documents/eca',
+        public_id: publicId,
+        overwrite: true,
+        resource_type: 'auto',
+        type: 'upload',
+      });
+      ecaDocumentPath = upload.secure_url;
+    }
+    if (itrFile && itrFile.filepath && itrFile.originalFilename) {
+      const publicId = path.parse(itrFile.originalFilename).name;
+      const upload = await cloudinary.uploader.upload(itrFile.filepath, {
+        folder: 'bike-rental/documents/itr',
+        public_id: publicId,
+        overwrite: true,
+        resource_type: 'auto',
+        type: 'upload',
+      });
+      itrDocumentPath = upload.secure_url;
     }
 
     // Save form data to Prisma
@@ -74,7 +116,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         dateOfBirth: new Date(getStringField(fields.dateOfBirth)!),
         phoneNumber: getStringField(fields.phoneNumber)!,
         email: getStringField(fields.email)!,
-        collegeProgram: getStringField(fields.collegeProgram)!,
+        collegeProgram: getStringField(fields.collegeProgram),
+        college: getStringField(fields.college),
+        program: getStringField(fields.program),
         gwaLastSemester: getStringField(fields.gwaLastSemester)!,
         extracurricularActivities: getStringField(fields.extracurricularActivities),
         houseNo: getStringField(fields.houseNo)!,
@@ -87,6 +131,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         intendedDuration: getStringField(fields.intendedDuration)!,
         intendedDurationOther: getStringField(fields.intendedDurationOther),
         certificatePath: certificatePath,
+        gwaDocumentPath: gwaDocumentPath,
+        ecaDocumentPath: ecaDocumentPath,
+        itrDocumentPath: itrDocumentPath,
         userId: getStringField(fields.userId)!,
       },
     });
