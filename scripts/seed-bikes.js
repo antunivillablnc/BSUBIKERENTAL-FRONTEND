@@ -2,57 +2,23 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-const bikes = [
-  {
-    name: "BSU 001",
-    status: "available"
-  },
-  {
-    name: "BSU 002",
-    status: "available"
-  },
-  {
-    name: "BSU 003",
-    status: "available"
-  },
-  {
-    name: "BSU 004",
-    status: "available"
-  },
-  {
-    name: "BSU 005",
-    status: "available"
-  },
-  {
-    name: "BSU 006",
-    status: "available"
-  },
-  {
-    name: "BSU 007",
-    status: "available"
-  },
-  {
-    name: "BSU 008",
-    status: "available"
-  },
-  {
-    name: "BSU 009",
-    status: "available"
-  },
-  {
-    name: "BSU 010",
-    status: "available"
-  }
-];
+// Generate BSU 001 - BSU 050
+const bikes = Array.from({ length: 50 }).map((_, i) => ({
+  name: `BSU ${String(i + 1).padStart(3, '0')}`,
+  status: 'available'
+}));
 
 async function seedBikes() {
   try {
     console.log('🌱 Seeding bikes...');
     
     for (const bike of bikes) {
-      await prisma.bike.create({
-        data: bike
-      });
+      const existing = await prisma.bike.findFirst({ where: { name: bike.name } });
+      if (existing) {
+        console.log(`⏭️  Skipped existing bike: ${bike.name}`);
+        continue;
+      }
+      await prisma.bike.create({ data: bike });
       console.log(`✅ Added bike: ${bike.name}`);
     }
     
