@@ -167,6 +167,7 @@ export default function LoginPage() {
             padding-left: 0 !important;
             padding-right: 0 !important;
           }
+          .auth-left-logo { display: none !important; }
         }
       `}</style>
       <div
@@ -175,12 +176,12 @@ export default function LoginPage() {
           position: "relative",
           zIndex: 2,
           display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "flex-start",
+          justifyContent: "center",
+          alignItems: "center",
           height: "100vh",
           paddingLeft: "0",
-          paddingRight: "5vw",
-          paddingTop: "8vw",
+          paddingRight: "0",
+          paddingTop: "0",
         }}
       >
         <div
@@ -190,113 +191,119 @@ export default function LoginPage() {
             boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
             padding: "32px 16px 16px 16px",
             width: "100%",
-            maxWidth: 400,
+            maxWidth: 780,
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
             alignItems: "stretch",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-            <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, marginRight: 10 }} />
-            <div>
-              <div style={{ fontWeight: 700, color: "#b22222", fontSize: 22, letterSpacing: 1 }}>UNIVERSITY BIKE RENTAL</div>
-              <div style={{ fontSize: 14, color: "#444" }}>Rent. Ride. Return. Spartan-style.</div>
+          <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+            <div className="auth-left-logo" style={{ flex: "0 0 350px", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
+              <img src="/bsu_logo.png" alt="BSU Logo" style={{ width: "100%", maxWidth: 340, height: "auto" }} />
             </div>
-          </div>
-          <h2 style={{ margin: "18px 0 18px 0", fontWeight: 500, color: "#222" }}>Please Log In</h2>
-          <form onSubmit={handleSubmit}>
-            <div style={inputGroupStyle}>
-              <div style={iconBoxStyle}><Icon type="mail" /></div>
-              <input
-                type="text"
-                placeholder="Email"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-                style={inputStyle}
-            />
-            </div>
-            <div style={inputGroupStyle}>
-              <div style={iconBoxStyle}><Icon type="lock" /></div>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                style={inputStyle}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(s => !s)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "0 12px 0 0"
-                }}
-                tabIndex={-1}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-                <Icon type={showPassword ? "eye-off" : "eye"} />
-              </button>
-        </div>
-            <div style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>* Password is case sensitive</div>
-            <div style={{ marginBottom: 18, display: "flex", justifyContent: "center" }}>
-              {siteKey ? (
-                <ReCAPTCHA
-                  ref={recaptchaRef}
-                  size="invisible"
-                  sitekey={siteKey}
-                  onChange={onRecaptchaChange}
-                  onErrored={() => {
-                    setError("reCAPTCHA failed to load. Please allow Google reCAPTCHA and try again.");
-                    setIsSubmitting(false);
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+                <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, marginRight: 10 }} />
+                <div>
+                  <div style={{ fontWeight: 700, color: "#b22222", fontSize: 22, letterSpacing: 1 }}>UNIVERSITY BIKE RENTAL</div>
+                  <div style={{ fontSize: 14, color: "#444" }}>Rent. Ride. Return. Spartan-style.</div>
+                </div>
+              </div>
+              <h2 style={{ margin: "18px 0 18px 0", fontWeight: 500, color: "#222" }}>Please Log In</h2>
+              <form onSubmit={handleSubmit}>
+                <div style={inputGroupStyle}>
+                  <div style={iconBoxStyle}><Icon type="mail" /></div>
+                  <input
+                    type="text"
+                    placeholder="Email"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    required
+                    style={inputStyle}
+                  />
+                </div>
+                <div style={inputGroupStyle}>
+                  <div style={iconBoxStyle}><Icon type="lock" /></div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    style={inputStyle}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(s => !s)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "0 12px 0 0"
+                    }}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <Icon type={showPassword ? "eye-off" : "eye"} />
+                  </button>
+                </div>
+                <div style={{ fontSize: 12, color: "#888", marginBottom: 10 }}>* Password is case sensitive</div>
+                <div style={{ marginBottom: 18, display: "flex", justifyContent: "center" }}>
+                  {siteKey ? (
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      size="invisible"
+                      sitekey={siteKey}
+                      onChange={onRecaptchaChange}
+                      onErrored={() => {
+                        setError("reCAPTCHA failed to load. Please allow Google reCAPTCHA and try again.");
+                        setIsSubmitting(false);
+                      }}
+                      onExpired={() => {
+                        if (recaptchaTimerRef.current) {
+                          clearTimeout(recaptchaTimerRef.current);
+                          recaptchaTimerRef.current = null;
+                        }
+                        setError("reCAPTCHA expired. Please try again.");
+                        setIsSubmitting(false);
+                      }}
+                    />
+                  ) : (
+                    <div style={{ fontSize: 12, color: "#b22222" }}>reCAPTCHA not configured</div>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  style={{
+                    width: "100%",
+                    background: "#FFD600",
+                    color: "#222",
+                    fontWeight: 600,
+                    fontSize: 18,
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "12px 0",
+                    marginBottom: 10,
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
                   }}
-                  onExpired={() => {
-                    if (recaptchaTimerRef.current) {
-                      clearTimeout(recaptchaTimerRef.current);
-                      recaptchaTimerRef.current = null;
-                    }
-                    setError("reCAPTCHA expired. Please try again.");
-                    setIsSubmitting(false);
-                  }}
-                />
-              ) : (
-                <div style={{ fontSize: 12, color: "#b22222" }}>reCAPTCHA not configured</div>
-              )}
+                >
+                  {isSubmitting ? "Signing In..." : "Sign In"}
+                </button>
+                <div style={{ textAlign: "center", marginBottom: 8 }}>
+                  <a href="/forgot-password" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500, cursor: "pointer" }}>
+                    Forgot password?
+                  </a>
+                </div>
+              </form>
+              {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
+              {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
+              <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
+                Don't have an account?{' '}
+                <a href="/register" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Sign Up</a>
+              </div>
             </div>
-            <button
-              type="submit"
-              style={{
-                width: "100%",
-                background: "#FFD600",
-                color: "#222",
-                fontWeight: 600,
-                fontSize: 18,
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 0",
-                marginBottom: 10,
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-              }}
-            >
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </button>
-            {/* Forgot password link */}
-            <div style={{ textAlign: "center", marginBottom: 8 }}>
-              <a href="/forgot-password" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500, cursor: "pointer" }}>
-                Forgot password?
-              </a>
-            </div>
-          </form>
-          {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
-          {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
-          <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
-            Don't have an account?{' '}
-            <a href="/register" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Sign Up</a>
           </div>
         </div>
       </div>
