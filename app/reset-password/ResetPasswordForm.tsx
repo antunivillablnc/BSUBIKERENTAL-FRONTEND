@@ -69,7 +69,7 @@ export default function ResetPasswordForm() {
     setLoading(false);
     if (res.ok) {
       setSuccess("Password has been reset. You can now log in.");
-      router.push("/");
+      router.push("/login");
     } else {
       const data = await res.json();
       setError(data.error || "Failed to reset password.");
@@ -103,6 +103,7 @@ export default function ResetPasswordForm() {
             padding-left: 0 !important;
             padding-right: 0 !important;
           }
+          .auth-left-logo { display: none !important; }
         }
       `}</style>
       <div
@@ -111,12 +112,12 @@ export default function ResetPasswordForm() {
           position: "relative",
           zIndex: 2,
           display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "flex-start",
+          justifyContent: "center",
+          alignItems: "center",
           height: "100vh",
           paddingLeft: "0",
-          paddingRight: "5vw",
-          paddingTop: "8vw",
+          paddingRight: "0",
+          paddingTop: "0",
         }}
       >
         <div
@@ -126,22 +127,27 @@ export default function ResetPasswordForm() {
             boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
             padding: "32px 16px 16px 16px",
             width: "100%",
-            maxWidth: 400,
+            maxWidth: 780,
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
             alignItems: "stretch",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-            <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, marginRight: 10 }} />
-            <div>
-              <div style={{ fontWeight: 700, color: "#b22222", fontSize: 22, letterSpacing: 1 }}>UNIVERSITY BIKE RENTAL</div>
-              <div style={{ fontSize: 14, color: "#444" }}>Rent. Ride. Return. Spartan-style.</div>
+          <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+            <div className="auth-left-logo" style={{ flex: "0 0 350px", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
+              <img src="/bsu_logo.png" alt="BSU Logo" style={{ width: "100%", maxWidth: 340, height: "auto" }} />
             </div>
-          </div>
-          <h2 style={{ margin: "18px 0 18px 0", fontWeight: 500, color: "#222" }}>Reset Password</h2>
-          <form onSubmit={handleSubmit}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+                <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, marginRight: 10 }} />
+                <div>
+                  <div style={{ fontWeight: 700, color: "#b22222", fontSize: 22, letterSpacing: 1 }}>UNIVERSITY BIKE RENTAL</div>
+                  <div style={{ fontSize: 14, color: "#444" }}>Rent. Ride. Return. Spartan-style.</div>
+                </div>
+              </div>
+              <h2 style={{ margin: "18px 0 18px 0", fontWeight: 500, color: "#222" }}>Reset Password</h2>
+              <form onSubmit={handleSubmit}>
             <div style={inputGroupStyle}>
               <div style={iconBoxStyle}><Icon type="lock" /></div>
               <input
@@ -167,53 +173,55 @@ export default function ResetPasswordForm() {
                 <Icon type={showPassword ? "eye-off" : "eye"} />
               </button>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-                background: "#FFD600",
-                color: "#222",
-                fontWeight: 600,
-                fontSize: 18,
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 0",
-                marginBottom: 10,
-                cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-              }}
-            >
-              {loading ? "Resetting..." : "Reset Password"}
-            </button>
-          </form>
-          {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
-          {success && (
-            <>
-              <div style={{ color: "green", marginTop: 12, fontWeight: 500 }}>
-                Password has been reset. You can now log in.
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    background: "#FFD600",
+                    color: "#222",
+                    fontWeight: 600,
+                    fontSize: 18,
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "12px 0",
+                    marginBottom: 10,
+                    cursor: loading ? "not-allowed" : "pointer",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+                  }}
+                >
+                  {loading ? "Resetting..." : "Reset Password"}
+                </button>
+              </form>
+              {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
+              {success && (
+                <>
+                  <div style={{ color: "green", marginTop: 12, fontWeight: 500 }}>
+                    Password has been reset. You can now log in.
+                  </div>
+                  <button
+                    type="button"
+                    style={{
+                      marginTop: 16,
+                      background: "#1976d2",
+                      color: "#fff",
+                      fontWeight: 600,
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "10px 24px",
+                      fontSize: 16,
+                      cursor: "pointer",
+                    }}
+                    onClick={() => router.push("/login")}
+                  >
+                    Go back to Sign in
+                  </button>
+                </>
+              )}
+              <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
+                Go back to{' '}
               </div>
-              <button
-                type="button"
-                style={{
-                  marginTop: 16,
-                  background: "#1976d2",
-                  color: "#fff",
-                  fontWeight: 600,
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "10px 24px",
-                  fontSize: 16,
-                  cursor: "pointer",
-                }}
-                onClick={() => router.push("/")}
-              >
-                Go back to Sign in
-              </button>
-            </>
-          )}
-          <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
-            Go back to{' '}
+            </div>
           </div>
         </div>
       </div>
