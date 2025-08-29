@@ -5,7 +5,33 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
-  const { username, password } = await req.json();
+  const { username, password, recaptchaToken } = await req.json();
+  // Verify reCAPTCHA (Invisible v2)
+  if (!recaptchaToken) {
+    return NextResponse.json({ error: "Missing reCAPTCHA token" }, { status: 400 });
+  }
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secretKey) {
+    return NextResponse.json({ error: "reCAPTCHA not configured" }, { status: 500 });
+  }
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0];
+  const verifyBody = `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(recaptchaToken)}${ip ? `&remoteip=${encodeURIComponent(ip)}` : ""}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: verifyBody,
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+    const verifyData: any = await verifyRes.json();
+    if (!verifyData?.success) {
+      return NextResponse.json({ error: "reCAPTCHA verification failed" }, { status: 400 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: "reCAPTCHA verification error" }, { status: 502 });
+  }
   // Find user by email
   const user = await prisma.user.findUnique({ where: { email: username } });
   if (!user) {

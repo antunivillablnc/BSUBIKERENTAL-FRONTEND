@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import { IncomingForm, File as FormidableFile, Fields, Files } from 'formidable';
-import { promises as fs } from 'fs';
 import path from 'path';
+import cloudinary from '../../lib/cloudinary';
 
 export const config = {
   api: {
@@ -48,16 +48,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    // Ensure the uploads directory exists
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await fs.mkdir(uploadsDir, { recursive: true });
-
-    // Save the file if it exists
+    // Upload the file to Cloudinary if it exists
     let certificatePath = null;
     if (file && file.filepath && file.originalFilename) {
-      const destPath = path.join(uploadsDir, file.originalFilename);
-      await fs.rename(file.filepath, destPath);
-      certificatePath = `/uploads/${file.originalFilename}`;
+      const publicId = path.parse(file.originalFilename).name;
+      const upload = await cloudinary.uploader.upload(file.filepath, {
+        folder: 'bike-rental/certificates',
+        public_id: publicId,
+        overwrite: true,
+        // Use 'auto' so non-images like PDFs are handled as raw assets
+        resource_type: 'auto',
+        type: 'upload',
+      });
+      certificatePath = upload.secure_url;
     }
 
     // Save form data to Prisma
