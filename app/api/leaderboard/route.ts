@@ -35,14 +35,21 @@ export async function GET(req: NextRequest) {
       // ignore best-effort errors
     }
 
-    // Fetch entries ordered
+    // Fetch and sort in memory to avoid composite index requirements
     const snap = await db
       .collection('leaderboard')
       .orderBy('distanceKm', 'desc')
-      .orderBy('co2SavedKg', 'desc')
-      .limit(limit)
       .get();
-    const entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const entries = snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as any))
+      .sort((a, b) => {
+        if (b.distanceKm !== a.distanceKm) return b.distanceKm - a.distanceKm;
+        if (b.co2SavedKg !== a.co2SavedKg) return b.co2SavedKg - a.co2SavedKg;
+        const ad = (a.createdAt?.toDate?.() ?? new Date(a.createdAt ?? 0)) as Date;
+        const bd = (b.createdAt?.toDate?.() ?? new Date(b.createdAt ?? 0)) as Date;
+        return bd.getTime() - ad.getTime();
+      })
+      .slice(0, limit);
 
     return NextResponse.json({ success: true, entries });
   } catch (error) {

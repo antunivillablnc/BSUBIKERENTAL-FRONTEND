@@ -1,16 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
 import { IncomingForm, File as FormidableFile, Fields, Files } from 'formidable';
 import path from 'path';
 import cloudinary from '../../lib/cloudinary';
+import { db } from '@/lib/firebase';
 
 export const config = {
   api: {
     bodyParser: false,
   },
 };
-
-const prisma = new PrismaClient();
 
 function getStringField(field: string | string[] | undefined): string | undefined {
   if (Array.isArray(field)) return field[0];
@@ -42,13 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let itrFile = data.files.itrFile as FormidableFile | FormidableFile[] | undefined;
     if (Array.isArray(itrFile)) itrFile = itrFile[0];
 
-    // Prevent duplicate active/pending/approved applications
-    const existing = await prisma.bikeRentalApplication.findFirst({
-      where: {
-        userId: getStringField(fields.userId),
-        status: { in: ["pending", "approved", "active"] },
-      },
-    });
+    // Prevent duplicate active/pending/approved applications (filter in memory to avoid composite index)
+    const userId = getStringField(fields.userId);
+    const existingSnap = await db.collection('applications').where('userId', '==', userId).get();
+    const existing = existingSnap.docs
+      .map(d => ({ id: d.id, ...(d.data() as any) }))
+      .find(a => ['pending', 'approved', 'active', 'assigned'].includes(String(a.status || '').toLowerCase()));
     if (existing) {
       res.status(400).json({ success: false, error: "You already have an active or pending rental application." });
       return;
@@ -105,38 +102,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       itrDocumentPath = upload.secure_url;
     }
 
-    // Save form data to Prisma
-    const application = await prisma.bikeRentalApplication.create({
-      data: {
-        lastName: getStringField(fields.lastName)!,
-        firstName: getStringField(fields.firstName)!,
-        middleName: getStringField(fields.middleName),
-        srCode: getStringField(fields.srCode)!,
-        sex: getStringField(fields.sex)!,
-        dateOfBirth: new Date(getStringField(fields.dateOfBirth)!),
-        phoneNumber: getStringField(fields.phoneNumber)!,
-        email: getStringField(fields.email)!,
-        collegeProgram: getStringField(fields.collegeProgram),
-        college: getStringField(fields.college),
-        program: getStringField(fields.program),
-        gwaLastSemester: getStringField(fields.gwaLastSemester)!,
-        extracurricularActivities: getStringField(fields.extracurricularActivities),
-        houseNo: getStringField(fields.houseNo)!,
-        streetName: getStringField(fields.streetName)!,
-        barangay: getStringField(fields.barangay)!,
-        municipality: getStringField(fields.municipality)!,
-        province: getStringField(fields.province)!,
-        distanceFromCampus: getStringField(fields.distanceFromCampus)!,
-        familyIncome: getStringField(fields.familyIncome)!,
-        intendedDuration: getStringField(fields.intendedDuration)!,
-        intendedDurationOther: getStringField(fields.intendedDurationOther),
-        certificatePath: certificatePath,
-        gwaDocumentPath: gwaDocumentPath,
-        ecaDocumentPath: ecaDocumentPath,
-        itrDocumentPath: itrDocumentPath,
-        userId: getStringField(fields.userId)!,
-      },
+    // Save form data to Firestore
+    const docRef = await db.collection('applications').add({
+      lastName: getStringField(fields.lastName)!,
+      firstName: getStringField(fields.firstName)!,
+      middleName: getStringField(fields.middleName) || null,
+      srCode: getStringField(fields.srCode)!,
+      sex: getStringField(fields.sex)!,
+      dateOfBirth: new Date(getStringField(fields.dateOfBirth)!),
+      phoneNumber: getStringField(fields.phoneNumber)!,
+      email: getStringField(fields.email)!,
+      collegeProgram: getStringField(fields.collegeProgram) || null,
+      college: getStringField(fields.college) || null,
+      program: getStringField(fields.program) || null,
+      gwaLastSemester: getStringField(fields.gwaLastSemester) || null,
+      extracurricularActivities: getStringField(fields.extracurricularActivities) || null,
+      houseNo: getStringField(fields.houseNo)!,
+      streetName: getStringField(fields.streetName)!,
+      barangay: getStringField(fields.barangay)!,
+      municipality: getStringField(fields.municipality)!,
+      province: getStringField(fields.province)!,
+      distanceFromCampus: getStringField(fields.distanceFromCampus)!,
+      familyIncome: getStringField(fields.familyIncome)!,
+      intendedDuration: getStringField(fields.intendedDuration)!,
+      intendedDurationOther: getStringField(fields.intendedDurationOther) || null,
+      certificatePath: certificatePath,
+      gwaDocumentPath: gwaDocumentPath,
+      ecaDocumentPath: ecaDocumentPath,
+      itrDocumentPath: itrDocumentPath,
+      userId: userId!,
+      bikeId: null,
+      status: 'pending',
+      dueDate: null,
+      assignedAt: null,
+      createdAt: new Date(),
     });
+    const application = { id: docRef.id };
 
     res.status(200).json({ success: true, application });
   } catch (error) {

@@ -21,7 +21,7 @@ export async function GET() {
     }));
 
     // Rejected application events
-    const rejSnap = await db.collection('applications').where('status', '==', 'rejected').orderBy('createdAt', 'desc').get();
+    const rejSnap = await db.collection('applications').where('status', '==', 'rejected').get();
     const mappedRejections = await Promise.all(rejSnap.docs.map(async aDoc => {
       const a: any = { id: aDoc.id, ...aDoc.data() };
       const userDoc = await db.collection('users').doc(a.userId).get();
@@ -39,7 +39,7 @@ export async function GET() {
     }));
 
     // Approved and currently rented (assigned/active) applications
-    const progSnap = await db.collection('applications').where('status', 'in', ['approved', 'assigned', 'active']).orderBy('createdAt', 'desc').get();
+    const progSnap = await db.collection('applications').where('status', 'in', ['approved', 'assigned', 'active']).get();
     const mappedInProgress = await Promise.all(progSnap.docs.map(async aDoc => {
       const a: any = { id: aDoc.id, ...aDoc.data() };
       const userDoc = await db.collection('users').doc(a.userId).get();
