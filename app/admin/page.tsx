@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import BikeLoader from "../components/BikeLoader";
 import Link from "next/link";
 
 interface DashboardStats {
@@ -156,20 +157,9 @@ export default function AdminDashboard() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div className="flash-spinner" />
+          <BikeLoader />
           <h2 style={{ color: '#1976d2', margin: 0 }}>Loading dashboard...</h2>
         </div>
-        <style>{`
-          @keyframes spin { to { transform: rotate(360deg); } }
-          .flash-spinner {
-            width: 74px; height: 74px; border-radius: 50%;
-            background: conic-gradient(#00e5ff, #00ff95, #ffd54f, #ff4081, #00e5ff);
-            -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-                    mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-            animation: spin 1s linear infinite;
-            box-shadow: 0 0 22px rgba(0,0,0,0.06), 0 0 30px rgba(33,150,243,0.20);
-          }
-        `}</style>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import BikeLoader from '../components/BikeLoader';
 
 export default function HomePage() {
   const [user, setUser] = useState<any>(null);
@@ -22,20 +23,10 @@ export default function HomePage() {
       <div style={{ minHeight: '100vh', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div className="flash-spinner" />
+          <BikeLoader />
           <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: 1, textShadow: '0 2px 8px rgba(0,0,0,0.45)' }}>Loading...</div>
         </div>
-        <style>{` 
-          @keyframes spin { to { transform: rotate(360deg); } }
-          .flash-spinner {
-            width: 74px; height: 74px; border-radius: 50%;
-            background: conic-gradient(#00e5ff, #00ff95, #ffd54f, #ff4081, #00e5ff);
-            -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-                    mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-            animation: spin 1s linear infinite;
-            box-shadow: 0 0 22px rgba(255,255,255,0.75), 0 0 44px rgba(0,229,255,0.45);
-          }
-        `}</style>
+        
       </div>
     );
   }

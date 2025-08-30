@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import BikeLoader from '../../components/BikeLoader';
 
 export default function AdminActivityLogPage() {
   const [activities, setActivities] = useState<any[]>([]);
@@ -29,19 +30,8 @@ export default function AdminActivityLogPage() {
           </h1>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginTop: 20 }}>
-              <div className="flash-spinner" />
+              <BikeLoader />
               <div style={{ color: '#1976d2', fontWeight: 700 }}>Loading activity log...</div>
-              <style>{`
-                @keyframes spin { to { transform: rotate(360deg); } }
-                .flash-spinner {
-                  width: 74px; height: 74px; border-radius: 50%;
-                  background: conic-gradient(#00e5ff, #00ff95, #ffd54f, #ff4081, #00e5ff);
-                  -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-                          mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-                  animation: spin 1s linear infinite;
-                  box-shadow: 0 0 22px rgba(0,0,0,0.06), 0 0 30px rgba(33,150,243,0.20);
-                }
-              `}</style>
             </div>
           ) : (
             <>

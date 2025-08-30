@@ -5,6 +5,7 @@ import 'swiper/css';
 import 'swiper/css/effect-coverflow';
 import { EffectCoverflow, Autoplay, Keyboard } from 'swiper/modules';
 import { useRouter } from 'next/navigation';
+import BikeLoader from '../components/BikeLoader';
 
 export default function BikeRentalPage() {
   const swiperRef = useRef<any>(null);
@@ -69,19 +70,8 @@ export default function BikeRentalPage() {
       <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 8px', position: 'relative', zIndex: 1 }}>
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
-            <div className="flash-spinner" />
+            <BikeLoader />
             <div style={{ color: '#ffffff', fontWeight: 800, fontSize: 18, letterSpacing: 1, textShadow: '0 2px 8px rgba(0,0,0,0.45)' }}>Loading bikes...</div>
-            <style>{`
-              @keyframes spin { to { transform: rotate(360deg); } }
-              .flash-spinner {
-                width: 74px; height: 74px; border-radius: 50%;
-                background: conic-gradient(#00e5ff, #00ff95, #ffd54f, #ff4081, #00e5ff);
-                -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-                        mask: radial-gradient(farthest-side,#0000 calc(100% - 10px),#000 0);
-                animation: spin 1s linear infinite;
-                box-shadow: 0 0 22px rgba(255,255,255,0.75), 0 0 44px rgba(0,229,255,0.45);
-              }
-            `}</style>
           </div>
         ) : bikes.length === 0 ? (
           <div style={{ color: '#b22222', fontWeight: 700, fontSize: 22, marginTop: 40 }}>No bikes available at the moment.</div>
