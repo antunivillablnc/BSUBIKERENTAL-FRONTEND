@@ -27,4 +27,4 @@ export const firebaseApp = apps.length
       ...(projectId ? { projectId } : {}),
     });
 
-export const db = getFirestore(firebaseApp);
+    export const db = getFirestore(firebaseApp);
