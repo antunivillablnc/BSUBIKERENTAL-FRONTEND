@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db } from '@/lib/firebase';
 
 export async function GET() {
   try {
-    const activities = await prisma.activityLog.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    
+    const snap = await db.collection('activityLogs').orderBy('createdAt', 'desc').get();
+    const activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     return NextResponse.json(activities);
   } catch (error) {
     console.error('Error fetching activity logs:', error);

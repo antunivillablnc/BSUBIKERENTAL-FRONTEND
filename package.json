@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "migrate:firestore": "tsx scripts/migrate-to-firestore.ts",
+    "seed:firestore": "tsx scripts/seed-firestore.ts",
+    "seed:from-schema": "tsx scripts/seed-from-schema.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -20,6 +23,7 @@
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
     "formidable": "^3.5.4",
     "leaflet": "^1.9.4",
     "next": "^15.3.5",

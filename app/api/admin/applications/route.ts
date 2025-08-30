@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db } from '@/lib/firebase';
 
 export async function GET() {
   try {
-    const applications = await prisma.bikeRentalApplication.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { bike: true },
-    });
+    const appsSnap = await db.collection('applications').orderBy('createdAt', 'desc').get();
+    const applications = await Promise.all(appsSnap.docs.map(async d => {
+      const app: any = { id: d.id, ...d.data() };
+      if (app.bikeId) {
+        const bikeDoc = await db.collection('bikes').doc(app.bikeId).get();
+        app.bike = bikeDoc.exists ? { id: bikeDoc.id, ...bikeDoc.data() } : null;
+      } else {
+        app.bike = null;
+      }
+      return app;
+    }));
     return NextResponse.json({ success: true, applications });
   } catch (error) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
@@ -22,28 +27,23 @@ export async function POST(req: Request) {
     if (!allowedStatuses.includes(status)) {
       return NextResponse.json({ success: false, error: 'Invalid status.' }, { status: 400 });
     }
-
-    const application = await prisma.bikeRentalApplication.findUnique({ where: { id: applicationId } });
-    if (!application) {
+    const appDoc = await db.collection('applications').doc(applicationId).get();
+    if (!appDoc.exists) {
       return NextResponse.json({ success: false, error: 'Application not found.' }, { status: 404 });
     }
-
-    if (application.status === 'completed' || application.status === 'assigned') {
+    const application: any = { id: appDoc.id, ...appDoc.data() };
+    if ((application.status || '').toLowerCase() === 'completed' || (application.status || '').toLowerCase() === 'assigned') {
       return NextResponse.json({ success: false, error: 'Cannot change status of assigned or completed applications.' }, { status: 400 });
     }
 
-    await prisma.bikeRentalApplication.update({
-      where: { id: applicationId },
-      data: { status },
-    });
+    await db.collection('applications').doc(applicationId).update({ status });
 
-    await prisma.activityLog.create({
-      data: {
-        type: 'Update Application Status',
-        adminName: 'Admin',
-        adminEmail: 'admin@example.com',
-        description: `Set application ${applicationId} status to ${status}`,
-      },
+    await db.collection('activityLogs').add({
+      type: 'Update Application Status',
+      adminName: 'Admin',
+      adminEmail: 'admin@example.com',
+      description: `Set application ${applicationId} status to ${status}`,
+      createdAt: new Date(),
     });
 
     return NextResponse.json({ success: true });

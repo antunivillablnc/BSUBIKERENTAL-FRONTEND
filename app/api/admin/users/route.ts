@@ -1,24 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
+import { db } from '@/lib/firebase';
 
 // GET - Fetch all users
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    const snap = await db.collection('users').orderBy('createdAt', 'desc').get();
+    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     
     return NextResponse.json({ success: true, users });
   } catch (error) {
@@ -36,47 +24,46 @@ export async function POST(req: Request) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    const existingSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+    if (!existingSnap.empty) {
       return NextResponse.json({ success: false, error: 'User with this email already exists.' }, { status: 400 });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role,
-      },
+    const userRef = await db.collection('users').add({
+      email,
+      password: hashedPassword,
+      name,
+      role,
+      createdAt: new Date(),
     });
+    const user = { id: userRef.id, email, name, role, createdAt: new Date() };
 
     // Ensure leaderboard entry for non-admin users
     if ((role || '').toLowerCase() !== 'admin') {
       try {
-        await prisma.leaderboard.create({
-          data: {
-            userId: user.id,
-            name: name || email,
-            distanceKm: 0,
-            co2SavedKg: 0,
-          },
+        await db.collection('leaderboard').add({
+          userId: user.id,
+          name: name || email,
+          distanceKm: 0,
+          co2SavedKg: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
       } catch (e) {
-        // Ignore if an entry already exists or any non-critical error
+        // Ignore non-critical error
       }
     }
 
     // Log activity
-    await prisma.activityLog.create({
-      data: {
-        type: 'Create User',
-        adminName: 'Admin',
-        adminEmail: 'admin@example.com',
-        description: `Created user account for ${email}`,
-      },
+    await db.collection('activityLogs').add({
+      type: 'Create User',
+      adminName: 'Admin',
+      adminEmail: 'admin@example.com',
+      description: `Created user account for ${email}`,
+      createdAt: new Date(),
     });
 
     return NextResponse.json({ success: true, user: { ...user, password: undefined } });
@@ -95,18 +82,14 @@ export async function PUT(req: Request) {
     }
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({ where: { id } });
-    if (!existingUser) {
+    const existingDoc = await db.collection('users').doc(id).get();
+    if (!existingDoc.exists) {
       return NextResponse.json({ success: false, error: 'User not found.' }, { status: 404 });
     }
 
     // Check if email is already taken by another user
-    const emailTaken = await prisma.user.findFirst({ 
-      where: { 
-        email, 
-        id: { not: id } 
-      } 
-    });
+    const emailSnap = await db.collection('users').where('email', '==', email).get();
+    const emailTaken = emailSnap.docs.some(d => d.id !== id);
     if (emailTaken) {
       return NextResponse.json({ success: false, error: 'Email is already taken by another user.' }, { status: 400 });
     }
@@ -116,19 +99,16 @@ export async function PUT(req: Request) {
       updateData.password = await bcrypt.hash(password, 12);
     }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: updateData,
-    });
+    await db.collection('users').doc(id).update(updateData);
+    const user = { id, ...updateData };
 
     // Log activity
-    await prisma.activityLog.create({
-      data: {
-        type: 'Update User',
-        adminName: 'Admin',
-        adminEmail: 'admin@example.com',
-        description: `Updated user account for ${email}`,
-      },
+    await db.collection('activityLogs').add({
+      type: 'Update User',
+      adminName: 'Admin',
+      adminEmail: 'admin@example.com',
+      description: `Updated user account for ${email}`,
+      createdAt: new Date(),
     });
 
     return NextResponse.json({ success: true, user: { ...user, password: undefined } });
@@ -147,22 +127,21 @@ export async function DELETE(req: Request) {
     }
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({ where: { id } });
-    if (!existingUser) {
+    const existingDoc = await db.collection('users').doc(id).get();
+    if (!existingDoc.exists) {
       return NextResponse.json({ success: false, error: 'User not found.' }, { status: 404 });
     }
 
     // Delete user
-    await prisma.user.delete({ where: { id } });
+    await db.collection('users').doc(id).delete();
 
     // Log activity
-    await prisma.activityLog.create({
-      data: {
-        type: 'Delete User',
-        adminName: 'Admin',
-        adminEmail: 'admin@example.com',
-        description: `Deleted user account for ${existingUser.email}`,
-      },
+    await db.collection('activityLogs').add({
+      type: 'Delete User',
+      adminName: 'Admin',
+      adminEmail: 'admin@example.com',
+      description: `Deleted user account for ${existingDoc.data()?.email}`,
+      createdAt: new Date(),
     });
 
     return NextResponse.json({ success: true });

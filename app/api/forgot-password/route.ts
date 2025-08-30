@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/firebase";
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -12,7 +10,9 @@ export async function POST(req: NextRequest) {
   }
 
   // Find user by email
-  const user = await prisma.user.findUnique({ where: { email } });
+  const userSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+  const userDoc = userSnap.docs[0];
+  const user: any = userDoc ? { id: userDoc.id, ...userDoc.data() } : null;
   if (!user) {
     // Always return success for security
     return NextResponse.json({ message: "If this email is registered, a reset link has been sent." });
@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
   const expiry = new Date(Date.now() + 1000 * 60 * 60); // 1 hour from now
 
   // Store token and expiry in user record
-  await prisma.user.update({
-    where: { email },
-    data: { passwordResetToken: token, passwordResetExpiry: expiry },
+  await db.collection('users').doc(user.id).update({
+    passwordResetToken: token,
+    passwordResetExpiry: expiry,
   });
 
   // Generate reset link

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/firebase";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,15 +11,20 @@ export async function POST(req: NextRequest) {
     // Normalize role to lowercase for consistency
     const normalizedRole = role.toLowerCase();
     // Check for existing user
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existingSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+    const existing = !existingSnap.empty;
     if (existing) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
     // Hash password
     const hashed = await bcrypt.hash(password, 10);
     // Create user
-    await prisma.user.create({
-      data: { name: fullName, email, password: hashed, role: normalizedRole },
+    await db.collection('users').add({
+      name: fullName,
+      email,
+      password: hashed,
+      role: normalizedRole,
+      createdAt: new Date(),
     });
     return NextResponse.json({ message: "Registration successful" });
   } catch (err) {

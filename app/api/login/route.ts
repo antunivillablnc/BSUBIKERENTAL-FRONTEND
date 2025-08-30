@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/firebase";
 
 export async function POST(req: NextRequest) {
   const { username, password, recaptchaToken } = await req.json();
@@ -33,7 +31,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "reCAPTCHA verification error" }, { status: 502 });
   }
   // Find user by email
-  const user = await prisma.user.findUnique({ where: { email: username } });
+  const userSnap = await db.collection('users').where('email', '==', username).limit(1).get();
+  const userDoc = userSnap.docs[0];
+  const user: any = userDoc ? { id: userDoc.id, ...userDoc.data() } : null;
   if (!user) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
@@ -45,13 +45,12 @@ export async function POST(req: NextRequest) {
   // Optionally, return user info (never return password)
   // Log admin login activity
   if (user.role === 'admin') {
-    await prisma.activityLog.create({
-      data: {
-        type: 'Login',
-        adminName: user.name || '',
-        adminEmail: user.email,
-        description: 'Admin logged in',
-      },
+    await db.collection('activityLogs').add({
+      type: 'Login',
+      adminName: user.name || '',
+      adminEmail: user.email,
+      description: 'Admin logged in',
+      createdAt: new Date(),
     });
   }
   return NextResponse.json({ message: "Login successful", user: { id: user.id, email: user.email, role: user.role, name: user.name } });
