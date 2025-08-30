@@ -42,7 +42,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const percent = Math.min(100, Math.round((value / max) * 100));
   return (
-    <div style={{ width: '100%', background: '#e5e7eb', borderRadius: 8, height: 10, marginTop: 8 }}>
+    <div style={{ width: '100%', background: 'var(--border-color)', borderRadius: 8, height: 10, marginTop: 8 }}>
       <div style={{ width: `${percent}%`, background: color, height: '100%', borderRadius: 8, transition: 'width 0.5s' }} />
     </div>
   );
@@ -82,6 +82,38 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Listen for theme changes and update chart colors
+  useEffect(() => {
+    const updateChartTheme = () => {
+      if (window.myTrendsChart) {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#f8fafc' : '#111827';
+        const gridColor = isDark ? '#475569' : '#e5e7eb';
+        
+        // Update chart options for dark mode
+        window.myTrendsChart.options.scales.x.grid.color = gridColor;
+        window.myTrendsChart.options.scales.y.grid.color = gridColor;
+        window.myTrendsChart.options.scales.y1.grid.color = gridColor;
+        window.myTrendsChart.options.scales.x.ticks.color = textColor;
+        window.myTrendsChart.options.scales.y.ticks.color = textColor;
+        window.myTrendsChart.options.scales.y1.ticks.color = textColor;
+        window.myTrendsChart.options.plugins.legend.labels.color = textColor;
+        window.myTrendsChart.options.plugins.title.color = textColor;
+        
+        window.myTrendsChart.update();
+      }
+    };
+
+    // Initial update
+    updateChartTheme();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(updateChartTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
   }, []);
 
   // Persist goals when changed
@@ -273,28 +305,35 @@ export default function DashboardPage() {
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
       <div style={{ flex: 1, position: 'relative', zIndex: 1, padding: '48px 24px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 16, boxShadow: '0 10px 30px rgba(0,0,0,0.15)', padding: 32 }}>
-          <h1 style={{ color: '#111', fontWeight: 900, letterSpacing: 0.3, fontSize: 34, marginBottom: 20, textAlign: 'center' }}>
+          <div style={{ 
+            background: 'var(--card-bg)', 
+            backdropFilter: 'blur(8px)', 
+            border: '1px solid var(--border-color)', 
+            borderRadius: 16, 
+            boxShadow: '0 10px 30px var(--shadow-color)', 
+            padding: 32 
+          }}>
+          <h1 style={{ color: 'var(--text-primary)', fontWeight: 900, letterSpacing: 0.3, fontSize: 34, marginBottom: 20, textAlign: 'center' }}>
             Dashboard
           </h1>
           {mounted && (
-            <div style={{ textAlign: 'right', color: '#666', fontSize: 13, marginBottom: 10 }}>
+            <div style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: 13, marginBottom: 10 }}>
               Last updated: {lastUpdated.toLocaleTimeString()}
             </div>
           )}
           {/* Trends Chart */}
-          <div style={{ margin: '0 auto 32px', maxWidth: 880, background: 'rgba(255,255,255,0.9)', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
+          <div style={{ margin: '0 auto 32px', maxWidth: 880, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 20, boxShadow: '0 8px 24px var(--shadow-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ color: '#111', fontWeight: 900, fontSize: 20, margin: 0, letterSpacing: 0.2 }}>{`${timeFrame.charAt(0).toUpperCase()}${timeFrame.slice(1)} Trends`}</h2>
-              <div style={{ display: 'inline-flex', gap: 6, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 9999, padding: 6 }}>
+              <h2 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, margin: 0, letterSpacing: 0.2 }}>{`${timeFrame.charAt(0).toUpperCase()}${timeFrame.slice(1)} Trends`}</h2>
+              <div style={{ display: 'inline-flex', gap: 6, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 9999, padding: 6 }}>
                 {(['week','month','year'] as const).map(tf => (
                   <button
                     key={tf}
                     onClick={() => setTimeFrame(tf)}
                     style={{
-                      background: timeFrame === tf ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' : '#eef6ff',
-                      color: timeFrame === tf ? '#ffffff' : '#1d4ed8',
-                      border: timeFrame === tf ? '1px solid transparent' : '1px solid #93c5fd',
+                      background: timeFrame === tf ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' : 'var(--bg-primary)',
+                      color: timeFrame === tf ? '#ffffff' : 'var(--text-primary)',
+                      border: timeFrame === tf ? '1px solid transparent' : '1px solid var(--border-color)',
                       borderRadius: 9999,
                       padding: '6px 10px',
                       fontSize: 12,
@@ -303,8 +342,8 @@ export default function DashboardPage() {
                       boxShadow: timeFrame === tf ? '0 0 0 2px rgba(37,99,235,0.25)' : 'none',
                       transition: 'background 0.15s, box-shadow 0.15s',
                     }}
-                    onMouseEnter={(e) => { if (timeFrame !== tf) { e.currentTarget.style.background = '#dbeafe'; } }}
-                    onMouseLeave={(e) => { if (timeFrame !== tf) { e.currentTarget.style.background = '#eef6ff'; } }}
+                    onMouseEnter={(e) => { if (timeFrame !== tf) { e.currentTarget.style.background = 'var(--bg-tertiary)'; } }}
+                    onMouseLeave={(e) => { if (timeFrame !== tf) { e.currentTarget.style.background = 'var(--bg-primary)'; } }}
                     aria-pressed={timeFrame === tf}
                   >
                     {tf === 'week' ? 'Week' : tf === 'month' ? 'Month' : 'Year'}
@@ -312,8 +351,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-            <canvas ref={chartRef} width={820} height={300} style={{ width: '100%', maxWidth: 820, background: '#fff', borderRadius: 12 }} />
-            {!chartLoaded && <div style={{ color: '#888', textAlign: 'center', marginTop: 12 }}>Loading chart...</div>}
+            <canvas ref={chartRef} width={820} height={300} style={{ width: '100%', maxWidth: 820, background: 'var(--input-bg)', borderRadius: 12 }} />
+            {!chartLoaded && <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>Loading chart...</div>}
           </div>
           {/* Dashboard Cards */}
           <div style={{
@@ -325,12 +364,13 @@ export default function DashboardPage() {
           }}>
             {/* Combined Bike Location + Travel Distance Card */}
             <div style={{
-              background: 'linear-gradient(180deg, #eef7ff 0%, #ffffff 100%)',
+              background: 'var(--card-bg)',
               borderRadius: 16,
               padding: 24,
-              boxShadow: '0 8px 24px rgba(25, 118, 210, 0.12)',
+              boxShadow: '0 8px 24px var(--shadow-color)',
               transition: 'transform 0.3s, box-shadow 0.3s',
               willChange: 'transform',
+              border: '1px solid var(--border-color)',
             }}
               className="dashboard-card"
             >
@@ -338,20 +378,20 @@ export default function DashboardPage() {
                 {/* Left: Bike Location */}
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 36, marginBottom: 10 }}>📍</div>
-                  <div style={{ fontWeight: 800, color: '#1e3a8a', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>Bike Location</div>
-                  <div style={{ color: '#334155', fontSize: 16 }}>{bikeLocation}</div>
+                  <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>Bike Location</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>{bikeLocation}</div>
             </div>
                 {/* Right: Travel Distance */}
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 36, marginBottom: 10 }}>🚴‍♂️</div>
-                  <div style={{ fontWeight: 800, color: '#1e3a8a', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>Travel Distance</div>
+                  <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>Travel Distance</div>
                   <div style={{ color: '#16a34a', fontSize: 20, marginBottom: 8, fontWeight: 800 }}>{travelDistanceKm} km</div>
                   <div style={{ margin: '0 auto', maxWidth: 280 }}>
               <Sparkline data={distanceTrend} color="#22c55e" />
                     <ProgressBar value={travelDistanceKm} max={distanceGoal} color="#22c55e" />
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
                       <span>Goal: {distanceGoal} km</span>
-                      <button onClick={editDistanceGoal} style={{ background: 'none', border: '1px solid #cbd5e1', color: '#1e3a8a', borderRadius: 9999, padding: '2px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                      <button onClick={editDistanceGoal} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: 9999, padding: '2px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
                     </div>
                   </div>
                 </div>
@@ -359,10 +399,10 @@ export default function DashboardPage() {
             </div>
             {/* Cost Savings Card */}
             <div style={{
-              background: 'linear-gradient(180deg, #fffde7 0%, #ffffff 100%)',
+              background: 'var(--card-bg)',
               borderRadius: 16,
               padding: 24,
-              boxShadow: '0 8px 24px rgba(251, 191, 36, 0.18)',
+              boxShadow: '0 8px 24px var(--shadow-color)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -371,84 +411,86 @@ export default function DashboardPage() {
               minHeight: 220,
               transition: 'transform 0.3s, box-shadow 0.3s',
               willChange: 'transform',
+              border: '1px solid var(--border-color)',
             }}
               className="dashboard-card"
             >
               <div style={{ fontSize: 46, marginBottom: 12 }}>💸</div>
-              <div style={{ fontWeight: 900, color: '#78350f', fontSize: 26, marginBottom: 8, letterSpacing: 0.2 }}>Cost Savings</div>
-              <div style={{ color: '#0f172a', fontSize: 34, fontWeight: 900 }}>₱{costSavings.toLocaleString()}</div>
+              <div style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: 26, marginBottom: 8, letterSpacing: 0.2 }}>Cost Savings</div>
+              <div style={{ color: 'var(--text-primary)', fontSize: 34, fontWeight: 900 }}>₱{costSavings.toLocaleString()}</div>
               {/* TODO: Replace with real cost savings calculation */}
             </div>
             {/* CO₂ Emission Savings Card */}
             <div style={{
-              background: 'linear-gradient(180deg, #f3e5f5 0%, #ffffff 100%)',
+              background: 'var(--card-bg)',
               borderRadius: 16,
               padding: 24,
-              boxShadow: '0 8px 24px rgba(139, 92, 246, 0.18)',
+              boxShadow: '0 8px 24px var(--shadow-color)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               transition: 'transform 0.3s, box-shadow 0.3s',
               willChange: 'transform',
+              border: '1px solid var(--border-color)',
             }}
               className="dashboard-card"
             >
               <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
-              <div style={{ fontWeight: 900, color: '#4c1d95', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>CO₂ Emission Savings</div>
-              <div style={{ color: '#0f172a', fontSize: 18, fontWeight: 800 }}>{co2SavingsKg} kg</div>
+              <div style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>CO₂ Emission Savings</div>
+              <div style={{ color: 'var(--text-primary)', fontSize: 18, fontWeight: 800 }}>{co2SavingsKg} kg</div>
               <Sparkline data={co2Trend} color="#8b5cf6" />
               <ProgressBar value={co2SavingsKg} max={co2Goal} color="#8b5cf6" />
-              <div style={{ fontSize: 13, color: '#64748b', marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
                 <span>Goal: {co2Goal} kg</span>
-                <button onClick={editCo2Goal} style={{ background: 'none', border: '1px solid #cbd5e1', color: '#4c1d95', borderRadius: 9999, padding: '2px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                <button onClick={editCo2Goal} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: 9999, padding: '2px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
               </div>
               {/* TODO: Replace with real CO2 savings calculation */}
             </div>
           </div>
           {/* Personal Bests & Fun Facts */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 24, marginBottom: 24, justifyContent: 'center' }}>
-            <div style={{ background: 'linear-gradient(180deg, #eef2ff 0%, #ffffff 100%)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px rgba(25, 118, 210, 0.12)' }}>
-              <h3 style={{ color: '#1e3a8a', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Personal Bests</h3>
-              <div style={{ color: '#222', fontSize: 16, marginBottom: 4 }}>🚴‍♂️ Longest Ride: <b>{personalBests.longestRide} km</b></div>
-              <div style={{ color: '#222', fontSize: 16, marginBottom: 4 }}>📅 Most in a Week: <b>{personalBests.mostInWeek} km</b></div>
-              <div style={{ color: '#222', fontSize: 16 }}>📆 Most in a Month: <b>{personalBests.mostInMonth} km</b></div>
+            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px var(--shadow-color)' }}>
+              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Personal Bests</h3>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 4 }}>🚴‍♂️ Longest Ride: <b>{personalBests.longestRide} km</b></div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 4 }}>📅 Most in a Week: <b>{personalBests.mostInWeek} km</b></div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>📆 Most in a Month: <b>{personalBests.mostInMonth} km</b></div>
             </div>
-            <div style={{ background: 'linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px rgba(34, 197, 94, 0.12)' }}>
-              <h3 style={{ color: '#065f46', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Environmental Impact</h3>
-              <div style={{ color: '#222', fontSize: 16, marginBottom: 4 }}>🌳 Trees Planted Equivalent: <b>{treesPlanted}</b></div>
-              <div style={{ color: '#222', fontSize: 16 }}>🚗 Car km Avoided: <b>{carKmAvoided} km</b></div>
+            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px var(--shadow-color)' }}>
+              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Environmental Impact</h3>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 4 }}>🌳 Trees Planted Equivalent: <b>{treesPlanted}</b></div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>🚗 Car km Avoided: <b>{carKmAvoided} km</b></div>
             </div>
-            <div style={{ background: 'linear-gradient(180deg, #fff7ed 0%, #ffffff 100%)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px rgba(251, 191, 36, 0.18)' }}>
-              <h3 style={{ color: '#92400e', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Goal Tracker</h3>
-              <div style={{ color: '#222', fontSize: 16 }}>Distance Goal: <b>{Math.round((travelDistanceKm/distanceGoal)*100)}%</b> complete</div>
+            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px var(--shadow-color)' }}>
+              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Goal Tracker</h3>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Distance Goal: <b>{Math.round((travelDistanceKm/distanceGoal)*100)}%</b> complete</div>
               <ProgressBar value={travelDistanceKm} max={distanceGoal} color="#22c55e" />
-              <div style={{ color: '#222', fontSize: 16, marginTop: 10 }}>CO₂ Goal: <b>{Math.round((co2SavingsKg/co2Goal)*100)}%</b> complete</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginTop: 10 }}>CO₂ Goal: <b>{Math.round((co2SavingsKg/co2Goal)*100)}%</b> complete</div>
               <ProgressBar value={co2SavingsKg} max={co2Goal} color="#8b5cf6" />
             </div>
           </div>
           {/* Leaderboard */}
-          <div style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)', border: '1px solid rgba(0,0,0,0.04)', borderRadius: 16, padding: 24, maxWidth: 700, margin: '0 auto', boxShadow: '0 8px 24px rgba(25, 118, 210, 0.08)' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, maxWidth: 700, margin: '0 auto', boxShadow: '0 8px 24px var(--shadow-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <h3 style={{ color: '#1e3a8a', fontWeight: 900, fontSize: 20, letterSpacing: 0.2 }}>Leaderboard</h3>
-              <button onClick={fetchLeaderboard} style={{ background: '#e5e7eb', color: '#111827', border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 10px', fontWeight: 700, cursor: 'pointer' }}>Refresh</button>
+              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, letterSpacing: 0.2 }}>Leaderboard</h3>
+              <button onClick={fetchLeaderboard} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 10px', fontWeight: 700, cursor: 'pointer' }}>Refresh</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#eef2ff' }}>
-                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>Rank</th>
-                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>User</th>
-                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>Distance (km)</th>
-                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: '#1e3a8a', fontSize: 16 }}>CO₂ Saved (kg)</th>
+                <tr style={{ background: 'var(--bg-secondary)' }}>
+                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>Rank</th>
+                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>User</th>
+                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>Distance (km)</th>
+                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>CO₂ Saved (kg)</th>
                 </tr>
               </thead>
               <tbody>
                 {leaderboardEntries.length === 0 ? (
-                  <tr><td colSpan={4} style={{ padding: 10, textAlign: 'center', color: '#666' }}>No entries yet</td></tr>
+                  <tr><td colSpan={4} style={{ padding: 10, textAlign: 'center', color: 'var(--text-muted)' }}>No entries yet</td></tr>
                 ) : (
                   leaderboardEntries.map((entry: LeaderboardEntry, i: number) => {
                     const isYou = !!(currentUser && (entry.userId === currentUser.id || (entry.name || '').toLowerCase() === (currentUser.name || '').toLowerCase() || (entry.name || '').toLowerCase() === (currentUser.email || '').toLowerCase()));
                     return (
-                      <tr key={entry.id} style={{ background: isYou ? '#bbf7d0' : 'transparent', fontWeight: isYou ? 800 : 500, color: '#222' }}>
+                      <tr key={entry.id} style={{ background: isYou ? 'var(--bg-tertiary)' : 'transparent', fontWeight: isYou ? 800 : 500, color: 'var(--text-secondary)' }}>
                         <td style={{ padding: 8 }}>{i + 1}</td>
                         <td style={{ padding: 8 }}>{isYou ? 'You' : entry.name}</td>
                         <td style={{ padding: 8, textAlign: 'right' }}>{entry.distanceKm}</td>
@@ -470,7 +512,7 @@ export default function DashboardPage() {
         }
         .dashboard-card:hover {
           transform: translateY(-8px) scale(1.03);
-          box-shadow: 0 8px 32px rgba(25, 118, 210, 0.12), 0 2px 8px rgba(0,0,0,0.10);
+          box-shadow: 0 8px 32px var(--shadow-color), 0 2px 8px rgba(0,0,0,0.10);
         }
       `}</style>
     </div>
