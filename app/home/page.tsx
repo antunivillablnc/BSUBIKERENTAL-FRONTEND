@@ -35,7 +35,7 @@ export default function HomePage() {
     return (
       <div style={{ minHeight: '100vh', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`, display: 'flex', flexDirection: 'column', position: 'relative' }}>
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', position: 'relative', zIndex: 1 }}>
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', position: 'relative', zIndex: 1, background: 'transparent' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <img src="/logo-spartan.png" alt="Sparta Logo" style={{ height: 60, width: 'auto', marginBottom: 8 }} />
             <div style={{ fontWeight: 800, color: '#b22222', fontSize: 30, letterSpacing: 1.1, marginBottom: 0, textShadow: '0 1px 0 rgba(255,255,255,0.35), 0 2px 4px rgba(0,0,0,0.25)' }}>SPARTA ADMIN</div>
@@ -77,7 +77,7 @@ export default function HomePage() {
       }} />
 
       {/* Hero Section */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', position: 'relative', zIndex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', position: 'relative', zIndex: 1, background: 'transparent' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <img src="/logo-spartan.png" alt="Sparta Logo" style={{ height: 60, width: 'auto', marginBottom: 8 }} />
           <div style={{ fontWeight: 900, color: '#b22222', fontSize: 32, letterSpacing: 1.2, marginBottom: 0, textShadow: '0 1px 0 rgba(255,255,255,0.35), 0 2px 4px rgba(0,0,0,0.25)' }}>SPARTA</div>
@@ -120,26 +120,26 @@ export default function HomePage() {
         {/* Features */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
           {/* Eco-Friendly */}
-          <div style={{ background: '#f7f7f7', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, boxShadow: '0 2px 8px var(--shadow-color)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
             <div style={{ fontSize: 48, color: '#388e3c', marginBottom: 8 }}>🌱</div>
             <div style={{ fontWeight: 700, fontSize: 22, color: '#388e3c', marginBottom: 8 }}>Eco-Friendly</div>
-            <div style={{ color: '#555', fontSize: 17 }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 17 }}>
               Reduce your carbon footprint and help keep our campus green by choosing bikes over cars.
             </div>
           </div>
           {/* Affordable */}
-          <div style={{ background: '#f7f7f7', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, boxShadow: '0 2px 8px var(--shadow-color)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
             <div style={{ fontSize: 48, color: '#1976d2', marginBottom: 8 }}>💸</div>
             <div style={{ fontWeight: 700, fontSize: 22, color: '#1976d2', marginBottom: 8 }}>Cost-Free</div>
-            <div style={{ color: '#555', fontSize: 17 }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 17 }}>
               Enjoy zero-cost rentals designed for students and staff. No hidden fees, just easy rides.
             </div>
           </div>
           {/* Convenient */}
-          <div style={{ background: '#f7f7f7', borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, boxShadow: '0 2px 8px var(--shadow-color)', padding: '32px 28px', maxWidth: 320, minWidth: 260, textAlign: 'center' }}>
             <div style={{ fontSize: 48, color: '#fbc02d', marginBottom: 8 }}>📍</div>
             <div style={{ fontWeight: 700, fontSize: 22, color: '#fbc02d', marginBottom: 8 }}>Convenient</div>
-            <div style={{ color: '#555', fontSize: 17 }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 17 }}>
               Pick up and return bikes at multiple campus locations. Fast, simple, and always available.
             </div>
           </div>

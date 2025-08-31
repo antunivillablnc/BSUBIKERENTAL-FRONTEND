@@ -91,17 +91,39 @@ export default function DashboardPage() {
         const isDark = document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#f8fafc' : '#111827';
         const gridColor = isDark ? '#475569' : '#e5e7eb';
-        
+
         // Update chart options for dark mode
-        window.myTrendsChart.options.scales.x.grid.color = gridColor;
-        window.myTrendsChart.options.scales.y.grid.color = gridColor;
-        window.myTrendsChart.options.scales.y1.grid.color = gridColor;
-        window.myTrendsChart.options.scales.x.ticks.color = textColor;
-        window.myTrendsChart.options.scales.y.ticks.color = textColor;
-        window.myTrendsChart.options.scales.y1.ticks.color = textColor;
-        window.myTrendsChart.options.plugins.legend.labels.color = textColor;
-        window.myTrendsChart.options.plugins.title.color = textColor;
-        
+        if (window.myTrendsChart.options.scales?.x) {
+          window.myTrendsChart.options.scales.x.grid = { ...(window.myTrendsChart.options.scales.x.grid || {}), color: gridColor };
+          window.myTrendsChart.options.scales.x.ticks = { ...(window.myTrendsChart.options.scales.x.ticks || {}), color: textColor };
+          window.myTrendsChart.options.scales.x.title = { ...(window.myTrendsChart.options.scales.x.title || {}), color: textColor };
+        }
+        if (window.myTrendsChart.options.scales?.y) {
+          window.myTrendsChart.options.scales.y.grid = { ...(window.myTrendsChart.options.scales.y.grid || {}), color: gridColor };
+          window.myTrendsChart.options.scales.y.ticks = { ...(window.myTrendsChart.options.scales.y.ticks || {}), color: textColor };
+          window.myTrendsChart.options.scales.y.title = { ...(window.myTrendsChart.options.scales.y.title || {}), color: textColor };
+        }
+        if (window.myTrendsChart.options.scales?.y1) {
+          window.myTrendsChart.options.scales.y1.grid = { ...(window.myTrendsChart.options.scales.y1.grid || {}), color: gridColor };
+          window.myTrendsChart.options.scales.y1.ticks = { ...(window.myTrendsChart.options.scales.y1.ticks || {}), color: textColor };
+          window.myTrendsChart.options.scales.y1.title = { ...(window.myTrendsChart.options.scales.y1.title || {}), color: textColor };
+        }
+
+        window.myTrendsChart.options.plugins.legend = {
+          ...(window.myTrendsChart.options.plugins.legend || {}),
+          labels: { ...((window.myTrendsChart.options.plugins.legend || {}).labels || {}), color: textColor },
+        };
+        window.myTrendsChart.options.plugins.title = {
+          ...(window.myTrendsChart.options.plugins.title || {}),
+          color: textColor,
+        } as any;
+        window.myTrendsChart.options.plugins.tooltip = {
+          ...((window.myTrendsChart.options.plugins || {}).tooltip || {}),
+          titleColor: textColor,
+          bodyColor: textColor,
+          backgroundColor: isDark ? '#0f172a' : '#ffffff',
+        } as any;
+
         window.myTrendsChart.update();
       }
     };
@@ -246,6 +268,9 @@ export default function DashboardPage() {
       if (ctx) {
         if (window.myTrendsChart) window.myTrendsChart.destroy();
         const base = getTrendBase(timeFrame);
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#f8fafc' : '#111827';
+        const gridColor = isDark ? '#475569' : '#e5e7eb';
         window.myTrendsChart = new window.Chart(ctx, {
           type: 'line',
           data: {
@@ -280,13 +305,15 @@ export default function DashboardPage() {
           options: {
             responsive: true,
             plugins: {
-              legend: { display: true, position: 'top' },
-              title: { display: true, text: `${timeFrame.charAt(0).toUpperCase()}${timeFrame.slice(1)} Trends` },
+              legend: { display: true, position: 'top', labels: { color: textColor } },
+              title: { display: true, text: `${timeFrame.charAt(0).toUpperCase()}${timeFrame.slice(1)} Trends`, color: textColor },
+              tooltip: { titleColor: textColor, bodyColor: textColor, backgroundColor: isDark ? '#0f172a' : '#ffffff' },
             },
             scales: {
-              y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Distance (km)' } },
-              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'CO₂ (kg)' } },
-              y2: { type: 'linear', display: false, position: 'right' },
+              x: { grid: { color: gridColor }, ticks: { color: textColor }, title: { display: false, color: textColor } },
+              y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Distance (km)', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false, color: gridColor }, title: { display: true, text: 'CO₂ (kg)', color: textColor }, ticks: { color: textColor } },
+              y2: { type: 'linear', display: false, position: 'right', ticks: { color: textColor }, grid: { color: gridColor } },
             },
           },
         });

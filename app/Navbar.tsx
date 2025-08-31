@@ -514,13 +514,13 @@ export default function Navbar() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, objectFit: 'contain', marginRight: 4 }} />
                                      <span style={{
-                     color: '#ef4444',
+                     color: '#b22222',
                      fontWeight: 900,
                      fontSize: 30,
                      letterSpacing: 2,
                      textTransform: 'uppercase',
                      fontFamily: 'inherit',
-                     textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                     textShadow: '0 1px 2px rgba(0,0,0,0.35)'
                    }}>
                      SPARTA
                    </span>
@@ -537,30 +537,32 @@ export default function Navbar() {
                     href={item.href}
                                                               style={{
                         textDecoration: 'none',
-                        padding: '8px 16px',
-                        borderRadius: 8,
+                        padding: '10px 14px',
+                        borderRadius: 999,
                         fontSize: 15,
                         fontWeight: 700,
-                        transition: 'all 0.2s ease',
+                        transition: 'background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
-                        color: pathname === item.href ? '#1976d2' : 'var(--text-primary)',
-                        background: pathname === item.href ? '#e3f2fd' : 'transparent',
-                        border: pathname === item.href ? '1px solid #1976d2' : '1px solid transparent',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                        color: pathname === item.href ? 'var(--accent-color)' : 'var(--text-primary)',
+                        background: pathname === item.href ? 'rgba(178,34,34,0.10)' : 'transparent',
+                        border: pathname === item.href ? '1px solid rgba(178,34,34,0.35)' : '1px solid transparent',
+                        textShadow: 'none',
                         letterSpacing: '0.5px',
                       }}
-                                           onMouseEnter={(e) => {
+                       onMouseEnter={(e) => {
                         if (pathname !== item.href) {
-                          e.currentTarget.style.background = '#1e40af';
-                          e.currentTarget.style.color = 'var(--text-primary)';
+                          e.currentTarget.style.background = 'rgba(178,34,34,0.10)';
+                          e.currentTarget.style.color = 'var(--accent-color)';
+                          e.currentTarget.style.border = '1px solid rgba(178,34,34,0.35)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (pathname !== item.href) {
                           e.currentTarget.style.background = 'transparent';
                           e.currentTarget.style.color = 'var(--text-primary)';
+                          e.currentTarget.style.border = '1px solid transparent';
                         }
                       }}
                   >
@@ -735,7 +737,7 @@ export default function Navbar() {
                        userName ? userName.charAt(0).toUpperCase() : 'U'
                      )}
                    </div>
-                                       <span style={{ fontSize: 15, fontWeight: 700, transition: 'color 0.3s ease', textShadow: '0 1px 3px rgba(0,0,0,0.8)', letterSpacing: '0.3px' }}>{userName || 'User'}</span>
+                                       <span style={{ fontSize: 15, fontWeight: 700, transition: 'color 0.3s ease', textShadow: 'none', letterSpacing: '0.3px' }}>{userName || 'User'}</span>
                   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ transition: 'transform 0.15s', transform: userDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                     <path d="M6 9l6 6 6-6"/>
                   </svg>
@@ -983,29 +985,34 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                                      style={{
-                     color: pathname === link.href ? '#1976d2' : 'var(--text-primary)',
-                     fontWeight: pathname === link.href ? 700 : 600,
+                     color: pathname === link.href ? 'var(--accent-color)' : 'var(--text-primary)',
+                     fontWeight: pathname === link.href ? 800 : 600,
                      textDecoration: 'none',
-                     fontSize: 22,
-                     padding: '8px 0',
-                     transition: 'all 0.2s ease',
-                     textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                     fontSize: 20,
+                     padding: '10px 12px',
+                     borderRadius: 10,
+                     transition: 'background-color 0.2s ease, color 0.2s ease',
+                     textShadow: 'none',
                      letterSpacing: '0.5px',
+                     background: pathname === link.href ? 'rgba(178,34,34,0.10)' : 'transparent',
+                     border: pathname === link.href ? '1px solid rgba(178,34,34,0.35)' : '1px solid transparent',
                    }}
-                                                            onMouseEnter={(e) => {
+                     onMouseEnter={(e) => {
                        if (pathname !== link.href) {
-                         e.currentTarget.style.background = '#1e40af';
-                         e.currentTarget.style.color = 'var(--text-primary)';
-                         e.currentTarget.style.padding = '8px 12px';
-                         e.currentTarget.style.borderRadius = '8px';
+                         e.currentTarget.style.background = 'rgba(178,34,34,0.10)';
+                         e.currentTarget.style.color = 'var(--accent-color)';
+                         e.currentTarget.style.padding = '10px 12px';
+                         e.currentTarget.style.borderRadius = '10px';
+                         e.currentTarget.style.border = '1px solid rgba(178,34,34,0.35)';
                        }
                      }}
-                                         onMouseLeave={(e) => {
+                     onMouseLeave={(e) => {
                        if (pathname !== link.href) {
                          e.currentTarget.style.background = 'transparent';
                          e.currentTarget.style.color = 'var(--text-primary)';
-                         e.currentTarget.style.padding = '8px 0';
-                         e.currentTarget.style.borderRadius = '0';
+                         e.currentTarget.style.padding = '10px 12px';
+                         e.currentTarget.style.borderRadius = '10px';
+                         e.currentTarget.style.border = '1px solid transparent';
                        }
                      }}
                   onClick={() => setMenuOpen(false)}

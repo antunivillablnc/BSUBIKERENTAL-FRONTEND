@@ -28,9 +28,10 @@ const initialForm = {
 
 // Add a style object for the card
 const cardStyle = {
-  background: '#fff',
+  background: 'var(--card-bg)',
   borderRadius: 16,
-  border: '1px solid #ececec',
+  border: '1px solid var(--border-color)',
+  boxShadow: '0 8px 24px var(--shadow-color)',
   padding: '40px 24px',
   maxWidth: 700,
   width: '100%',
@@ -41,16 +42,16 @@ const cardStyle = {
 const labelStyle = {
   fontWeight: 500,
   fontSize: 15,
-  color: '#444',
+  color: 'var(--text-secondary)',
   marginBottom: 6,
   letterSpacing: 0.05,
   display: 'block',
 } as React.CSSProperties;
 
 const inputStyle = {
-  color: '#222',
-  background: '#f5f6fa',
-  border: '1.5px solid #e0e0e0',
+  color: 'var(--text-primary)',
+  background: 'var(--input-bg)',
+  border: '1.5px solid var(--input-border)',
   borderRadius: 8,
   padding: '10px 14px',
   fontSize: 16,
@@ -64,7 +65,7 @@ const inputStyle = {
 } as React.CSSProperties;
 
 const buttonStyle = {
-  background: '#1976d2',
+  background: 'var(--accent-color)',
   color: '#fff',
   fontWeight: 600,
   fontSize: 18,
@@ -306,17 +307,19 @@ export default function BikeRentalApplication() {
 
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f7f7' }}>
-        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', padding: 40, maxWidth: 420, textAlign: 'center' }}>
-          <h2 style={{ color: '#1976d2', fontWeight: 800, marginBottom: 18 }}>Application Submitted!</h2>
-          <p style={{ color: '#444', fontSize: 18 }}>Thank you for applying to rent a bike. We will review your application and contact you soon.</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ background: 'var(--card-bg)', borderRadius: 16, boxShadow: '0 8px 24px var(--shadow-color)', border: '1px solid var(--border-color)', padding: 40, maxWidth: 420, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <h2 style={{ color: 'var(--accent-color)', fontWeight: 800, marginBottom: 18 }}>Application Submitted!</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 18 }}>Thank you for applying to rent a bike. We will review your application and contact you soon.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f8fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+    <div style={{ minHeight: '100vh', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`, display: 'flex', flexDirection: 'column', position: 'relative', padding: '48px 0' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
       <div
         style={{
           display: 'flex',
@@ -327,13 +330,16 @@ export default function BikeRentalApplication() {
           width: '100%',
           maxWidth: 1300,
           padding: '0 16px',
+          position: 'relative',
+          zIndex: 1,
+          margin: '0 auto',
         }}
       >
         {/* Left: Application Form */}
         <form onSubmit={handleSubmit} style={{ ...cardStyle, flex: 1, maxWidth: 700, minWidth: 320, opacity: agreed ? 1 : 0.6, pointerEvents: agreed ? 'auto' : 'none' }}>
-          <h1 style={{ color: '#1976d2', fontWeight: 800, fontSize: 30, marginBottom: 24, textAlign: 'center', letterSpacing: 0.2 }}>Bike Rental Application</h1>
+          <h1 style={{ color: 'var(--accent-color)', fontWeight: 800, fontSize: 30, marginBottom: 24, textAlign: 'center', letterSpacing: 0.2 }}>Bike Rental Application</h1>
           {/* Personal Information */}
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Personal Information</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Personal Information</div>
 
           <div style={grid3Style}>
             <div>
@@ -393,7 +399,7 @@ export default function BikeRentalApplication() {
           </div>
 
           {/* Required Documents */}
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Required Documents</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Required Documents</div>
           <div style={docGridStyle}>
             <div>
               <label style={labelStyle}>Certificate of Indigency</label>
@@ -405,18 +411,16 @@ export default function BikeRentalApplication() {
                 cursor: 'pointer',
                 marginBottom: 0,
                 height: 44,
-                background: '#f5f6fa',
-                border: '1.5px solid #e0e0e0',
                 borderRadius: 8,
                 fontSize: 16,
-                color: indigencyFile ? '#222' : '#888',
+                color: indigencyFile ? 'var(--text-primary)' : 'var(--text-muted)',
                 overflow: 'hidden',
                 position: 'relative',
                 maxWidth: 320, // Prevents the input from stretching
               }}>
                 <span style={{
-                  background: '#e0e0e0',
-                  color: '#444',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
                   fontWeight: 600,
                   borderRadius: 6,
                   padding: '6px 16px',
@@ -427,7 +431,7 @@ export default function BikeRentalApplication() {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}>Choose File</span>
-                <span style={{ fontSize: 15, color: indigencyFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                <span style={{ fontSize: 15, color: indigencyFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
                   {indigencyFile ? indigencyFile.name : 'No file chosen'}
                 </span>
                 <input
@@ -459,18 +463,16 @@ export default function BikeRentalApplication() {
                 cursor: 'pointer',
                 marginBottom: 0,
                 height: 44,
-                background: '#f5f6fa',
-                border: '1.5px solid #e0e0e0',
                 borderRadius: 8,
                 fontSize: 16,
-                color: gwaFile ? '#222' : '#888',
+                color: gwaFile ? 'var(--text-primary)' : 'var(--text-muted)',
                 overflow: 'hidden',
                 position: 'relative',
                 maxWidth: 320,
               }}>
                 <span style={{
-                  background: '#e0e0e0',
-                  color: '#444',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
                   fontWeight: 600,
                   borderRadius: 6,
                   padding: '6px 16px',
@@ -481,7 +483,7 @@ export default function BikeRentalApplication() {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}>Choose File</span>
-                <span style={{ fontSize: 15, color: gwaFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                <span style={{ fontSize: 15, color: gwaFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
                   {gwaFile ? gwaFile.name : 'No file chosen'}
                 </span>
                 <input
@@ -505,18 +507,16 @@ export default function BikeRentalApplication() {
                 cursor: 'pointer',
                 marginBottom: 0,
                 height: 44,
-                background: '#f5f6fa',
-                border: '1.5px solid #e0e0e0',
                 borderRadius: 8,
                 fontSize: 16,
-                color: ecaFile ? '#222' : '#888',
+                color: ecaFile ? 'var(--text-primary)' : 'var(--text-muted)',
                 overflow: 'hidden',
                 position: 'relative',
                 maxWidth: 320,
               }}>
                 <span style={{
-                  background: '#e0e0e0',
-                  color: '#444',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
                   fontWeight: 600,
                   borderRadius: 6,
                   padding: '6px 16px',
@@ -527,7 +527,7 @@ export default function BikeRentalApplication() {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}>Choose File</span>
-                <span style={{ fontSize: 15, color: ecaFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                <span style={{ fontSize: 15, color: ecaFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
                   {ecaFile ? ecaFile.name : 'No file chosen'}
                 </span>
                 <input
@@ -551,18 +551,16 @@ export default function BikeRentalApplication() {
                 cursor: 'pointer',
                 marginBottom: 0,
                 height: 44,
-                background: '#f5f6fa',
-                border: '1.5px solid #e0e0e0',
                 borderRadius: 8,
                 fontSize: 16,
-                color: itrFile ? '#222' : '#888',
+                color: itrFile ? 'var(--text-primary)' : 'var(--text-muted)',
                 overflow: 'hidden',
                 position: 'relative',
                 maxWidth: 320,
               }}>
                 <span style={{
-                  background: '#e0e0e0',
-                  color: '#444',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
                   fontWeight: 600,
                   borderRadius: 6,
                   padding: '6px 16px',
@@ -573,7 +571,7 @@ export default function BikeRentalApplication() {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}>Choose File</span>
-                <span style={{ fontSize: 15, color: itrFile ? '#222' : '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
+                <span style={{ fontSize: 15, color: itrFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
                   {itrFile ? itrFile.name : 'No file chosen'}
                 </span>
                 <input
@@ -591,7 +589,7 @@ export default function BikeRentalApplication() {
           
           {/* Documents consolidated under Required Documents section above */}
           {/* Address */}
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Present Home Address</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Present Home Address</div>
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
@@ -633,7 +631,7 @@ export default function BikeRentalApplication() {
           <div style={{ display: 'flex', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
             <div style={{ flex: 2, minWidth: 140 }}>
               <label style={labelStyle}>Distance from Campus*</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 15, color: '#333', marginTop: 4 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>
                 <label><input type="radio" name="distanceFromCampus" value="<1km" checked={form.distanceFromCampus === "<1km"} onChange={handleChange} required /> Less than 1 km</label>
                 <label><input type="radio" name="distanceFromCampus" value="1-5km" checked={form.distanceFromCampus === "1-5km"} onChange={handleChange} required /> 1 km but less than 5 km</label>
                 <label><input type="radio" name="distanceFromCampus" value=">=5km" checked={form.distanceFromCampus === ">=5km"} onChange={handleChange} required /> 5 km and above</label>
@@ -645,7 +643,7 @@ export default function BikeRentalApplication() {
             </div>
             <div style={{ flex: 2, minWidth: 140 }}>
               <label style={labelStyle}>Intended Duration of Use*</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 15, color: '#333', marginTop: 4 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 15, color: 'var(--text-secondary)', marginTop: 4 }}>
                 <label><input type="radio" name="intendedDuration" value="One Semester" checked={form.intendedDuration === "One Semester"} onChange={handleChange} required /> One Semester</label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <input type="radio" name="intendedDuration" value="Others" checked={form.intendedDuration === "Others"} onChange={handleChange} required />
@@ -662,8 +660,8 @@ export default function BikeRentalApplication() {
         </form>
         {/* Right: Agreement and Info */}
         <div style={{ ...cardStyle, flex: 1, maxWidth: 480, minWidth: 280, padding: '28px 18px', marginBottom: 0 }}>
-          <h2 style={{ color: '#1976d2', fontWeight: 700, fontSize: 22, marginBottom: 16 }}>Rental Agreement</h2>
-          <div style={{ color: '#444', fontSize: 15, marginBottom: 18, lineHeight: 1.7 }}>
+          <h2 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 22, marginBottom: 16 }}>Rental Agreement</h2>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 15, marginBottom: 18, lineHeight: 1.7 }}>
             <p><b>By submitting this application, you agree to the following terms:</b></p>
             <ul style={{ margin: '10px 0 18px 18px', padding: 0 }}>
               <li>You will use the bike responsibly and follow all campus rules.</li>
@@ -671,7 +669,7 @@ export default function BikeRentalApplication() {
               <li>You are responsible for reporting any damage or issues immediately.</li>
               <li>Loss or damage due to negligence may result in penalties.</li>
             </ul>
-            <p style={{ color: '#1976d2', fontWeight: 600, marginTop: 18, marginBottom: 0 }}>Please read all terms carefully before submitting your application.</p>
+            <p style={{ color: 'var(--accent-color)', fontWeight: 600, marginTop: 18, marginBottom: 0 }}>Please read all terms carefully before submitting your application.</p>
             <div style={{ marginTop: 18, marginBottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <input
@@ -679,22 +677,22 @@ export default function BikeRentalApplication() {
                   id="agree-checkbox"
                   checked={agreed}
                   onChange={e => setAgreed(e.target.checked)}
-                  style={{ width: 20, height: 20, accentColor: '#1976d2', cursor: 'pointer' }}
+                  style={{ width: 20, height: 20, accentColor: 'var(--accent-color)', cursor: 'pointer' }}
                 />
-                <label htmlFor="agree-checkbox" style={{ color: '#1976d2', fontWeight: 600, fontSize: 15, cursor: 'pointer', userSelect: 'none' }}>
+                <label htmlFor="agree-checkbox" style={{ color: 'var(--accent-color)', fontWeight: 600, fontSize: 15, cursor: 'pointer', userSelect: 'none' }}>
                   I have read and accept the terms and conditions
                 </label>
               </div>
               {!agreed && <div style={{ color: '#b22222', fontWeight: 500, fontSize: 14, marginTop: 2 }}>You must accept the agreement to fill out the application.</div>}
             </div>
           </div>
-          <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid #e0e0e0' }} />
-          <h2 style={{ color: '#1976d2', fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How will the bike be maintained?</h2>
-          <p style={{ color: '#444', fontSize: 15, marginBottom: 16 }}>
+          <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid var(--border-color)' }} />
+          <h2 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How will the bike be maintained?</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15, marginBottom: 16 }}>
             All bikes are regularly checked and maintained by the BSU Bike Rental team. Please report any issues immediately after your ride.
           </p>
-          <h2 style={{ color: '#1976d2', fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How to find your bike?</h2>
-          <p style={{ color: '#444', fontSize: 15 }}>
+          <h2 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How to find your bike?</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
             After your application is approved, you will receive instructions on where to pick up your bike on campus.
           </p>
         </div>
@@ -709,14 +707,14 @@ export default function BikeRentalApplication() {
           }
         }
         input::placeholder, select:invalid { color: #aaa !important; opacity: 1; }
-        select { color: #222 !important; }
+        select { color: var(--text-primary) !important; background: var(--input-bg) !important; border-color: var(--input-border) !important; }
         input:focus, select:focus {
           border: 1.5px solid #1976d2 !important;
-          background: #fff;
+          background: var(--card-bg);
         }
         body, html {
           font-family: 'Segoe UI', Arial, sans-serif;
-          background: #f7f8fa;
+          background: transparent;
         }
       `}</style>
     </div>

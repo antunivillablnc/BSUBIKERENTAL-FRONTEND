@@ -67,7 +67,7 @@ export default function BikeRentalPage() {
         pointerEvents: 'none',
       }} />
       {/* Hero Section */}
-      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 8px', position: 'relative', zIndex: 1 }}>
+      <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 8px', position: 'relative', zIndex: 1, background: 'transparent' }}>
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
             <BikeLoader />
@@ -97,7 +97,7 @@ export default function BikeRentalPage() {
                 margin: '0 auto 32px',
                 display: 'block',
                 opacity: 1,
-                textShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                textShadow: '0 2px 8px var(--shadow-color)',
                 userSelect: 'none',
               }}
               onClick={() => router.push('/reserve/apply')}
@@ -124,7 +124,7 @@ export default function BikeRentalPage() {
               marginTop: 8,
               marginBottom: 10,
               letterSpacing: 0.1,
-              textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+              textShadow: '0 2px 6px var(--shadow-color)',
               background: 'transparent',
               padding: 0,
               borderRadius: 0,
@@ -155,10 +155,10 @@ export default function BikeRentalPage() {
               {bikes.map((bike, i) => (
                 <SwiperSlide key={bike.id}>
                   <div style={{
-                    background: '#fff',
+                    background: 'var(--card-bg)',
                     borderRadius: 18,
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
-                    border: '2px solid #1976d2',
+                    boxShadow: '0 4px 16px var(--shadow-color)',
+                    border: '1px solid var(--border-color)',
                     minWidth: 180,
                     maxWidth: 260,
                     width: '90vw',
@@ -169,13 +169,13 @@ export default function BikeRentalPage() {
                     margin: '0 auto',
                   }}>
                     <img src="/Bike.jpg" alt={bike.name} style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 10, marginBottom: 16, border: '1.5px solid #eee' }} />
-                    <div style={{ fontWeight: 800, fontSize: 22, color: '#1976d2', marginBottom: 8, letterSpacing: 1, textShadow: '0 1px 2px #eee' }}>{bike.name}</div>
-                    <div style={{ color: '#555', fontSize: 16, marginBottom: 18, textAlign: 'center' }}>Available for BSU students</div>
+                    <div style={{ fontWeight: 800, fontSize: 22, color: '#1976d2', marginBottom: 8, letterSpacing: 1, textShadow: '0 1px 2px var(--shadow-color)' }}>{bike.name}</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 18, textAlign: 'center' }}>Available for BSU students</div>
                     {/* Amenities section */}
                     <div style={{ color: '#1976d2', fontWeight: 600, fontSize: 15, marginBottom: 10, textAlign: 'center' }}>
                       Amenities
                     </div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#444', fontSize: 15, marginBottom: 16, textAlign: 'center' }}>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: 'var(--text-secondary)', fontSize: 15, marginBottom: 16, textAlign: 'center' }}>
                       <li>🪖 Helmet</li>
                       <li>🥤 Tumbler</li>
                       <li>🛠️ Air pump</li>
