@@ -1198,15 +1198,15 @@ export default function Navbar() {
           }
 
           .dark {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #475569;
+            --bg-primary: #222831;
+            --bg-secondary: #222831;
+            --bg-tertiary: #222831;
             --text-primary: #f8fafc;
             --text-secondary: #e2e8f0;
             --text-muted: #94a3b8;
             --border-color: #475569;
             --shadow-color: rgba(0,0,0,0.5);
-            --card-bg: #1e293b;
+            --card-bg: #222831;
             --input-bg: #334155;
             --input-border: #475569;
             --hover-bg: #475569;
@@ -1223,7 +1223,7 @@ export default function Navbar() {
 
           /* Default dark mode for entire page */
           body {
-            background-color: #0f172a;
+            background-color: #222831;
             color: #f8fafc;
           }
 

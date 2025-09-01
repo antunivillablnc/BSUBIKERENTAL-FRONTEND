@@ -29,9 +29,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <main style={{ flex: 1 }}>
             {children}
           </main>
-          <footer style={{ background: '#fff', borderTop: '1px solid #e5e7eb', padding: '24px' }}>
+          <footer style={{ background: 'var(--card-bg)', borderTop: '1px solid var(--border-color)', padding: '24px' }}>
             <div style={{ maxWidth: 1400, margin: '0 auto', textAlign: 'center' }}>
-              <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0 }}>
                 © 2025 Bike Rental Website. All rights reserved.
               </p>
             </div>

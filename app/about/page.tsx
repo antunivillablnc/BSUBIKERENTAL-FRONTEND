@@ -2,13 +2,13 @@
 
 export default function AboutPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f8fa', padding: '48px 24px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)', padding: '48px 24px' }}>
       <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', padding: 32 }}>
+        <div style={{ background: 'var(--card-bg)', borderRadius: 16, boxShadow: '0 4px 16px var(--shadow-color)', border: '1px solid var(--border-color)', padding: 32 }}>
           <h1 style={{ color: '#1976d2', fontWeight: 800, fontSize: 32, marginBottom: 24, textAlign: 'center' }}>
             About Us
           </h1>
-          <p style={{ color: '#444', fontSize: 18, textAlign: 'center', marginBottom: 32 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 18, textAlign: 'center', marginBottom: 32 }}>
             Connect with us for updates, support, and more!
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
