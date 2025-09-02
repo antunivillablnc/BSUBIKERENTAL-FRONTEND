@@ -178,116 +178,118 @@ export default function AdminLayout({
               <svg width="22" height="22" fill="none" stroke="#b22222" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11c0-3.07-1.64-5.64-5-5.958V4a1 1 0 1 0-2 0v1.042C6.64 5.36 5 7.929 5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 1 1-6 0v-1m6 0H9"/>
               </svg>
-              {pendingCount > 0 && !showDropdown && (
+              {pendingCount > 0 && (
                 <span style={{
                   position: 'absolute',
-                  top: 4,
-                  right: 4,
+                  top: -8,
+                  right: -8,
                   background: '#ef4444',
                   color: '#fff',
                   borderRadius: 9999,
-                  minWidth: 18,
-                  height: 18,
+                  minWidth: 20,
+                  height: 20,
                   fontSize: 12,
                   fontWeight: 700,
-                  display: 'flex',
+                  display: showDropdown ? 'none' : 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '0 5px',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
+                  padding: '0 6px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.10)'
                 }}>
-                  {pendingCount}
+                  {Math.min(pendingCount, 9)}
                 </span>
               )}
-              {showDropdown && (
-                <div
-                  ref={dropdownRef}
-                  style={{
-                    position: 'absolute',
-                    top: 44,
-                    right: 0,
-                    minWidth: 320,
-                    background: '#fff',
-                    border: '1.5px solid #e0e0e0',
-                    borderRadius: 12,
-                    boxShadow: '0 8px 32px 0 rgba(31,38,135,0.12)',
-                    zIndex: 1001,
-                    padding: 0,
-                  }}
-                >
-                  <div style={{ padding: '14px 18px', borderBottom: '1.5px solid #f3f4f6', fontWeight: 700, color: '#b22222', fontSize: 16 }}>
-                    Pending Requests
-                  </div>
-                  {pendingApps.length === 0 ? (
-                    <div style={{ padding: '18px', color: '#6b7280', textAlign: 'center', fontSize: 15 }}>
-                      No pending requests
-                    </div>
-                  ) : (
-                    <div style={{ maxHeight: 320, overflowY: 'auto', padding: '12px 0' }}>
-                      {pendingApps.map(app => (
-                        <div key={app.id} style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 12,
-                          padding: '12px 18px',
-                          margin: '0 8px 12px 8px',
-                          background: '#f6fafd',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 4px 0 rgba(31,38,135,0.06)',
-                          border: '1px solid #e0e0e0',
-                        }}>
-                          <div style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: '50%',
-                            background: '#b6d4fa',
-                            color: '#1976d2',
-                            fontWeight: 800,
-                            fontSize: 18,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}>
-                            {app.firstName?.[0]?.toUpperCase() || '?'}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ color: '#222', fontWeight: 700, fontSize: 15, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {app.firstName} {app.lastName}
-                            </div>
-                            <div style={{ color: '#1976d2', fontSize: 14, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {app.email}
-                            </div>
-                            <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 8 }}>
-                              Applied: {new Date(app.createdAt).toLocaleDateString()}
-                            </div>
-                            <a
-                              href="/admin/applications"
-                              style={{
-                                display: 'inline-block',
-                                background: '#b22222',
-                                color: '#fff',
-                                fontWeight: 700,
-                                fontSize: 13,
-                                borderRadius: 8,
-                                padding: '6px 16px',
-                                textDecoration: 'none',
-                                marginTop: 2,
-                                transition: 'background 0.15s',
-                              }}
-                              onMouseEnter={e => e.currentTarget.style.background = '#a11d1d'}
-                              onMouseLeave={e => e.currentTarget.style.background = '#b22222'}
-                            >
-                              View
-                            </a>
-                          </div>
+            </button>
+          </div>
+          {/* Collapsible notifications panel that pushes nav items down */}
+          <div
+            ref={dropdownRef}
+            style={{
+              maxHeight: showDropdown ? 340 : 0,
+              opacity: showDropdown ? 1 : 0,
+              transform: `translateY(${showDropdown ? 0 : -6}px)`,
+              transition: 'max-height 220ms ease, opacity 180ms ease, transform 180ms ease',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              background: '#fff',
+              border: '1.5px solid #e0e0e0',
+              borderRadius: 12,
+              boxShadow: '0 8px 24px 0 rgba(31,38,135,0.12)',
+              marginTop: 12,
+            }}>
+              <div style={{ padding: '14px 18px', borderBottom: '1.5px solid #f3f4f6', fontWeight: 700, color: '#b22222', fontSize: 16 }}>
+                Pending Requests
+              </div>
+              {pendingApps.length === 0 ? (
+                <div style={{ padding: '18px', color: '#6b7280', textAlign: 'center', fontSize: 15 }}>
+                  No pending requests
+                </div>
+              ) : (
+                <div style={{ maxHeight: 260, overflowY: 'auto', padding: '12px 0' }}>
+                  {pendingApps.map(app => (
+                    <div key={app.id} style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: '12px 18px',
+                      margin: '0 8px 12px 8px',
+                      background: '#f6fafd',
+                      borderRadius: 12,
+                      boxShadow: '0 1px 4px 0 rgba(31,38,135,0.06)',
+                      border: '1px solid #e0e0e0',
+                    }}>
+                      <div style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        background: '#b6d4fa',
+                        color: '#1976d2',
+                        fontWeight: 800,
+                        fontSize: 18,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        {app.firstName?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: '#222', fontWeight: 700, fontSize: 15, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {app.firstName} {app.lastName}
                         </div>
-                      ))}
+                        <div style={{ color: '#1976d2', fontSize: 14, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {app.email}
+                        </div>
+                        <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 8 }}>
+                          Applied: {new Date(app.createdAt).toLocaleDateString()}
+                        </div>
+                        <a
+                          href="/admin/applications"
+                          style={{
+                            display: 'inline-block',
+                            background: '#b22222',
+                            color: '#fff',
+                            fontWeight: 700,
+                            fontSize: 13,
+                            borderRadius: 8,
+                            padding: '6px 16px',
+                            textDecoration: 'none',
+                            marginTop: 2,
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#a11d1d'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#b22222'}
+                        >
+                          View
+                        </a>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
-            </button>
+            </div>
           </div>
         </div>
 
