@@ -19,6 +19,9 @@ export default function AdminBikesPage() {
   const [bikes, setBikes] = useState<Bike[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // Pagination
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [addName, setAddName] = useState("");
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState("");
@@ -74,6 +77,14 @@ export default function AdminBikesPage() {
 
   useEffect(() => {
     fetchBikes();
+    // Pre-select status filter if query param present
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const s = (params.get('status') || '').toLowerCase();
+      if (s === 'rented' || s === 'available' || s === 'all') {
+        setStatusFilter(s as typeof statusFilter);
+      }
+    } catch {}
   }, []);
 
   const fetchBikes = async () => {
@@ -167,6 +178,30 @@ export default function AdminBikesPage() {
   // Filter bikes by status and plate number
   const filteredBikes = (statusFilter === 'all' ? sortedBikes : sortedBikes.filter(b => b.status === statusFilter))
     .filter(bike => bike.name.toLowerCase().includes(plateFilter.toLowerCase()));
+
+  // Reset to first page when filters/sorts change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, sortField, sortOrder, plateFilter]);
+
+  // Pagination derived values
+  const totalItems = filteredBikes.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const clampedPage = Math.min(currentPage, totalPages);
+  const startIndex = (clampedPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const pageItems = filteredBikes.slice(startIndex, endIndex);
+
+  // Visible page window (max 5 like the reference look)
+  const windowSize = 5;
+  const half = Math.floor(windowSize / 2);
+  const windowStart = Math.max(1, Math.min(clampedPage - half, totalPages - windowSize + 1));
+  const windowEnd = Math.min(totalPages, windowStart + windowSize - 1);
+  const visiblePages = Array.from({ length: windowEnd - windowStart + 1 }, (_, i) => windowStart + i);
+
+  // Pagination controls state
+  const isPrevDisabled = clampedPage <= 1;
+  const isNextDisabled = clampedPage >= totalPages;
 
   // Modal state for renter info
   const [modalBike, setModalBike] = useState<Bike | null>(null);
@@ -505,7 +540,7 @@ export default function AdminBikesPage() {
           </div>
 
           <div style={{ display: 'grid', gap: 20 }}>
-            {filteredBikes.map((bike) => {
+            {pageItems.map((bike) => {
               const isRented = bike.status === 'rented' && bike.applications && bike.applications.length > 0;
               return (
                 <div
@@ -714,6 +749,92 @@ export default function AdminBikesPage() {
               </div>
               );
             })}
+          </div>
+
+          {/* Pagination controls */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 24 }}>
+            <nav aria-label="Pagination" style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              {/* Previous arrow (always rendered to keep layout stable) */}
+              <button
+                onClick={() => !isPrevDisabled && setCurrentPage(clampedPage - 1)}
+                disabled={isPrevDisabled}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: isPrevDisabled ? 'var(--text-muted)' : '#1976d2',
+                  fontWeight: 800,
+                  cursor: isPrevDisabled ? 'default' : 'pointer',
+                  padding: 0,
+                  fontSize: 18,
+                  lineHeight: 1,
+                  width: 22,
+                  textAlign: 'center',
+                }}
+                aria-label="Previous page"
+                aria-disabled={isPrevDisabled}
+              >
+                {"<"}
+              </button>
+              {/* Page numbers styled like the reference */}
+              <div style={{ display: 'flex', gap: 16 }}>
+                {visiblePages.map((pageNum) => {
+                  const isActive = clampedPage === pageNum;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      aria-current={isActive ? 'page' : undefined}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: isActive ? '#1976d2' : '#ADADAD',
+                        fontWeight: isActive ? 800 : 700,
+                        cursor: isActive ? 'default' : 'pointer',
+                        padding: 0,
+                        fontSize: 16,
+                        opacity: 1,
+                        transition: 'color 0.15s ease, opacity 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.color = '#1976d2';
+                          e.currentTarget.style.opacity = '1';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.color = '#ADADAD';
+                          e.currentTarget.style.opacity = '1';
+                        }
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Next link */}
+              <button
+                onClick={() => !isNextDisabled && setCurrentPage(clampedPage + 1)}
+                disabled={isNextDisabled}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: isNextDisabled ? 'var(--text-muted)' : '#1976d2',
+                  fontWeight: 800,
+                  cursor: isNextDisabled ? 'default' : 'pointer',
+                  padding: 0,
+                  fontSize: 18,
+                  lineHeight: 1,
+                  width: 22,
+                  textAlign: 'center',
+                }}
+                aria-label="Next page"
+                aria-disabled={isNextDisabled}
+              >
+                {">"}
+              </button>
+            </nav>
           </div>
 
           {/* Modal for renter info */}

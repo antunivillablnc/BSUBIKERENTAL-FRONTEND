@@ -91,8 +91,8 @@ export default function AdminDashboard() {
         // Get recent applications (last 5)
         setRecentApplications(applications.slice(0, 5));
         
-        // Get recent bikes (last 5)
-        setRecentBikes(bikes.slice(0, 5));
+        // Get currently rented bikes
+        setRecentBikes(bikes.filter((b: any) => (b?.status || '').toLowerCase() === 'rented'));
 
         // Leaderboard entries
         setLeaderboard(Array.isArray(fetchedLb) ? fetchedLb : []);
@@ -233,32 +233,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div style={{ marginBottom: 32 }}>
-          <h2 style={{ color: '#111827', fontWeight: 700, fontSize: 24, marginBottom: 20, textAlign: 'center' }}>
-            Quick Actions
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-            <QuickActionCard
-              title="Manage Applications"
-              description="Review and assign bikes to rental applications"
-              href="/admin/applications"
-              color="#1976d2"
-            />
-            <QuickActionCard
-              title="Manage Bikes"
-              description="Add, edit, and monitor bike inventory"
-              href="/admin/bikes"
-              color="#22c55e"
-            />
-            <QuickActionCard
-              title="Manage Accounts"
-              description="Create, edit, and manage user accounts"
-              href="/admin/users"
-              color="#8b5cf6"
-            />
-          </div>
-        </div>
+        
 
         {/* Recent Activity */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
@@ -306,11 +281,11 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Recent Bikes */}
+          {/* Rented Bikes */}
           <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h3 style={{ color: '#111827', fontWeight: 700, fontSize: 20, margin: 0 }}>Recent Bikes</h3>
-              <Link href="/admin/bikes" style={{ color: '#1976d2', textDecoration: 'none', fontWeight: 600 }}>
+              <h3 style={{ color: '#111827', fontWeight: 700, fontSize: 20, margin: 0 }}>Rented Bikes</h3>
+              <Link href="/admin/bikes?status=rented" style={{ color: '#1976d2', textDecoration: 'none', fontWeight: 600 }}>
                 View All →
               </Link>
             </div>
@@ -343,7 +318,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#6b7280', textAlign: 'center', fontStyle: 'italic' }}>No bikes yet</p>
+              <p style={{ color: '#6b7280', textAlign: 'center', fontStyle: 'italic' }}>No rented bikes at the moment</p>
             )}
           </div>
 
