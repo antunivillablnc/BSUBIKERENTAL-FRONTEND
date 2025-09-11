@@ -9,16 +9,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
     "migrate:firestore": "tsx scripts/migrate-to-firestore.ts",
     "seed:firestore": "tsx scripts/seed-firestore.ts",
     "seed:from-schema": "tsx scripts/seed-from-schema.ts"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
-    "@prisma/client": "^6.11.1",
     "@splinetool/react-spline": "^4.0.0",
     "@types/bcryptjs": "^2.4.6",
     "all": "^0.0.0",
@@ -30,7 +25,6 @@
     "leaflet": "^1.9.4",
     "next": "^15.3.5",
     "nodemailer": "^7.0.4",
-    "prisma": "^6.11.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-google-recaptcha": "^3.1.0",
