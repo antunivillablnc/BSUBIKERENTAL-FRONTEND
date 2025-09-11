@@ -61,7 +61,7 @@ export default function ResetPasswordForm() {
     setError("");
     setSuccess("");
     setLoading(true);
-    const res = await fetch("/api/reset-password", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),

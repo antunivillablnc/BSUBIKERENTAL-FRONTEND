@@ -57,9 +57,9 @@ export default function AdminDashboard() {
     setError("");
     try {
       const [appsRes, bikesRes, lbRes] = await Promise.all([
-        fetch("/api/admin/applications"),
-        fetch("/api/admin/bikes"),
-        fetch("/api/leaderboard?limit=5"),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard?limit=5`),
       ]);
       
       const appsData = await appsRes.json();
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
                     alert('Please provide valid name, distance, and CO2 values.');
                     return;
                   }
-                  const res = await fetch('/api/leaderboard', {
+                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
@@ -403,7 +403,7 @@ export default function AdminDashboard() {
                             const distanceKm = distance == null ? entry.distanceKm : parseFloat(distance);
                             const co2SavedKg = co2 == null ? entry.co2SavedKg : parseFloat(co2);
                             if (Number.isNaN(distanceKm) || Number.isNaN(co2SavedKg)) return alert('Invalid numbers');
-                            const res = await fetch('/api/leaderboard', {
+                            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ id: entry.id, name, distanceKm, co2SavedKg }),

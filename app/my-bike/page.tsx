@@ -82,7 +82,7 @@ export default function MyBikePage() {
         return;
       }
       try {
-        const res = await fetch(`/api/my-bike?userId=${userId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/my-bike?userId=${userId}`);
         const json: ApiResponse = await res.json();
         if (!json.success) throw new Error(json.error || "Unknown error");
         setData(json);

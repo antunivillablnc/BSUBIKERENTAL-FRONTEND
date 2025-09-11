@@ -33,6 +33,29 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 # .env*
 
+# secrets (do not commit)
+.env
+.env.local
+backend/.env
+backend/.env.local
+*serviceAccount*.json
+*credentials*.json
+
+# ignore backend directory in this repo (backend will have its own repo)
+/backend/
+
+# backend build artifacts
+/backend/dist/
+/backend/node_modules/
+/backend/coverage/
+/backend/*.tsbuildinfo
+
+# editor/OS metadata
+.vscode/
+.idea/
+Thumbs.db
+*.swp
+
 # vercel
 .vercel
 

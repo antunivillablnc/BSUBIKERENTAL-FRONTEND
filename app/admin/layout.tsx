@@ -21,7 +21,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function fetchPending() {
       try {
-        const res = await fetch("/api/admin/applications");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`);
         const data = await res.json();
         if (data.success && Array.isArray(data.applications)) {
           const pending = data.applications.filter((app: any) => app.status === 'pending');

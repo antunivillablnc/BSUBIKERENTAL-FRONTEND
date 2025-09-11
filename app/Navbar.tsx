@@ -73,7 +73,7 @@ function ProfileSettingsForm({
     formData.append('photo', file);
     
     try {
-      const response = await fetch('/api/upload-profile-photo', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-profile-photo`, {
         method: 'POST',
         body: formData,
       });
@@ -372,7 +372,7 @@ export default function Navbar() {
      setSeenIdsSnapshot(loadSeenSnapshot(user.email || '')); 
     // Fetch real notifications
     const query = user?.id ? `userId=${encodeURIComponent(user.id)}` : `email=${encodeURIComponent(user.email)}`;
-    fetch(`/api/dashboard?${query}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard?${query}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.applications)) {

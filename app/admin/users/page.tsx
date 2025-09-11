@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/admin/users");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`);
       const data = await response.json();
       
       if (data.success) {
@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
 
     setFormLoading(true);
     try {
-      const res = await fetch("/api/admin/users", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
 
     setFormLoading(true);
     try {
-      const res = await fetch("/api/admin/users", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,7 +136,7 @@ export default function AdminUsersPage() {
     
     setDeletingUserId(userId);
     try {
-      const res = await fetch("/api/admin/users", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: userId }),
@@ -344,7 +344,7 @@ export default function AdminUsersPage() {
                         border: '1px solid #d1d5db',
                         fontSize: 16,
                         background: '#fff',
-                        color: '#111', // set font color to black
+                        color: '#111',
                       }}
                       required
                     />
@@ -365,7 +365,7 @@ export default function AdminUsersPage() {
                         border: '1px solid #d1d5db',
                         fontSize: 16,
                         background: '#fff',
-                        color: '#111', // set font color to black
+                        color: '#111',
                       }}
                       required
                     />
@@ -386,7 +386,7 @@ export default function AdminUsersPage() {
                         border: '1px solid #d1d5db',
                         fontSize: 16,
                         background: '#fff',
-                        color: '#111', // set font color to black
+                        color: '#111',
                       }}
                     />
                   </div>
@@ -404,8 +404,8 @@ export default function AdminUsersPage() {
                         borderRadius: 8,
                         border: '1px solid #d1d5db',
                         fontSize: 16,
-                        background: '#fff', // white background
-                        color: '#111', // black font
+                        background: '#fff',
+                        color: '#111',
                       }}
                       required
                     >

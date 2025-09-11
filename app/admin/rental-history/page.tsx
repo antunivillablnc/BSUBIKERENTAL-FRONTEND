@@ -28,7 +28,7 @@ export default function AdminRentalHistoryPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/rental-history");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/rental-history`);
       const data = await res.json();
       if (data.success) setHistory(data.history);
       else setError(data.error || "Failed to fetch history");

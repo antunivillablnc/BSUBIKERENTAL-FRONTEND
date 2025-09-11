@@ -71,8 +71,8 @@ export default function AdminApplicationsPage() {
     setError("");
     try {
       const [appsRes, bikesRes] = await Promise.all([
-        fetch("/api/admin/applications"),
-        fetch("/api/admin/bikes"),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`),
       ]);
       const appsData = await appsRes.json();
       const bikesData = await bikesRes.json();
@@ -92,7 +92,7 @@ export default function AdminApplicationsPage() {
     setAssigning(appId);
     setAssignError("");
     try {
-      const res = await fetch("/api/admin/assign-bike", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/assign-bike`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ applicationId: appId, bikeId }),
@@ -112,7 +112,7 @@ export default function AdminApplicationsPage() {
   async function handleUpdateStatus(appId: string, status: 'approved' | 'rejected' | 'pending') {
     setError("");
     try {
-      const res = await fetch('/api/admin/applications', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId: appId, status }),

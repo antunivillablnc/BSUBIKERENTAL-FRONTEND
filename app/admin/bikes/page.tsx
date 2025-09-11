@@ -89,7 +89,7 @@ export default function AdminBikesPage() {
 
   const fetchBikes = async () => {
     try {
-      const response = await fetch("/api/admin/bikes");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`);
       const data = await response.json();
       
       if (data.success) {
@@ -113,7 +113,7 @@ export default function AdminBikesPage() {
     }
     setAddLoading(true);
     try {
-      const res = await fetch("/api/admin/bikes", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: addName.trim(), status: "available" }),
@@ -209,7 +209,7 @@ export default function AdminBikesPage() {
   const handleEndRental = async (bikeId: string) => {
     setEndingBikeId(bikeId);
     try {
-      const res = await fetch("/api/admin/bikes", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: bikeId, status: "available" }),
@@ -246,7 +246,7 @@ export default function AdminBikesPage() {
     setEditLoading(true);
     setEditError("");
     try {
-      const res = await fetch("/api/admin/bikes", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: bikeId, name: editName.trim(), status: editStatus }),
@@ -272,7 +272,7 @@ export default function AdminBikesPage() {
   const handleDeleteBike = async (bikeId: string) => {
     setDeleteLoadingId(bikeId);
     try {
-      const res = await fetch("/api/admin/bikes", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: bikeId }),

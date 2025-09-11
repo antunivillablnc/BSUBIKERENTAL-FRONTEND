@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { apiFetch } from "@/lib/apiClient";
 
 const roles = [
   { value: "", label: "Select your role" },
@@ -45,7 +46,7 @@ export default function RegisterPage() {
       setError("Please fill in all fields.");
       return;
     }
-    const res = await fetch("/api/register", {
+    const res = await apiFetch("/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullName, email, password, role }),

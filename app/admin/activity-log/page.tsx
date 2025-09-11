@@ -8,7 +8,7 @@ export default function AdminActivityLogPage() {
 
   useEffect(() => {
     // Fetch activity logs from the API
-    fetch('/api/admin/activity-log')
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/activity-log`)
       .then(res => res.json())
       .then(data => {
         setActivities(data);

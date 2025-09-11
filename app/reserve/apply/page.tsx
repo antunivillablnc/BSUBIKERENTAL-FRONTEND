@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { getApiBaseUrl } from "@/lib/apiClient";
 
 const initialForm = {
   lastName: "",
@@ -281,7 +282,7 @@ export default function BikeRentalApplication() {
       formData.append("gwaFile", gwaFile);
       formData.append("ecaFile", ecaFile);
       formData.append("itrFile", itrFile);
-      const res = await fetch("/api/rental-application", {
+      const res = await fetch(`${getApiBaseUrl()}/applications`, {
         method: "POST",
         body: formData,
       });
@@ -297,7 +298,14 @@ export default function BikeRentalApplication() {
         setItrFile(null);
         setItrPreview(null);
       } else {
-        setError("Submission failed. Please try again.");
+        let message = "Submission failed. Please try again.";
+        try {
+          const data = await res.json();
+          if (data && (data.error || data.message)) {
+            message = data.error || data.message;
+          }
+        } catch {}
+        setError(message);
       }
     } catch {
       setError("Submission failed. Please try again.");

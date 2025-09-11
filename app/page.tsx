@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
+import { apiFetch } from "@/lib/apiClient";
 
 function Icon({ type }: { type: string }) {
   switch (type) {
@@ -40,7 +41,7 @@ export default function LoginPage() {
       recaptchaTimerRef.current = null;
     }
     try {
-      const res = await fetch("/api/login", {
+      const res = await apiFetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, recaptchaToken: token }),

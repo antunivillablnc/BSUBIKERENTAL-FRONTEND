@@ -176,7 +176,7 @@ export default function DashboardPage() {
 
   async function fetchLeaderboard() {
     try {
-      const res = await fetch('/api/leaderboard?limit=10');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard?limit=10`);
       const data = await res.json();
       if (data.success && Array.isArray(data.entries)) {
         setLeaderboardEntries(data.entries);

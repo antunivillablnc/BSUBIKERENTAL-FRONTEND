@@ -97,7 +97,7 @@ export default function AdminBikesMapPage() {
     // Load bikes for all-markers view
     (async () => {
       try {
-        const res = await fetch('/api/admin/bikes');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`);
         const data = await res.json();
         if (data?.success && Array.isArray(data.bikes)) setBikes(data.bikes);
       } catch {}
