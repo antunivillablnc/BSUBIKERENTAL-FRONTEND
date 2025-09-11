@@ -73,4 +73,4 @@ Use Invisible reCAPTCHA to protect the login endpoint:
    NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_site_key_here
    RECAPTCHA_SECRET_KEY=your_secret_key_here
    ```
-3. Restart the dev server after changing env variables.
+3. Restart the dev server after changing env variables.# BSUBIKERENTAL-FRONTEND
