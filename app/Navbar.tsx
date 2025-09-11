@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -323,6 +323,26 @@ export default function Navbar() {
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [seenIdsSnapshot, setSeenIdsSnapshot] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
+  const mobileProfileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileProfileMenuBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (
+        mobileProfileMenuOpen &&
+        mobileProfileMenuRef.current &&
+        !mobileProfileMenuRef.current.contains(e.target as Node) &&
+        mobileProfileMenuBtnRef.current &&
+        !mobileProfileMenuBtnRef.current.contains(e.target as Node)
+      ) {
+        setMobileProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [mobileProfileMenuOpen]);
+  // Mobile sidebar sections are always expanded; no dropdown state needed
 
   const dismissedKey = (email: string) => `dismissedNotifications:${email}`;
   const loadDismissed = (email: string): string[] => {
@@ -555,7 +575,7 @@ export default function Navbar() {
                         textShadow: 'none',
                         letterSpacing: '0.5px',
                       }}
-                       onMouseEnter={(e) => {
+                                           onMouseEnter={(e) => {
                         if (pathname !== item.href) {
                           e.currentTarget.style.background = 'rgba(178,34,34,0.10)';
                           e.currentTarget.style.color = 'var(--accent-color)';
@@ -578,7 +598,7 @@ export default function Navbar() {
             </div>
 
             {/* Right actions: notifications + user profile */}
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div className="header-actions" style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
               {/* Notifications */}
               <div
                 style={{ position: 'relative' }}
@@ -913,27 +933,30 @@ export default function Navbar() {
                  )}
               </div>
             </div>
+
+            {/* Mobile hamburger (inside header) */}
+            {!menuOpen && (
+              <button
+                className="hamburger"
+                aria-label="Open menu"
+                onClick={() => setMenuOpen(true)}
+                style={{
+                  display: 'none',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: 30,
+                  color: 'var(--accent-color)',
+                  cursor: 'pointer'
+                }}
+              >
+                &#9776;
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Hamburger icon for mobile */}
-      <button
-        className="hamburger"
-        aria-label="Open menu"
-        onClick={() => setMenuOpen(true)}
-        style={{
-          display: 'none',
-          background: 'none',
-          border: 'none',
-          fontSize: 32,
-          marginLeft: 16,
-          cursor: 'pointer',
-          zIndex: 120,
-        }}
-      >
-        &#9776;
-      </button>
+      {/* Hamburger icon moved inside header for mobile */}
 
       {/* Mobile menu overlay */}
       {menuOpen && (
@@ -955,77 +978,156 @@ export default function Navbar() {
           <div
             className="mobile-menu"
             style={{
-                           background: 'var(--card-bg)',
-             width: '80vw',
-             maxWidth: 320,
-             height: '100vh',
-             padding: '32px 24px',
-             boxShadow: `2px 0 16px var(--shadow-color)`,
+              background: 'var(--card-bg)',
+              width: '80vw',
+              maxWidth: 320,
+              height: '100vh',
+              padding: '24px 20px',
+              boxShadow: `2px 0 16px var(--shadow-color)`,
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
+              borderRight: '1px solid var(--border-color)',
+              gap: 12,
             }}
             onClick={e => e.stopPropagation()}
           >
-            <button
-              aria-label="Close menu"
-              onClick={() => setMenuOpen(false)}
-              style={{
-                                 background: 'none',
-                 border: 'none',
-                 fontSize: 32,
-                 color: 'var(--accent-color)',
-                 position: 'absolute',
-                 top: 16,
-                 right: 16,
-                 cursor: 'pointer',
-              }}
-            >
-              &times;
-            </button>
-            <div style={{ marginTop: 48, display: 'flex', flexDirection: 'column', gap: 28 }}>
-              {navLinks.map(link => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                                     style={{
-                     color: pathname === link.href ? 'var(--accent-color)' : 'var(--text-primary)',
-                     fontWeight: pathname === link.href ? 800 : 600,
-                     textDecoration: 'none',
-                     fontSize: 20,
-                     padding: '10px 12px',
-                     borderRadius: 10,
-                     transition: 'background-color 0.2s ease, color 0.2s ease',
-                     textShadow: 'none',
-                     letterSpacing: '0.5px',
-                     background: pathname === link.href ? 'rgba(178,34,34,0.10)' : 'transparent',
-                     border: pathname === link.href ? '1px solid rgba(178,34,34,0.35)' : '1px solid transparent',
-                   }}
-                     onMouseEnter={(e) => {
-                       if (pathname !== link.href) {
-                         e.currentTarget.style.background = 'rgba(178,34,34,0.10)';
-                         e.currentTarget.style.color = 'var(--accent-color)';
-                         e.currentTarget.style.padding = '10px 12px';
-                         e.currentTarget.style.borderRadius = '10px';
-                         e.currentTarget.style.border = '1px solid rgba(178,34,34,0.35)';
-                       }
-                     }}
-                     onMouseLeave={(e) => {
-                       if (pathname !== link.href) {
-                         e.currentTarget.style.background = 'transparent';
-                         e.currentTarget.style.color = 'var(--text-primary)';
-                         e.currentTarget.style.padding = '10px 12px';
-                         e.currentTarget.style.borderRadius = '10px';
-                         e.currentTarget.style.border = '1px solid transparent';
-                       }
-                     }}
-                  onClick={() => setMenuOpen(false)}
+            {/* Close button removed */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 8, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                <span style={{
+                  color: '#b22222',
+                  fontWeight: 800,
+                  fontSize: 22,
+                  letterSpacing: 1.5,
+                  textTransform: 'uppercase',
+                  fontFamily: 'inherit',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                }}>SPARTA</span>
+              </div>
+              <button
+                style={{ background: 'none', border: '1px solid var(--border-color)', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer' }}
+                onClick={() => setNotifModalOpen(true)}
+                aria-label="Open notifications"
+              >
+                <svg width="18" height="18" fill="none" stroke="var(--accent-color)" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11c0-3.07-1.64-5.64-5-5.958V4a1 1 0 1 0-2 0v1.042C6.64 5.36 5 7.929 5 11v3.159c0 .538-.214 1.055-.595 1.436L3 17h5m7 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg>
+                {showBadge && (
+                  <span style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff', borderRadius: 9999, minWidth: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{Math.min(notifications.length, 9)}</span>
+                )}
+              </button>
+            </div>
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Nav Links */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 90 }}>
+                {navLinks.map(link => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    style={{
+                      color: pathname === link.href ? 'var(--accent-color)' : 'var(--text-primary)',
+                      fontWeight: pathname === link.href ? 800 : 700,
+                      textDecoration: 'none',
+                      fontSize: 16,
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                      textShadow: 'none',
+                      letterSpacing: '0.2px',
+                      background: pathname === link.href ? 'rgba(178,34,34,0.10)' : 'transparent',
+                      border: pathname === link.href ? '1px solid rgba(178,34,34,0.35)' : '1px solid var(--border-color)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (pathname !== link.href) {
+                        e.currentTarget.style.background = 'rgba(178,34,34,0.10)';
+                        e.currentTarget.style.color = 'var(--accent-color)';
+                        e.currentTarget.style.border = '1px solid rgba(178,34,34,0.35)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (pathname !== link.href) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-primary)';
+                        e.currentTarget.style.border = '1px solid var(--border-color)';
+                      }
+                    }}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <span aria-hidden="true" style={{ marginRight: 10 }}>{link.icon}</span>
+                    <span>{link.label}</span>
+                  </a>
+                ))}
+              </div>
+
+              {/* Bottom profile chip */}
+              <div style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
+                <div
+                  style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: 9999, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 8px var(--shadow-color)' }}
                 >
-                  <span aria-hidden="true" style={{ marginRight: 10 }}>{link.icon}</span>
-                  <span>{link.label}</span>
-                </a>
-              ))}
-                             <button style={{ background: 'var(--accent-color)', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '10px 0', fontSize: 18, cursor: 'pointer', marginTop: 24, transition: 'background-color 0.3s ease' }} onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}>Log Out</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
+                      {userPhoto ? (
+                        <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)' }}>{(userName || 'U').charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.1 }}>{userName || 'User'}</div>
+                      <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--text-muted)' }}>{userEmail ? `@${(userEmail.split('@')[0] || 'user')}` : '@user'}</div>
+                    </div>
+                  </div>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <button
+                      ref={mobileProfileMenuBtnRef}
+                      aria-label="Open profile menu"
+                      onClick={(e) => { e.stopPropagation(); setMobileProfileMenuOpen(v => !v); }}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer' }}
+                    >
+                      ⋯
+                    </button>
+
+                    {mobileProfileMenuOpen && (
+                      <div
+                        ref={mobileProfileMenuRef}
+                        style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: 12, boxShadow: '0 8px 24px var(--shadow-color)', minWidth: 220, overflow: 'hidden' }}
+                      >
+                        <button
+                          onClick={() => { setProfileModalOpen(true); setMobileProfileMenuOpen(false); }}
+                          style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px 14px', cursor: 'pointer', fontWeight: 700 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          Profile Settings
+                        </button>
+                        <button
+                          style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px 14px', cursor: 'pointer', fontWeight: 700 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          Help Center
+                        </button>
+                        <button
+                          onClick={() => { toggleTheme(); setMobileProfileMenuOpen(false); }}
+                          style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px 14px', cursor: 'pointer', fontWeight: 700 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                        </button>
+                        <button
+                          onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}
+                          style={{ width: '100%', textAlign: 'left', background: 'var(--accent-color)', border: 'none', color: '#fff', padding: '12px 14px', cursor: 'pointer', fontWeight: 800 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent-color)')}
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1061,23 +1163,8 @@ export default function Navbar() {
            }}
             onClick={e => e.stopPropagation()}
           >
-            <button
-              onClick={() => setNotifModalOpen(false)}
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 16,
-                                 background: 'none',
-                 border: 'none',
-                 fontSize: 26,
-                 color: 'var(--accent-color)',
-                 cursor: 'pointer',
-              }}
-              aria-label="Close notifications"
-            >
-              ×
-            </button>
-                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            {/* Close button removed; click outside modal to dismiss */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                <div style={{ fontWeight: 800, color: '#1976d2', fontSize: 22, transition: 'color 0.3s ease' }}>All Notifications</div>
                <button onClick={clearAllNotifications} style={{ background: 'none', border: '1px solid #1976d2', color: '#1976d2', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 13, padding: '6px 10px', transition: 'all 0.3s ease' }}>Clear</button>
              </div>
@@ -1178,8 +1265,12 @@ export default function Navbar() {
            .navbar-links {
              display: none !important;
            }
+           .header-actions {
+             display: none !important;
+           }
            .hamburger {
              display: block !important;
+             position: static !important;
            }
          }
 
@@ -1325,6 +1416,13 @@ export default function Navbar() {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
+
+        /* Mobile menu slide-in animation */
+        @keyframes mobileSlideIn {
+          0% { transform: translateX(-16px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        .mobile-menu { animation: mobileSlideIn 200ms ease forwards; }
        `}</style>
     </>
   );

@@ -329,6 +329,7 @@ export default function BikeRentalApplication() {
     <div style={{ minHeight: '100vh', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`, display: 'flex', flexDirection: 'column', position: 'relative', padding: '48px 0' }}>
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
       <div
+        className="apply-grid"
         style={{
           display: 'flex',
           flexDirection: 'row',
@@ -344,12 +345,12 @@ export default function BikeRentalApplication() {
         }}
       >
         {/* Left: Application Form */}
-        <form onSubmit={handleSubmit} style={{ ...cardStyle, flex: 1, maxWidth: 700, minWidth: 320, opacity: agreed ? 1 : 0.6, pointerEvents: agreed ? 'auto' : 'none' }}>
-          <h1 style={{ color: 'var(--accent-color)', fontWeight: 800, fontSize: 30, marginBottom: 24, textAlign: 'center', letterSpacing: 0.2 }}>Bike Rental Application</h1>
+        <form className="apply-form" onSubmit={handleSubmit} style={{ ...cardStyle, flex: 1, maxWidth: 700, minWidth: 320, opacity: agreed ? 1 : 0.6, pointerEvents: agreed ? 'auto' : 'none' }}>
+          <h1 className="apply-title" style={{ color: 'var(--accent-color)', fontWeight: 800, fontSize: 30, marginBottom: 24, textAlign: 'center', letterSpacing: 0.2 }}>Bike Rental Application</h1>
           {/* Personal Information */}
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Personal Information</div>
 
-          <div style={grid3Style}>
+          <div className="grid-3" style={grid3Style}>
             <div>
               <label style={labelStyle}>Last Name*</label>
               <input name="lastName" value={form.lastName} onChange={handleChange} required style={inputStyle} placeholder="Last Name" />
@@ -363,7 +364,7 @@ export default function BikeRentalApplication() {
               <input name="middleName" value={form.middleName} onChange={handleChange} style={inputStyle} placeholder="Middle Name" />
             </div>
           </div>
-          <div style={grid3Style}>
+          <div className="grid-3" style={grid3Style}>
             <div>
               <label style={labelStyle}>SR Code*</label>
               <input name="srCode" value={form.srCode} onChange={handleChange} required style={inputStyle} placeholder="SR Code" />
@@ -377,7 +378,7 @@ export default function BikeRentalApplication() {
               </select>
             </div>
           </div>
-          <div style={grid3Style}>
+          <div className="grid-3" style={grid3Style}>
             <div>
               <label style={labelStyle}>Date of Birth*</label>
               <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required style={inputStyle} />
@@ -391,7 +392,7 @@ export default function BikeRentalApplication() {
               <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} placeholder="Email Address" />
             </div>
           </div>
-          <div style={grid3Style}>
+          <div className="grid-3" style={grid3Style}>
             <div>
               <label style={labelStyle}>College*</label>
               <input name="college" value={form.college} onChange={handleChange} required style={inputStyle} placeholder="College" />
@@ -408,10 +409,10 @@ export default function BikeRentalApplication() {
 
           {/* Required Documents */}
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Required Documents</div>
-          <div style={docGridStyle}>
+          <div className="doc-grid" style={docGridStyle}>
             <div>
               <label style={labelStyle}>Certificate of Indigency</label>
-              <label htmlFor="indigencyFile" style={{
+              <label className="file-input" htmlFor="indigencyFile" style={{
                 ...inputStyle,
                 display: 'flex',
                 alignItems: 'center',
@@ -463,7 +464,7 @@ export default function BikeRentalApplication() {
             </div>
             <div>
               <label style={labelStyle}>General Weighted Average</label>
-              <label htmlFor="gwaFile" style={{
+              <label className="file-input" htmlFor="gwaFile" style={{
                 ...inputStyle,
                 display: 'flex',
                 alignItems: 'center',
@@ -507,7 +508,7 @@ export default function BikeRentalApplication() {
             </div>
             <div>
               <label style={labelStyle}>Extra Curricular Activities</label>
-              <label htmlFor="ecaFile" style={{
+              <label className="file-input" htmlFor="ecaFile" style={{
                 ...inputStyle,
                 display: 'flex',
                 alignItems: 'center',
@@ -551,7 +552,7 @@ export default function BikeRentalApplication() {
             </div>
             <div>
               <label style={labelStyle}>Income Tax Return</label>
-              <label htmlFor="itrFile" style={{
+              <label className="file-input" htmlFor="itrFile" style={{
                 ...inputStyle,
                 display: 'flex',
                 alignItems: 'center',
@@ -598,7 +599,7 @@ export default function BikeRentalApplication() {
           {/* Documents consolidated under Required Documents section above */}
           {/* Address */}
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Present Home Address</div>
-          <div style={{
+          <div className="grid-3" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
             gap: 12,
@@ -617,7 +618,7 @@ export default function BikeRentalApplication() {
               </select>
             </div>
           </div>
-          <div style={{
+          <div className="grid-2" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: 12,
@@ -667,7 +668,7 @@ export default function BikeRentalApplication() {
           </button>
         </form>
         {/* Right: Agreement and Info */}
-        <div style={{ ...cardStyle, flex: 1, maxWidth: 480, minWidth: 280, padding: '28px 18px', marginBottom: 0 }}>
+        <div className="agreement-section" style={{ ...cardStyle, flex: 1, maxWidth: 480, minWidth: 280, padding: '28px 18px', marginBottom: 0 }}>
           <h2 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 22, marginBottom: 16 }}>Rental Agreement</h2>
           <div style={{ color: 'var(--text-secondary)', fontSize: 15, marginBottom: 18, lineHeight: 1.7 }}>
             <p><b>By submitting this application, you agree to the following terms:</b></p>
@@ -707,12 +708,24 @@ export default function BikeRentalApplication() {
       </div>
       <style jsx global>{`
         @media (max-width: 900px) {
-          div[style*='display: flex'][style*='flex-direction: row'] {
+          .apply-grid {
             flex-direction: column !important;
             gap: 24px !important;
             align-items: stretch !important;
             max-width: 98vw !important;
           }
+          /* Ensure agreement shows before form on mobile */
+          .agreement-section { order: 0 !important; }
+          .apply-form { order: 1 !important; }
+        }
+        @media (max-width: 700px) {
+          .grid-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .grid-4 { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .grid-2 { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .doc-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .file-input { max-width: 100% !important; }
+          .apply-title { font-size: 24px !important; }
+          form[style] { padding: 24px 16px !important; }
         }
         input::placeholder, select:invalid { color: #aaa !important; opacity: 1; }
         select { color: var(--text-primary) !important; background: var(--input-bg) !important; border-color: var(--input-border) !important; }

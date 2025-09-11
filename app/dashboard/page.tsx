@@ -91,7 +91,7 @@ export default function DashboardPage() {
         const isDark = document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#f8fafc' : '#111827';
         const gridColor = isDark ? '#475569' : '#e5e7eb';
-
+        
         // Update chart options for dark mode
         if (window.myTrendsChart.options.scales?.x) {
           window.myTrendsChart.options.scales.x.grid = { ...(window.myTrendsChart.options.scales.x.grid || {}), color: gridColor };
@@ -123,7 +123,7 @@ export default function DashboardPage() {
           bodyColor: textColor,
           backgroundColor: isDark ? '#0f172a' : '#ffffff',
         } as any;
-
+        
         window.myTrendsChart.update();
       }
     };

@@ -132,28 +132,23 @@ export default function AdminLayout({
         flexDirection: 'column',
         zIndex: 100,
       }}>
-        {/* Brand */}
-        <div style={{ padding: '16px 16px 12px 16px', borderBottom: '1px solid #f1f5f9' }}>
-          <Link href="/admin" style={{ textDecoration: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 40, height: 40, objectFit: 'contain' }} />
-              <span style={{
-                color: '#b22222',
-                fontWeight: 800,
-                fontSize: 22,
-                letterSpacing: 1.5,
-                textTransform: 'uppercase',
-                fontFamily: 'inherit',
-                textShadow: '0 1px 2px rgba(0,0,0,0.15)'
-              }}>SPARTA</span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Notifications */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ color: '#334155', fontWeight: 700, fontSize: 14 }}>Notifications</div>
+        {/* Brand + Notifications */}
+        <div style={{ padding: '16px 16px 12px 16px', borderBottom: '1px solid #f1f5f9', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <Link href="/admin" style={{ textDecoration: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                <span style={{
+                  color: '#b22222',
+                  fontWeight: 800,
+                  fontSize: 22,
+                  letterSpacing: 1.5,
+                  textTransform: 'uppercase',
+                  fontFamily: 'inherit',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.15)'
+                }}>SPARTA</span>
+              </div>
+            </Link>
             <button
               ref={bellRef}
               style={{
@@ -201,24 +196,23 @@ export default function AdminLayout({
               )}
             </button>
           </div>
-          {/* Collapsible notifications panel that pushes nav items down */}
-          <div
-            ref={dropdownRef}
-            style={{
-              maxHeight: showDropdown ? 340 : 0,
-              opacity: showDropdown ? 1 : 0,
-              transform: `translateY(${showDropdown ? 0 : -6}px)`,
-              transition: 'max-height 220ms ease, opacity 180ms ease, transform 180ms ease',
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{
-              background: '#fff',
-              border: '1.5px solid #e0e0e0',
-              borderRadius: 12,
-              boxShadow: '0 8px 24px 0 rgba(31,38,135,0.12)',
-              marginTop: 12,
-            }}>
+          {/* Absolute dropdown under the bell */}
+          {showDropdown && (
+            <div
+              ref={dropdownRef}
+              style={{
+                position: 'absolute',
+                left: 16,
+                right: 16,
+                top: 'calc(100% + 8px)',
+                background: '#fff',
+                border: '1.5px solid #e0e0e0',
+                borderRadius: 12,
+                boxShadow: '0 8px 24px 0 rgba(31,38,135,0.12)',
+                maxWidth: '100%',
+                zIndex: 1500,
+              }}
+            >
               <div style={{ padding: '14px 18px', borderBottom: '1.5px solid #f3f4f6', fontWeight: 700, color: '#b22222', fontSize: 16 }}>
                 Pending Requests
               </div>
@@ -290,8 +284,10 @@ export default function AdminLayout({
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
+
+        {/* Notifications moved to brand header above */}
 
         {/* Nav Items */}
         <nav style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -329,16 +325,16 @@ export default function AdminLayout({
             aria-expanded={showProfileMenu}
             style={{
               width: '100%',
-              background: '#0b1220',
-              border: '1px solid #111827',
-              color: '#f8fafc',
+              background: '#ffffff',
+              border: '1px solid #e5e7eb',
+              color: '#111827',
               borderRadius: 9999,
               padding: '10px 12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -347,25 +343,25 @@ export default function AdminLayout({
                 height: 36,
                 borderRadius: '50%',
                 overflow: 'hidden',
-                background: '#111827',
+                background: '#f3f4f6',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '1px solid #1f2937',
+                border: '1px solid #e5e7eb',
               }}>
                 {userPhoto ? (
                   <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontWeight: 800, fontSize: 14, color: '#e5e7eb' }}>{(userName || 'A').charAt(0).toUpperCase()}</span>
+                  <span style={{ fontWeight: 800, fontSize: 14, color: '#111827' }}>{(userName || 'A').charAt(0).toUpperCase()}</span>
                 )}
               </div>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontWeight: 800, fontSize: 14, color: '#f8fafc', lineHeight: 1.1 }}>{userName || 'Admin'}</div>
-                <div style={{ fontWeight: 600, fontSize: 12, color: '#9ca3af' }}>{userEmail ? `@${userEmail.split('@')[0]}` : '@admin'}</div>
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#111827', lineHeight: 1.1 }}>{userName || 'Admin'}</div>
+                <div style={{ fontWeight: 600, fontSize: 12, color: '#6b7280' }}>{userEmail ? `@${userEmail.split('@')[0]}` : '@admin'}</div>
               </div>
             </div>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: 18, color: '#e5e7eb' }}>⋯</span>
+              <span style={{ fontSize: 18, color: '#6b7280' }}>⋯</span>
             </div>
           </button>
           {showProfileMenu && (
@@ -377,8 +373,8 @@ export default function AdminLayout({
                 bottom: 'calc(100% + 8px)',
                 left: 12,
                 right: 12,
-                background: '#0b1220',
-                border: '1px solid #111827',
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
                 borderRadius: 12,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 overflow: 'visible',
@@ -395,12 +391,12 @@ export default function AdminLayout({
                   textAlign: 'left',
                   background: 'transparent',
                   border: 'none',
-                  color: '#e5e7eb',
+                  color: '#111827',
                   padding: '12px 14px',
                   cursor: 'pointer',
                   fontWeight: 700,
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#0f172a')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 Manage Accounts
@@ -413,12 +409,12 @@ export default function AdminLayout({
                   textAlign: 'left',
                   background: 'transparent',
                   border: 'none',
-                  color: '#fecaca',
+                  color: '#b22222',
                   padding: '12px 14px',
                   cursor: 'pointer',
                   fontWeight: 800,
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#0f172a')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 Log Out
@@ -432,9 +428,9 @@ export default function AdminLayout({
                   left: 'calc(50%)',
                   width: 12,
                   height: 12,
-                  background: '#0b1220',
-                  borderLeft: '1px solid #111827',
-                  borderTop: '1px solid #111827',
+                  background: '#ffffff',
+                  borderLeft: '1px solid #e5e7eb',
+                  borderTop: '1px solid #e5e7eb',
                   transform: 'translateX(-50%) rotate(45deg)',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
                 }}
