@@ -370,45 +370,49 @@ export default function Navbar() {
      setUserName(user.name || null);
      setUserPhoto(user.photo || null);
      setSeenIdsSnapshot(loadSeenSnapshot(user.email || '')); 
-    // Fetch real notifications
+    // Initial fetch
     const query = user?.id ? `userId=${encodeURIComponent(user.id)}` : `email=${encodeURIComponent(user.email)}`;
+    const buildNotifs = (apps: any[]) => {
+      const dismissed = loadDismissed(user.email || '');
+      const notifs = apps
+        .map((app: any) => {
+          const status: string = (app?.status || '').toLowerCase();
+          const isApproved = !!app?.bikeId || ['approved', 'active', 'assigned', 'assigned'].includes(status);
+          const isRejected = ['rejected', 'declined'].includes(status);
+          const isPending = !isApproved && !isRejected && ['pending', 'submitted', 'under review'].includes(status);
+          if (!isApproved && !isPending && !isRejected) return null;
+          const kind = isApproved ? 'approved' : isRejected ? 'rejected' : 'pending';
+          const id = `${app.id}:${kind}`;
+          if (dismissed.includes(id)) return null;
+          return { id, message: isApproved ? 'Your bike rental was approved!' : isRejected ? 'Your application was rejected.' : 'Your application is pending review.', date: app.createdAt ? app.createdAt.split('T')[0] : '', status: kind } as Notification;
+        })
+        .filter(Boolean) as Notification[];
+      setNotifications(notifs);
+      setLoadingNotifs(false);
+    };
+
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard?${query}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && Array.isArray(data.applications)) {
-          // Build one notification per application:
-          // - pending if not approved yet
-          // - approved if bike assigned/approved
-          // Include rejected
-          const dismissed = loadDismissed(user.email || '');
-          const notifs = data.applications
-            .map((app: any) => {
-              const status: string = (app?.status || '').toLowerCase();
-              const isApproved = !!app?.bikeId || ['approved', 'active', 'assigned', 'assigned'].includes(status);
-              const isRejected = ['rejected', 'declined'].includes(status);
-              const isPending = !isApproved && !isRejected && ['pending', 'submitted', 'under review'].includes(status);
-              if (!isApproved && !isPending && !isRejected) return null;
-              const kind = isApproved ? 'approved' : isRejected ? 'rejected' : 'pending';
-              const id = `${app.id}:${kind}`;
-              if (dismissed.includes(id)) return null;
-              return {
-                id,
-                message: isApproved ? 'Your bike rental was approved!' : isRejected ? 'Your application was rejected.' : 'Your application is pending review.',
-                date: app.createdAt ? app.createdAt.split('T')[0] : '',
-                status: kind,
-              } as Notification;
-            })
-            .filter(Boolean) as Notification[];
-          setNotifications(notifs);
-        } else {
-          setNotifications([]);
-        }
-        setLoadingNotifs(false);
+        if (data.success && Array.isArray(data.applications)) buildNotifs(data.applications); else { setNotifications([]); setLoadingNotifs(false); }
       })
-      .catch(() => {
-        setNotifications([]);
-        setLoadingNotifs(false);
-      });
+      .catch(() => { setNotifications([]); setLoadingNotifs(false); });
+
+    // Live updates via SSE
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/stream?${query}`;
+      const ev = new EventSource(url, { withCredentials: false } as any);
+      ev.onmessage = (evt) => {
+        try {
+          const payload = JSON.parse(evt.data);
+          if (payload?.success && Array.isArray(payload.applications)) {
+            buildNotifs(payload.applications);
+          }
+        } catch {}
+      };
+      ev.onerror = () => { /* ignore; connection may auto-retry */ };
+      return () => { ev.close(); };
+    } catch {}
   }, []);
 
   // Load theme preference from localStorage
