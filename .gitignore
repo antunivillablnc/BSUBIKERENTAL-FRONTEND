@@ -30,6 +30,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# env files (can opt-in for committing if needed)
+# .env*
 
 # secrets (do not commit)
 .env
@@ -39,14 +41,14 @@ backend/.env.local
 *serviceAccount*.json
 *credentials*.json
 
-# ignore backend directory in this repo (backend will have its own repo)
-/backend/
-
 # backend build artifacts
 /backend/dist/
 /backend/node_modules/
 /backend/coverage/
 /backend/*.tsbuildinfo
+
+# ignore backend folder (managed in separate repo)
+/backend/
 
 # editor/OS metadata
 .vscode/
