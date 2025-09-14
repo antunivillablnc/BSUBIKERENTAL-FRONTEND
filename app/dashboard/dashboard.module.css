@@ -1,0 +1,288 @@
+.page {
+  min-height: 100vh;
+  background: url('/car-rental-app.jpg') center center / cover no-repeat fixed;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(80, 80, 80, 0.7);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.contentWrap {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  padding: 48px 24px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cardShell {
+  background: var(--card-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-color);
+  padding: 32px;
+}
+
+.lastUpdated {
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.chartCard {
+  margin: 0 auto 32px;
+  max-width: 880px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 6px;
+}
+
+.segmentBtn {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.segmentBtnActive {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.gridCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  margin-top: 12px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  transition: transform 0.3s, box-shadow 0.3s;
+  will-change: transform;
+  border: 1px solid var(--border-color);
+}
+
+.cardHover:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 8px 32px var(--shadow-color), 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.center {
+  text-align: center;
+}
+
+.chartCanvas {
+  width: 100%;
+  max-width: 820px;
+  background: var(--input-bg);
+  border-radius: 12px;
+}
+
+.tableCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.btn {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.primaryTitle {
+  color: var(--text-primary);
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.h1Title {
+  color: var(--text-primary);
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  font-size: 34px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.h2Title {
+  color: var(--text-primary);
+  font-weight: 900;
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.secondaryText {
+  color: var(--text-secondary);
+}
+
+.green {
+  color: #16a34a;
+}
+
+.miniChartBox {
+  margin: 0 auto;
+  max-width: 280px;
+}
+
+.goalRow {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+}
+
+.chipButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.progress {
+  width: 100%;
+  background: var(--border-color);
+  border-radius: 8px;
+  height: 10px;
+  margin-top: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s;
+}
+
+.sparklineSvg {
+  display: block;
+}
+
+.valueEmphasis {
+  font-size: 20px;
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.bigCurrency {
+  color: var(--text-primary);
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.iconLg {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.iconHuge {
+  font-size: 46px;
+  margin-bottom: 12px;
+}
+
+.flexItem {
+  min-width: 220px;
+  flex: 1;
+}
+
+.minH220 {
+  min-height: 220px;
+}
+
+.highlightRow {
+  background: var(--bg-tertiary);
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.theadRow {
+  background: var(--bg-secondary);
+}
+
+.th,
+.td {
+  padding: 8px;
+}
+
+.textRight {
+  text-align: right;
+}
+
+

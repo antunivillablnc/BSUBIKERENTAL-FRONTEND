@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import styles from "./forgot-password.module.css";
 
 function Icon({ type }: { type: string }) {
   if (type === "mail") {
@@ -14,36 +15,9 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const inputGroupStyle = {
-    display: "flex",
-    alignItems: "center",
-    background: "#f7f7f7",
-    borderRadius: 6,
-    border: "1px solid #ccc",
-    marginBottom: 16,
-    padding: 0,
-    height: 48,
-  } as const;
-  const iconBoxStyle = {
-    background: "#e9ecef",
-    borderTopLeftRadius: 6,
-    borderBottomLeftRadius: 6,
-    width: 48,
-    height: 48,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as const;
-  const inputStyle = {
-    border: "none",
-    outline: "none",
-    background: "transparent",
-    fontSize: 16,
-    padding: "0 12px",
-    flex: 1,
-    height: 48,
-    color: "#000",
-  } as const;
+  const inputGroupStyle = undefined as any; // replaced by CSS module
+  const iconBoxStyle = undefined as any; // replaced by CSS module
+  const inputStyle = undefined as any; // replaced by CSS module
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,113 +38,48 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      width: "100vw",
-      backgroundImage: `url('/car-rental-app.jpg')`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      backgroundColor: "#aaa",
-      position: "relative"
-    }}>
-      <div style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "rgba(128,128,128,0.7)",
-        zIndex: 1
-      }} />
-      <style>{`
-        @media (max-width: 600px) {
-          .forgot-flex-container {
-            justify-content: center !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-          }
-          .auth-left-logo { display: none !important; }
-        }
-      `}</style>
-      <div
-        className="forgot-flex-container"
-        style={{
-          position: "relative",
-          zIndex: 2,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          paddingLeft: "0",
-          paddingRight: "0",
-          paddingTop: "0",
-        }}
-      >
-        <div
-          style={{
-            background: "#f5f5f5",
-            borderRadius: 20,
-            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-            padding: "32px 16px 16px 16px",
-            width: "100%",
-            maxWidth: 780,
-            minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "stretch",
-          }}
-        >
-          <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
-            <div className="auth-left-logo" style={{ flex: "0 0 350px", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
-              <img src="/bsu_logo.png" alt="BSU Logo" style={{ width: "100%", maxWidth: 340, height: "auto" }} />
+    <div className={styles.page}>
+      <div className={styles.overlay} />
+      <div className={styles.content}>
+        <div className={styles.panel}>
+          <div className={styles.row}>
+            <div className={styles.leftLogo}>
+              <img src="/bsu_logo.png" alt="BSU Logo" className={styles.leftLogoImg} />
             </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-                <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, marginRight: 10 }} />
+            <div className={styles.rightCol}>
+              <div className={styles.brandRow}>
+                <img src="/spartan_logo.png" alt="Sparta Logo" className={styles.brandLogo} />
                 <div>
-                  <div style={{ fontWeight: 700, color: "#b22222", fontSize: 22, letterSpacing: 1 }}>UNIVERSITY BIKE RENTAL</div>
-                  <div style={{ fontSize: 14, color: "#444" }}>Rent. Ride. Return. Spartan-style.</div>
+                  <div className={styles.brandTitle}>UNIVERSITY BIKE RENTAL</div>
+                  <div className={styles.brandTagline}>Rent. Ride. Return. Spartan-style.</div>
                 </div>
               </div>
-              <h2 style={{ margin: "18px 0 18px 0", fontWeight: 500, color: "#222" }}>Forgot Password</h2>
+              <h2 className={styles.heading}>Forgot Password</h2>
               <form onSubmit={handleSubmit}>
-            <div style={inputGroupStyle}>
-              <div style={iconBoxStyle}><Icon type="mail" /></div>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                style={inputStyle}
-              />
-            </div>
+                <div className={styles.inputGroup}>
+                  <div className={styles.iconBox}><Icon type="mail" /></div>
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    className={styles.input}
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{
-                    width: "100%",
-                    background: "#FFD600",
-                    color: "#222",
-                    fontWeight: 600,
-                    fontSize: 18,
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "12px 0",
-                    marginBottom: 10,
-                    cursor: loading ? "not-allowed" : "pointer",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-                  }}
+                  className={styles.submitBtn}
                 >
                   {loading ? "Sending..." : "Send Reset Link"}
                 </button>
               </form>
-              {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
-              {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
-              <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
+              {error && <p className={styles.error}>{error}</p>}
+              {success && <p className={styles.success}>{success}</p>}
+              <div className={styles.bottomText}>
                 Remembered your password?{' '}
-                <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Sign In</a>
+                <a href="/" className={styles.bottomLink}>Sign In</a>
               </div>
             </div>
           </div>

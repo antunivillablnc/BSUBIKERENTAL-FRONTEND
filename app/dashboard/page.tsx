@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import styles from "./dashboard.module.css";
 
 // Extend Window interface to include Chart
 declare global {
@@ -27,7 +28,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   const min = Math.min(...data, 0);
   const points = data.map((v, i) => `${(i / (data.length - 1)) * 100},${100 - ((v - min) / (max - min || 1)) * 100}`).join(' ');
   return (
-    <svg width="100%" height="32" viewBox="0 0 100 100" style={{ display: 'block' }}>
+    <svg width="100%" height="32" viewBox="0 0 100 100" className={styles.sparklineSvg}>
       <polyline
         fill="none"
         stroke={color}
@@ -42,8 +43,8 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const percent = Math.min(100, Math.round((value / max) * 100));
   return (
-    <div style={{ width: '100%', background: 'var(--border-color)', borderRadius: 8, height: 10, marginTop: 8 }}>
-      <div style={{ width: `${percent}%`, background: color, height: '100%', borderRadius: 8, transition: 'width 0.5s' }} />
+    <div className={styles.progress}>
+      <div className={styles.progressFill} style={{ width: `${percent}%`, background: color }} />
     </div>
   );
 }
@@ -322,55 +323,29 @@ export default function DashboardPage() {
   }, [chartLoaded, distanceTrend, co2Trend, timeFrame]);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`,
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-    }}>
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
-      <div style={{ flex: 1, position: 'relative', zIndex: 1, padding: '48px 24px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ 
-            background: 'var(--card-bg)', 
-            backdropFilter: 'blur(8px)', 
-            border: '1px solid var(--border-color)', 
-            borderRadius: 16, 
-            boxShadow: '0 10px 30px var(--shadow-color)', 
-            padding: 32 
-          }}>
-          <h1 style={{ color: 'var(--text-primary)', fontWeight: 900, letterSpacing: 0.3, fontSize: 34, marginBottom: 20, textAlign: 'center' }}>
+    <div className={styles.page}>
+      <div className={styles.overlay} />
+      <div className={styles.contentWrap}>
+      <div className={styles.container}>
+          <div className={styles.cardShell}>
+          <h1 className={styles.h1Title}>
             Dashboard
           </h1>
           {mounted && (
-            <div style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: 13, marginBottom: 10 }}>
+            <div className={styles.lastUpdated}>
               Last updated: {lastUpdated.toLocaleTimeString()}
             </div>
           )}
           {/* Trends Chart */}
-          <div style={{ margin: '0 auto 32px', maxWidth: 880, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 20, boxShadow: '0 8px 24px var(--shadow-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, margin: 0, letterSpacing: 0.2 }}>{`${timeFrame.charAt(0).toUpperCase()}${timeFrame.slice(1)} Trends`}</h2>
-              <div style={{ display: 'inline-flex', gap: 6, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 9999, padding: 6 }}>
+          <div className={styles.chartCard}>
+            <div className={styles.chartHeader}>
+              <h2 className={styles.h2Title}>{`${timeFrame.charAt(0).toUpperCase()}${timeFrame.slice(1)} Trends`}</h2>
+              <div className={styles.segmented}>
                 {(['week','month','year'] as const).map(tf => (
                   <button
                     key={tf}
                     onClick={() => setTimeFrame(tf)}
-                    style={{
-                      background: timeFrame === tf ? 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' : 'var(--bg-primary)',
-                      color: timeFrame === tf ? '#ffffff' : 'var(--text-primary)',
-                      border: timeFrame === tf ? '1px solid transparent' : '1px solid var(--border-color)',
-                      borderRadius: 9999,
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      boxShadow: timeFrame === tf ? '0 0 0 2px rgba(37,99,235,0.25)' : 'none',
-                      transition: 'background 0.15s, box-shadow 0.15s',
-                    }}
-                    onMouseEnter={(e) => { if (timeFrame !== tf) { e.currentTarget.style.background = 'var(--bg-tertiary)'; } }}
-                    onMouseLeave={(e) => { if (timeFrame !== tf) { e.currentTarget.style.background = 'var(--bg-primary)'; } }}
+                    className={`${styles.segmentBtn} ${timeFrame === tf ? styles.segmentBtnActive : ''}`}
                     aria-pressed={timeFrame === tf}
                   >
                     {tf === 'week' ? 'Week' : tf === 'month' ? 'Month' : 'Year'}
@@ -378,150 +353,105 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-            <canvas ref={chartRef} width={820} height={300} style={{ width: '100%', maxWidth: 820, background: 'var(--input-bg)', borderRadius: 12 }} />
-            {!chartLoaded && <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>Loading chart...</div>}
+            <canvas ref={chartRef} width={820} height={300} className={styles.chartCanvas} />
+            {!chartLoaded && <div className={styles.muted} style={{ textAlign: 'center', marginTop: 12 }}>Loading chart...</div>}
           </div>
           {/* Dashboard Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: 28,
-            marginTop: 12,
-            marginBottom: 24,
-          }}>
+          <div className={styles.gridCards}>
             {/* Combined Bike Location + Travel Distance Card */}
-            <div style={{
-              background: 'var(--card-bg)',
-              borderRadius: 16,
-              padding: 24,
-              boxShadow: '0 8px 24px var(--shadow-color)',
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              willChange: 'transform',
-              border: '1px solid var(--border-color)',
-            }}
-              className="dashboard-card"
-            >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
+            <div className={`${styles.card} ${styles.cardHover}`}>
+              <div className={styles.twoCol}>
                 {/* Left: Bike Location */}
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 36, marginBottom: 10 }}>📍</div>
-                  <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>Bike Location</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>{bikeLocation}</div>
-            </div>
+                <div className={styles.center}>
+                  <div className={styles.iconLg}>📍</div>
+                  <div className={styles.primaryTitle} style={{ fontSize: 18, marginBottom: 6 }}>Bike Location</div>
+                  <div className={styles.secondaryText} style={{ fontSize: 16 }}>{bikeLocation}</div>
+                </div>
                 {/* Right: Travel Distance */}
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 36, marginBottom: 10 }}>🚴‍♂️</div>
-                  <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>Travel Distance</div>
-                  <div style={{ color: '#16a34a', fontSize: 20, marginBottom: 8, fontWeight: 800 }}>{travelDistanceKm} km</div>
-                  <div style={{ margin: '0 auto', maxWidth: 280 }}>
-              <Sparkline data={distanceTrend} color="#22c55e" />
+                <div className={styles.center}>
+                  <div className={styles.iconLg}>🚴‍♂️</div>
+                  <div className={styles.primaryTitle} style={{ fontSize: 18, marginBottom: 6 }}>Travel Distance</div>
+                  <div className={`${styles.valueEmphasis} ${styles.green}`}>{travelDistanceKm} km</div>
+                  <div className={styles.miniChartBox}>
+                    <Sparkline data={distanceTrend} color="#22c55e" />
                     <ProgressBar value={travelDistanceKm} max={distanceGoal} color="#22c55e" />
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+                    <div className={styles.goalRow}>
                       <span>Goal: {distanceGoal} km</span>
-                      <button onClick={editDistanceGoal} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: 9999, padding: '2px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                      <button onClick={editDistanceGoal} className={styles.chipButton}>Edit</button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             {/* Cost Savings Card */}
-            <div style={{
-              background: 'var(--card-bg)',
-              borderRadius: 16,
-              padding: 24,
-              boxShadow: '0 8px 24px var(--shadow-color)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              minHeight: 220,
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              willChange: 'transform',
-              border: '1px solid var(--border-color)',
-            }}
-              className="dashboard-card"
-            >
-              <div style={{ fontSize: 46, marginBottom: 12 }}>💸</div>
-              <div style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: 26, marginBottom: 8, letterSpacing: 0.2 }}>Cost Savings</div>
-              <div style={{ color: 'var(--text-primary)', fontSize: 34, fontWeight: 900 }}>₱{costSavings.toLocaleString()}</div>
+            <div className={`${styles.card} ${styles.cardHover} ${styles.minH220} ${styles.center}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div className={styles.iconHuge}>💸</div>
+              <div className={styles.primaryTitle} style={{ fontSize: 26, marginBottom: 8 }}>Cost Savings</div>
+              <div className={styles.bigCurrency}>₱{costSavings.toLocaleString()}</div>
               {/* TODO: Replace with real cost savings calculation */}
             </div>
             {/* CO₂ Emission Savings Card */}
-            <div style={{
-              background: 'var(--card-bg)',
-              borderRadius: 16,
-              padding: 24,
-              boxShadow: '0 8px 24px var(--shadow-color)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              willChange: 'transform',
-              border: '1px solid var(--border-color)',
-            }}
-              className="dashboard-card"
-            >
-              <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
-              <div style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: 18, marginBottom: 6, letterSpacing: 0.2 }}>CO₂ Emission Savings</div>
-              <div style={{ color: 'var(--text-primary)', fontSize: 18, fontWeight: 800 }}>{co2SavingsKg} kg</div>
+            <div className={`${styles.card} ${styles.cardHover} ${styles.center}`}>
+              <div className={styles.iconLg}>🌱</div>
+              <div className={styles.primaryTitle} style={{ fontSize: 18, marginBottom: 6 }}>CO₂ Emission Savings</div>
+              <div className={styles.primaryTitle} style={{ fontSize: 18, fontWeight: 800 }}>{co2SavingsKg} kg</div>
               <Sparkline data={co2Trend} color="#8b5cf6" />
               <ProgressBar value={co2SavingsKg} max={co2Goal} color="#8b5cf6" />
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
+              <div className={styles.goalRow}>
                 <span>Goal: {co2Goal} kg</span>
-                <button onClick={editCo2Goal} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: 9999, padding: '2px 8px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                <button onClick={editCo2Goal} className={styles.chipButton}>Edit</button>
               </div>
               {/* TODO: Replace with real CO2 savings calculation */}
             </div>
           </div>
           {/* Personal Bests & Fun Facts */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, marginTop: 24, marginBottom: 24, justifyContent: 'center' }}>
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px var(--shadow-color)' }}>
-              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Personal Bests</h3>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 4 }}>🚴‍♂️ Longest Ride: <b>{personalBests.longestRide} km</b></div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 4 }}>📅 Most in a Week: <b>{personalBests.mostInWeek} km</b></div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>📆 Most in a Month: <b>{personalBests.mostInMonth} km</b></div>
+            <div className={`${styles.card} ${styles.flexItem}`}>
+              <h3 className={styles.h2Title} style={{ marginBottom: 10 }}>Personal Bests</h3>
+              <div className={styles.secondaryText} style={{ fontSize: 16, marginBottom: 4 }}>🚴‍♂️ Longest Ride: <b>{personalBests.longestRide} km</b></div>
+              <div className={styles.secondaryText} style={{ fontSize: 16, marginBottom: 4 }}>📅 Most in a Week: <b>{personalBests.mostInWeek} km</b></div>
+              <div className={styles.secondaryText} style={{ fontSize: 16 }}>📆 Most in a Month: <b>{personalBests.mostInMonth} km</b></div>
             </div>
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px var(--shadow-color)' }}>
-              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Environmental Impact</h3>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginBottom: 4 }}>🌳 Trees Planted Equivalent: <b>{treesPlanted}</b></div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>🚗 Car km Avoided: <b>{carKmAvoided} km</b></div>
+            <div className={`${styles.card} ${styles.flexItem}`}>
+              <h3 className={styles.h2Title} style={{ marginBottom: 10 }}>Environmental Impact</h3>
+              <div className={styles.secondaryText} style={{ fontSize: 16, marginBottom: 4 }}>🌳 Trees Planted Equivalent: <b>{treesPlanted}</b></div>
+              <div className={styles.secondaryText} style={{ fontSize: 16 }}>🚗 Car km Avoided: <b>{carKmAvoided} km</b></div>
             </div>
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, minWidth: 220, flex: 1, boxShadow: '0 8px 24px var(--shadow-color)' }}>
-              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, marginBottom: 10, letterSpacing: 0.2 }}>Goal Tracker</h3>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16 }}>Distance Goal: <b>{Math.round((travelDistanceKm/distanceGoal)*100)}%</b> complete</div>
+            <div className={`${styles.card} ${styles.flexItem}`}>
+              <h3 className={styles.h2Title} style={{ marginBottom: 10 }}>Goal Tracker</h3>
+              <div className={styles.secondaryText} style={{ fontSize: 16 }}>Distance Goal: <b>{Math.round((travelDistanceKm/distanceGoal)*100)}%</b> complete</div>
               <ProgressBar value={travelDistanceKm} max={distanceGoal} color="#22c55e" />
-              <div style={{ color: 'var(--text-secondary)', fontSize: 16, marginTop: 10 }}>CO₂ Goal: <b>{Math.round((co2SavingsKg/co2Goal)*100)}%</b> complete</div>
+              <div className={styles.secondaryText} style={{ fontSize: 16, marginTop: 10 }}>CO₂ Goal: <b>{Math.round((co2SavingsKg/co2Goal)*100)}%</b> complete</div>
               <ProgressBar value={co2SavingsKg} max={co2Goal} color="#8b5cf6" />
             </div>
           </div>
           {/* Leaderboard */}
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, maxWidth: 700, margin: '0 auto', boxShadow: '0 8px 24px var(--shadow-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <h3 style={{ color: 'var(--text-primary)', fontWeight: 900, fontSize: 20, letterSpacing: 0.2 }}>Leaderboard</h3>
-              <button onClick={fetchLeaderboard} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 10px', fontWeight: 700, cursor: 'pointer' }}>Refresh</button>
+          <div className={styles.tableCard}>
+            <div className={styles.chartHeader}>
+              <h3 className={styles.h2Title}>Leaderboard</h3>
+              <button onClick={fetchLeaderboard} className={styles.btn}>Refresh</button>
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table className={styles.table}>
               <thead>
-                <tr style={{ background: 'var(--bg-secondary)' }}>
-                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>Rank</th>
-                  <th style={{ padding: 8, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>User</th>
-                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>Distance (km)</th>
-                  <th style={{ padding: 8, textAlign: 'right', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>CO₂ Saved (kg)</th>
+                <tr className={styles.theadRow}>
+                  <th className={styles.th} style={{ textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>Rank</th>
+                  <th className={styles.th} style={{ textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>User</th>
+                  <th className={`${styles.th} ${styles.textRight}`} style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>Distance (km)</th>
+                  <th className={`${styles.th} ${styles.textRight}`} style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 16 }}>CO₂ Saved (kg)</th>
                 </tr>
               </thead>
               <tbody>
                 {leaderboardEntries.length === 0 ? (
-                  <tr><td colSpan={4} style={{ padding: 10, textAlign: 'center', color: 'var(--text-muted)' }}>No entries yet</td></tr>
+                  <tr><td colSpan={4} className={styles.td} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No entries yet</td></tr>
                 ) : (
                   leaderboardEntries.map((entry: LeaderboardEntry, i: number) => {
                     const isYou = !!(currentUser && (entry.userId === currentUser.id || (entry.name || '').toLowerCase() === (currentUser.name || '').toLowerCase() || (entry.name || '').toLowerCase() === (currentUser.email || '').toLowerCase()));
                     return (
-                      <tr key={entry.id} style={{ background: isYou ? 'var(--bg-tertiary)' : 'transparent', fontWeight: isYou ? 800 : 500, color: 'var(--text-secondary)' }}>
-                        <td style={{ padding: 8 }}>{i + 1}</td>
-                        <td style={{ padding: 8 }}>{isYou ? 'You' : entry.name}</td>
-                        <td style={{ padding: 8, textAlign: 'right' }}>{entry.distanceKm}</td>
-                        <td style={{ padding: 8, textAlign: 'right' }}>{entry.co2SavedKg}</td>
+                      <tr key={entry.id} className={isYou ? styles.highlightRow : ''}>
+                        <td className={styles.td}>{i + 1}</td>
+                        <td className={styles.td}>{isYou ? 'You' : entry.name}</td>
+                        <td className={`${styles.td} ${styles.textRight}`}>{entry.distanceKm}</td>
+                        <td className={`${styles.td} ${styles.textRight}`}>{entry.co2SavedKg}</td>
                       </tr>
                     );
                   })
@@ -532,16 +462,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      {/* Card hover animation */}
-      <style>{`
-        .dashboard-card {
-          transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .dashboard-card:hover {
-          transform: translateY(-8px) scale(1.03);
-          box-shadow: 0 8px 32px var(--shadow-color), 0 2px 8px rgba(0,0,0,0.10);
-        }
-      `}</style>
+      
     </div>
   );
 } 
