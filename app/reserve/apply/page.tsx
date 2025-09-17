@@ -103,6 +103,38 @@ const docGridStyle = {
   marginBottom: 18,
 } as React.CSSProperties;
 
+// Map of college -> available program options
+const programOptionsByCollege: Record<string, string[]> = {
+  "College of Teacher Education (CTE)": [
+    "BS Education Major in English",
+    "BS Education Major in Mathematics",
+    "BS Education Major in Science",
+  ],
+  "College of Engineering Technology (CET)": [
+    "Bachelor of Computer Engineering Technology",
+    "Bachelor of Electrical Engineering Technology",
+    "Bachelor of Electronics Engineering Technology",
+    "Bachelor of Instrumentation and Control Engineering Technology",
+  ],
+  "College of Arts and Sciences (CAS)": [
+    "Bachelor of Science in Psychology",
+    "Bachelor of Arts in Communication",
+  ],
+  "College of Accountancy, Business and Economics (CABE)": [
+    "BSBA Major in Human Resource Management",
+    "BSBA Major in Marketing Management",
+    "BSBA Major in Operations Management",
+    "Bachelor of Public Administration",
+    "BS in Management Accounting",
+  ],
+  "College of Informatics and Computing Sciences (CICS)": [
+    "BS in Information Technology",
+    "BSIT Major in Business Analytics",
+    "BSIT Major in Network Technology",
+    "BSIT Major in Service Management",
+  ],
+};
+
 export default function BikeRentalApplication() {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -175,6 +207,9 @@ export default function BikeRentalApplication() {
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
       setForm(f => ({ ...f, [name]: checked ? value : "" }));
+    } else if (name === "college") {
+      // Reset program when college changes to ensure a valid selection
+      setForm(f => ({ ...f, college: value, program: "" }));
     } else if (type === "file" && name === "indigencyFile") {
       const file = (e.target as HTMLInputElement).files?.[0] || null;
       setIndigencyFile(file);
@@ -381,7 +416,7 @@ export default function BikeRentalApplication() {
           <div className="grid-3" style={grid3Style}>
             <div>
               <label style={labelStyle}>Date of Birth*</label>
-              <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required style={inputStyle} />
+              <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} required style={{ ...inputStyle, WebkitAppearance: 'none' }} />
             </div>
             <div>
               <label style={labelStyle}>Phone Number*</label>
@@ -395,11 +430,27 @@ export default function BikeRentalApplication() {
           <div className="grid-3" style={grid3Style}>
             <div>
               <label style={labelStyle}>College*</label>
-              <input name="college" value={form.college} onChange={handleChange} required style={inputStyle} placeholder="College" />
+              <select name="college" value={form.college} onChange={handleChange} required style={inputStyle}>
+                <option value="">Select College</option>
+                <option value="College of Teacher Education (CTE)">College of Teacher Education (CTE)</option>
+                <option value="College of Engineering Technology (CET)">College of Engineering Technology (CET)</option>
+                <option value="College of Arts and Sciences (CAS)">College of Arts and Sciences (CAS)</option>
+                <option value="College of Accountancy, Business and Economics (CABE)">College of Accountancy, Business and Economics (CABE)</option>
+                <option value="College of Informatics and Computing Sciences (CICS)">College of Informatics and Computing Sciences (CICS)</option>
+              </select>
             </div>
             <div>
               <label style={labelStyle}>Program*</label>
-              <input name="program" value={form.program} onChange={handleChange} required style={inputStyle} placeholder="Program" />
+              {programOptionsByCollege[form.college] ? (
+                <select name="program" value={form.program} onChange={handleChange} required style={inputStyle} disabled={!form.college}>
+                  <option value="">Select Program</option>
+                  {programOptionsByCollege[form.college].map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              ) : (
+                <input name="program" value={form.program} onChange={handleChange} required style={inputStyle} placeholder={form.college ? "Program" : "Select College first"} disabled={!form.college} />
+              )}
             </div>
             <div>
               <label style={labelStyle}>Section</label>
@@ -723,11 +774,13 @@ export default function BikeRentalApplication() {
           .grid-4 { grid-template-columns: 1fr !important; gap: 12px !important; }
           .grid-2 { grid-template-columns: 1fr !important; gap: 12px !important; }
           .doc-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .grid-3 > div { min-width: 0 !important; }
           .file-input { max-width: 100% !important; }
           .apply-title { font-size: 24px !important; }
           form[style] { padding: 24px 16px !important; }
         }
         input::placeholder, select:invalid { color: #aaa !important; opacity: 1; }
+        input[type="date"] { -webkit-appearance: none !important; width: 100% !important; max-width: 100% !important; }
         select { color: var(--text-primary) !important; background: var(--input-bg) !important; border-color: var(--input-border) !important; }
         input:focus, select:focus {
           border: 1.5px solid #1976d2 !important;
