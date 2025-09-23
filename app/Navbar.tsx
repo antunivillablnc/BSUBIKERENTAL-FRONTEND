@@ -516,7 +516,6 @@ export default function Navbar() {
     { href: "/home", label: "Home", icon: "🏠" },
     { href: "/reserve", label: "Rent a Bike", icon: "🚲" },
     { href: "/dashboard", label: "Dashboard", icon: "📊" },
-    { href: "/my-bike", label: "My Bike", icon: "🚴" },
   ];
 
   return (
@@ -531,9 +530,9 @@ export default function Navbar() {
          transition: 'background-color 0.3s ease, border-color 0.3s ease',
        }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', height: 64, width: '100%' }}>
             {/* Logo/Brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-start' }}>
               <Link href="/home" style={{ textDecoration: 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, objectFit: 'contain', marginRight: 4 }} />
@@ -552,9 +551,9 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Navigation */}
-            <div className="navbar-links" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-              <nav style={{ display: 'flex', gap: 8 }}>
+            {/* Navigation - Perfectly Centered */}
+            <div className="navbar-links" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <nav style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 {navLinks.map((item) => (
                   <Link
                     key={item.href}
@@ -598,7 +597,7 @@ export default function Navbar() {
             </div>
 
             {/* Right actions: notifications + user profile */}
-            <div className="header-actions" style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div className="header-actions" style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'flex-end' }}>
               {/* Notifications */}
               <div
                 style={{ position: 'relative' }}
