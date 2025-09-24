@@ -69,7 +69,7 @@ export default function ResetPasswordForm() {
     setLoading(false);
     if (res.ok) {
       setSuccess("Password has been reset. You can now log in.");
-      router.push("/login");
+      router.push("/");
     } else {
       const data = await res.json();
       setError(data.error || "Failed to reset password.");

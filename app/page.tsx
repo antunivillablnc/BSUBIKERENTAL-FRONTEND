@@ -53,10 +53,14 @@ export default function LoginPage() {
           console.log('Saving user to localStorage:', data.user);
           console.log('User role:', data.user.role);
           console.log('Is admin?', data.user.role === "admin");
+          console.log('Is staff?', data.user.role === "teaching_staff" || data.user.role === "non_teaching_staff");
           localStorage.setItem('user', JSON.stringify(data.user));
           if (data.user.role === "admin") {
             console.log('Redirecting admin to /admin');
             router.push("/admin");
+          } else if (data.user.role === "teaching_staff" || data.user.role === "non_teaching_staff") {
+            console.log('Redirecting staff to /staff');
+            router.push("/staff");
           } else {
             console.log('Redirecting user to /home');
             router.push("/home");
