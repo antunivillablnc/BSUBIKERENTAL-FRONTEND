@@ -17,11 +17,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isAdmin = pathname?.startsWith('/admin');
-  const shouldHideNavbar = isAdmin || pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password';
+  const isStaff = pathname === '/staff' || pathname?.startsWith('/staff/');
+  const shouldHideNavbar = isAdmin || isStaff || pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password';
 
   return (
     <>
-      {isAdmin ? (
+      {isAdmin || isStaff ? (
         <>{children}</>
       ) : (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -29,13 +30,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <main style={{ flex: 1 }}>
             {children}
           </main>
-          <footer style={{ background: 'var(--card-bg)', borderTop: '1px solid var(--border-color)', padding: '24px' }}>
-            <div style={{ maxWidth: 1400, margin: '0 auto', textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0 }}>
-                © 2025 Bike Rental Website. All rights reserved.
-              </p>
-            </div>
-          </footer>
+          {!shouldHideNavbar && (
+            <footer style={{ background: 'var(--card-bg)', borderTop: '1px solid var(--border-color)', padding: '24px' }}>
+              <div style={{ maxWidth: 1400, margin: '0 auto', textAlign: 'center' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0 }}>
+                  © 2025 Bike Rental Website. All rights reserved.
+                </p>
+              </div>
+            </footer>
+          )}
         </div>
       )}
     </>

@@ -49,21 +49,31 @@ export default function DashboardMap({
   useEffect(() => {
     if (!containerRef.current) return;
     if (!token) return; // Graceful fallback handled by render below
-
     if (mapRef.current) return; // already initialized
 
-    mapboxgl.accessToken = token;
+    let cancelled = false;
+    let rafId = 0;
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
-      center: defaultCenter,
-      zoom,
-      attributionControl: false,
-    });
-    mapRef.current = map;
+    const init = () => {
+      if (cancelled) return;
+      if (!containerRef.current || !(containerRef.current as any).isConnected) return;
 
-    map.on("load", () => {
+      try {
+        mapboxgl.accessToken = token;
+        const map = new mapboxgl.Map({
+          container: containerRef.current,
+          style: "mapbox://styles/mapbox/light-v11",
+          center: defaultCenter,
+          zoom,
+          attributionControl: false,
+        });
+        mapRef.current = map;
+
+        // Swallow non-critical mapbox errors that can appear on rapid mount/unmount
+        map.on("error", () => {});
+
+        map.on("load", () => {
+          if (cancelled) return;
       const lineCoordinates: Position[] = defaultRoute.map(([lng, lat]) => [lng, lat]);
       const geojson: FeatureCollection<LineString> = {
         type: "FeatureCollection",
@@ -121,8 +131,17 @@ export default function DashboardMap({
       new mapboxgl.Marker(startEl).setLngLat(start).addTo(map);
       new mapboxgl.Marker(endEl).setLngLat(end).addTo(map);
     });
+      } catch {
+        // no-op; mapbox may throw if container disappears mid-init
+      }
+    };
+
+    // Delay init to avoid clashes with entry/exit animations causing rapid mount/unmount
+    rafId = requestAnimationFrame(init);
 
     return () => {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
       mapRef.current?.remove();
       mapRef.current = null;
     };
