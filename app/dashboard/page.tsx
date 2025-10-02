@@ -3,16 +3,21 @@ import { useEffect, useState } from "react";
 import DashboardMap from "../components/DashboardMap";
 
 // Simple circular progress component
-function CircularProgress({ value, max, color, size = 80, strokeWidth = 8 }: { 
+function CircularProgress({ value, max, color, size = 80, strokeWidth = 8, unit, goal }: { 
   value: number; 
   max: number; 
   color: string; 
   size?: number; 
   strokeWidth?: number; 
+  unit?: string;
+  goal?: number;
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
-  const percent = Math.min(100, (value / max) * 100);
+  
+  // Use goal for progress calculation if provided, otherwise use max
+  const target = goal || max;
+  const percent = Math.min(100, (value / target) * 100);
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
   return (
@@ -46,42 +51,164 @@ function CircularProgress({ value, max, color, size = 80, strokeWidth = 8 }: {
         transform: 'translate(-50%, -50%)',
         textAlign: 'center',
       }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#1e293b' }}>
           {value.toFixed(1)}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-          {max > 1000 ? 'kcal' : 'kg'}
+        <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+          {unit || 'units'}
         </div>
+        {goal && (
+          <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
+            Goal: {goal}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// Weekly activity bar chart component
-function WeeklyActivity({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  const days = ['10', '12', '14', '16', '18'];
+// Simple and reliable weekly activity chart
+function WeeklyActivity({ data }: { data: { day: string; distance: number; calories: number; co2: number }[] }) {
+  const [activeMetric, setActiveMetric] = useState<'distance' | 'calories' | 'co2'>('distance');
+  
+  const getValue = (item: typeof data[0]) => {
+    switch (activeMetric) {
+      case 'distance': return item.distance;
+      case 'calories': return item.calories;
+      case 'co2': return item.co2;
+      default: return item.distance;
+    }
+  };
+  
+  const getUnit = () => {
+    switch (activeMetric) {
+      case 'distance': return 'km';
+      case 'calories': return 'kcal';
+      case 'co2': return 'kg';
+    }
+  };
+  
+  const getColor = () => {
+    switch (activeMetric) {
+      case 'distance': return '#3b82f6';
+      case 'calories': return '#f97316';
+      case 'co2': return '#22c55e';
+    }
+  };
+  
+  const maxValue = Math.max(...data.map(getValue), 1);
   
   return (
-    <div style={{ display: 'flex', alignItems: 'end', gap: 8, height: 80 }}>
-      {data.slice(0, 5).map((value, i) => {
-        const height = (value / max) * 60;
-        return (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+    <div style={{ width: '100%' }}>
+      {/* Metric Selector */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '8px', 
+        marginBottom: '20px',
+        background: '#f8fafc',
+        padding: '4px',
+        borderRadius: '8px'
+      }}>
+        {(['distance', 'calories', 'co2'] as const).map((metric) => (
+          <button
+            key={metric}
+            onClick={() => setActiveMetric(metric)}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              border: 'none',
+              background: activeMetric === metric ? 'white' : 'transparent',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '500',
+              color: activeMetric === metric ? '#1e293b' : '#64748b',
+              cursor: 'pointer',
+              boxShadow: activeMetric === metric ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {metric === 'distance' ? 'Distance' : metric === 'calories' ? 'Calories' : 'CO₂ Saved'}
+          </button>
+        ))}
+      </div>
+      
+      {/* Simple Chart */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'flex-end', 
+        justifyContent: 'space-between',
+        height: '100px',
+        padding: '0 8px',
+        gap: '8px',
+        marginBottom: '16px'
+      }}>
+        {data.map((item, i) => {
+          const value = getValue(item);
+          const height = Math.max((value / maxValue) * 80, 6);
+          
+          return (
             <div 
+              key={i}
               style={{ 
-                width: 20, 
-                height: Math.max(height, 4), 
-                background: '#22c55e', 
-                borderRadius: 4,
-                marginBottom: 8,
-                transition: 'height 0.3s ease'
-              }} 
-            />
-            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{days[i]}</div>
-          </div>
-        );
-      })}
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                flex: 1,
+                gap: '8px'
+              }}
+            >
+              {/* Bar */}
+              <div
+                style={{
+                  width: '20px',
+                  height: `${height}px`,
+                  backgroundColor: getColor(),
+                  borderRadius: '3px 3px 0 0',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                }}
+                title={`${item.day}: ${value.toFixed(1)} ${getUnit()}`}
+              />
+              
+              {/* Day Label */}
+              <div style={{ 
+                fontSize: '11px', 
+                fontWeight: '500', 
+                color: '#64748b' 
+              }}>
+                {item.day}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Summary */}
+      <div style={{ 
+        marginTop: '16px',
+        paddingTop: '16px',
+        borderTop: '1px solid #e5e7eb',
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: '16px'
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Total this week:
+          </span>
+          <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>
+            {data.reduce((sum, item) => sum + getValue(item), 0).toFixed(1)} {getUnit()}
+          </span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Daily average:
+          </span>
+          <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>
+            {(data.reduce((sum, item) => sum + getValue(item), 0) / data.length).toFixed(1)} {getUnit()}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -91,9 +218,43 @@ export default function DashboardPage() {
   const [distanceKm] = useState(15.2);
   const [co2SavedKg] = useState(1.8);
   const [caloriesBurned] = useState(450);
-  const [weeklyData] = useState([20, 35, 40, 45, 55]);
+  const [weeklyData] = useState([
+    { day: 'Mon', distance: 12.5, calories: 380, co2: 1.2 },
+    { day: 'Tue', distance: 8.3, calories: 250, co2: 0.8 },
+    { day: 'Wed', distance: 15.7, calories: 470, co2: 1.5 },
+    { day: 'Thu', distance: 6.2, calories: 190, co2: 0.6 },
+    { day: 'Fri', distance: 18.9, calories: 580, co2: 1.8 },
+    { day: 'Sat', distance: 22.1, calories: 680, co2: 2.1 },
+    { day: 'Sun', distance: 14.3, calories: 440, co2: 1.4 }
+  ]);
   const [longestRide] = useState(75);
   const [fastestSpeed] = useState(35);
+
+  // Goals state with localStorage persistence
+  const [goals, setGoals] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedGoals = localStorage.getItem('bikeRentalGoals');
+      return savedGoals ? JSON.parse(savedGoals) : {
+        co2: 5.0,
+        calories: 600,
+        distance: 20.0
+      };
+    }
+    return {
+      co2: 5.0,
+      calories: 600,
+      distance: 20.0
+    };
+  });
+
+  const [showGoalSettings, setShowGoalSettings] = useState(false);
+
+  // Save goals to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bikeRentalGoals', JSON.stringify(goals));
+    }
+  }, [goals]);
 
   return (
     <div className="dashboard-container">
@@ -107,27 +268,48 @@ export default function DashboardPage() {
         {/* CO2 Saved Card */}
         <div className="metric-card co2-card">
           <div className="metric-icon">🌱</div>
-          <div className="metric-content">
+          <div className="metric-center-content">
             <div className="metric-label">CO₂ Saved</div>
-            <CircularProgress value={co2SavedKg} max={5} color="#22c55e" size={70} />
+            <CircularProgress 
+              value={co2SavedKg} 
+              max={5} 
+              color="#22c55e" 
+              size={100} 
+              unit="kg"
+              goal={goals.co2}
+            />
           </div>
         </div>
 
         {/* Calories Burned Card */}
         <div className="metric-card calories-card">
           <div className="metric-icon">🔥</div>
-          <div className="metric-content">
+          <div className="metric-center-content">
             <div className="metric-label">Calories Burned</div>
-            <CircularProgress value={caloriesBurned} max={1000} color="#f97316" size={70} />
+            <CircularProgress 
+              value={caloriesBurned} 
+              max={1000} 
+              color="#f97316" 
+              size={100} 
+              unit="kcal"
+              goal={goals.calories}
+            />
           </div>
         </div>
 
         {/* Kilometers Biked Card */}
         <div className="metric-card distance-card">
           <div className="metric-icon">🚴‍♂️</div>
-          <div className="metric-content">
+          <div className="metric-center-content">
             <div className="metric-label">Kilometers Biked</div>
-            <CircularProgress value={distanceKm} max={25} color="#3b82f6" size={70} />
+            <CircularProgress 
+              value={distanceKm} 
+              max={25} 
+              color="#3b82f6" 
+              size={100} 
+              unit="km"
+              goal={goals.distance}
+            />
           </div>
         </div>
       </div>
@@ -140,12 +322,55 @@ export default function DashboardPage() {
           <WeeklyActivity data={weeklyData} />
         </div>
 
-        {/* Personal Bests */}
+        {/* Personal Bests & Goals */}
         <div className="personal-bests-card">
           <div className="bests-header">
-            <h3>Personal Bests</h3>
-            <span className="settings-icon">⚙️</span>
+            <h3>Personal Bests & Goals</h3>
+            <button 
+              className="settings-button"
+              onClick={() => setShowGoalSettings(!showGoalSettings)}
+              title="Set Goals"
+            >
+              ⚙️
+            </button>
           </div>
+          
+          {showGoalSettings && (
+            <div className="goal-settings">
+              <h4>Set Your Goals</h4>
+              <div className="goal-input-group">
+                <label>CO₂ Saved (kg):</label>
+                <input
+                  type="number"
+                  value={goals.co2}
+                  onChange={(e) => setGoals({...goals, co2: parseFloat(e.target.value) || 0})}
+                  min="0"
+                  step="0.1"
+                />
+              </div>
+              <div className="goal-input-group">
+                <label>Calories (kcal):</label>
+                <input
+                  type="number"
+                  value={goals.calories}
+                  onChange={(e) => setGoals({...goals, calories: parseFloat(e.target.value) || 0})}
+                  min="0"
+                  step="10"
+                />
+              </div>
+              <div className="goal-input-group">
+                <label>Distance (km):</label>
+                <input
+                  type="number"
+                  value={goals.distance}
+                  onChange={(e) => setGoals({...goals, distance: parseFloat(e.target.value) || 0})}
+                  min="0"
+                  step="0.1"
+                />
+              </div>
+            </div>
+          )}
+          
           <div className="best-item">
             <span>Longest Ride:</span>
             <span className="best-value">{longestRide} km</span>
@@ -153,6 +378,31 @@ export default function DashboardPage() {
           <div className="best-item">
             <span>Fastest Speed:</span>
             <span className="best-value">{fastestSpeed} km/h</span>
+          </div>
+          
+          <div className="goal-progress-section">
+            <h4>Today's Progress</h4>
+            <div className="goal-progress-item">
+              <span>CO₂ Goal:</span>
+              <span className="progress-text">
+                {co2SavedKg.toFixed(1)} / {goals.co2} kg 
+                ({Math.round((co2SavedKg / goals.co2) * 100)}%)
+              </span>
+            </div>
+            <div className="goal-progress-item">
+              <span>Calories Goal:</span>
+              <span className="progress-text">
+                {caloriesBurned} / {goals.calories} kcal 
+                ({Math.round((caloriesBurned / goals.calories) * 100)}%)
+              </span>
+            </div>
+            <div className="goal-progress-item">
+              <span>Distance Goal:</span>
+              <span className="progress-text">
+                {distanceKm.toFixed(1)} / {goals.distance} km 
+                ({Math.round((distanceKm / goals.distance) * 100)}%)
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -175,38 +425,49 @@ export default function DashboardPage() {
 
         .metrics-row {
           display: flex;
-          gap: 16px;
+          gap: 20px;
           justify-content: center;
           flex-wrap: wrap;
-          max-width: 800px;
+          max-width: 1000px;
           margin: 0 auto;
         }
 
         .metric-card {
           background: white;
-          border-radius: 16px;
-          padding: 20px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          border-radius: 20px;
+          padding: 32px 24px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
           display: flex;
           align-items: center;
-          gap: 16px;
-          min-width: 200px;
+          justify-content: space-between;
+          gap: 24px;
+          min-width: 280px;
           flex: 1;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          position: relative;
+        }
+
+        .metric-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
         }
 
         .metric-icon {
-          font-size: 32px;
+          font-size: 40px;
+          flex-shrink: 0;
         }
 
-        .metric-content {
+        .metric-center-content {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
+          flex: 1;
+          text-align: center;
         }
 
         .metric-label {
-          font-size: 14px;
+          font-size: 16px;
           font-weight: 600;
           color: #64748b;
           text-align: center;
@@ -257,9 +518,20 @@ export default function DashboardPage() {
           color: #1e293b;
         }
 
-        .settings-icon {
+        .settings-button {
+          background: none;
+          border: none;
           font-size: 16px;
           opacity: 0.6;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 4px;
+          transition: opacity 0.2s ease, background-color 0.2s ease;
+        }
+
+        .settings-button:hover {
+          opacity: 1;
+          background-color: #f1f5f9;
         }
 
         .best-item {
@@ -276,22 +548,125 @@ export default function DashboardPage() {
           color: #1e293b;
         }
 
+        .goal-settings {
+          background: #f8fafc;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 20px;
+          border: 1px solid #e2e8f0;
+        }
+
+        .goal-settings h4 {
+          margin: 0 0 16px 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #475569;
+        }
+
+        .goal-input-group {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+        }
+
+        .goal-input-group label {
+          font-size: 13px;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .goal-input-group input {
+          width: 80px;
+          padding: 6px 8px;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+          font-size: 13px;
+          text-align: right;
+        }
+
+        .goal-input-group input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .goal-progress-section {
+          margin-top: 20px;
+          padding-top: 16px;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        .goal-progress-section h4 {
+          margin: 0 0 12px 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #475569;
+        }
+
+        .goal-progress-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          font-size: 13px;
+          color: #64748b;
+        }
+
+        .progress-text {
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+
+        /* Tablet Responsive */
+        @media (max-width: 1024px) {
+          .metrics-row {
+            max-width: 100%;
+            gap: 16px;
+          }
+
+          .metric-card {
+            min-width: 240px;
+          }
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
           .dashboard-container {
-            padding: 16px;
+            padding: 12px;
             gap: 16px;
           }
 
           .metrics-row {
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
+            gap: 16px;
+            margin: 0;
+            max-width: 100%;
           }
 
           .metric-card {
             min-width: unset;
             width: 100%;
-            max-width: 400px;
+            max-width: none;
+            padding: 24px 16px;
+            margin: 0;
+            justify-content: space-between;
+          }
+
+          .metric-center-content {
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+            text-align: left;
+            justify-content: space-between;
+          }
+
+          .metric-label {
+            text-align: left;
+            margin: 0;
+            flex: 1;
           }
 
           .bottom-section {
@@ -300,28 +675,30 @@ export default function DashboardPage() {
 
           .map-section {
             max-width: 100%;
+            margin: 0;
           }
         }
 
         /* Small mobile */
         @media (max-width: 480px) {
           .dashboard-container {
-            padding: 12px;
+            padding: 8px;
           }
 
           .metric-card {
-            padding: 16px;
+            padding: 20px 12px;
             gap: 12px;
           }
 
           .metric-icon {
-            font-size: 24px;
+            font-size: 32px;
           }
 
           .activity-card,
           .personal-bests-card {
-            padding: 20px;
+            padding: 16px;
           }
+
         }
       `}</style>
     </div>
