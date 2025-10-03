@@ -6,6 +6,8 @@ import Papa from 'papaparse';
 
 interface Application {
   id: string;
+  applicationType?: string; // 'student' or 'staff'
+  
   // Basic identity
   lastName: string;
   firstName: string;
@@ -18,7 +20,7 @@ interface Application {
   phoneNumber?: string;
   email: string;
 
-  // Academic
+  // Student-specific: Academic
   collegeProgram?: string;
   college?: string;
   program?: string;
@@ -26,22 +28,33 @@ interface Application {
   gwaLastSemester?: string;
   extracurricularActivities?: string | null;
 
-  // Address
+  // Staff-specific
+  department?: string;
+  staffId?: string;
+  employeeType?: string;
+  purpose?: string;
+  startDate?: string;
+  durationDays?: number;
+
+  // Address (student only)
   houseNo?: string;
   streetName?: string;
   barangay?: string;
   municipality?: string;
   province?: string;
 
-  // Other details
+  // Other details (student only)
   distanceFromCampus?: string;
   familyIncome?: string;
   intendedDuration?: string;
   intendedDurationOther?: string | null;
+  
+  // Documents
   certificatePath?: string | null;
   gwaDocumentPath?: string | null;
   ecaDocumentPath?: string | null;
   itrDocumentPath?: string | null;
+  employmentCertPath?: string | null;
 
   // Status / relations
   status: string;
@@ -185,8 +198,25 @@ export default function AdminApplicationsPage() {
   const handleCSVExport = () => {
     if (!selectedApp) return;
     
-    const csvData = [{
+    const csvData = selectedApp.applicationType === 'staff' ? [{
       'Application ID': selectedApp.id,
+      'Application Type': 'Staff',
+      'Last Name': selectedApp.lastName,
+      'First Name': selectedApp.firstName,
+      'Middle Name': selectedApp.middleName || '',
+      'Staff ID': selectedApp.staffId || '',
+      'Email': selectedApp.email,
+      'Employee Type': selectedApp.employeeType || '',
+      'Department': selectedApp.department || '',
+      'Purpose/Reason': selectedApp.purpose || '',
+      'Start Date': formatDate(selectedApp.startDate),
+      'Duration (days)': selectedApp.durationDays || '',
+      'Status': selectedApp.status,
+      'Assigned Bike': selectedApp.bike?.name || '',
+      'Created At': formatDate(selectedApp.createdAt)
+    }] : [{
+      'Application ID': selectedApp.id,
+      'Application Type': 'Student',
       'Last Name': selectedApp.lastName,
       'First Name': selectedApp.firstName,
       'Middle Name': selectedApp.middleName || '',
@@ -237,10 +267,12 @@ export default function AdminApplicationsPage() {
     const margin = 20;
     let yPosition = 30;
     
+    const isStaff = selectedApp.applicationType === 'staff';
+    
     // Title
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Bike Rental Application Details', pageWidth / 2, yPosition, { align: 'center' });
+    doc.text(`Bike Rental Application Details (${isStaff ? 'Staff' : 'Student'})`, pageWidth / 2, yPosition, { align: 'center' });
     
     yPosition += 20;
     
@@ -253,7 +285,13 @@ export default function AdminApplicationsPage() {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const personalInfo = [
+    const personalInfo = isStaff ? [
+      ['Last Name:', selectedApp.lastName],
+      ['First Name:', selectedApp.firstName],
+      ['Middle Name:', selectedApp.middleName || '-'],
+      ['Staff ID:', selectedApp.staffId || '-'],
+      ['Email:', selectedApp.email]
+    ] : [
       ['Last Name:', selectedApp.lastName],
       ['First Name:', selectedApp.firstName],
       ['Middle Name:', selectedApp.middleName || '-'],
@@ -272,86 +310,112 @@ export default function AdminApplicationsPage() {
     
     yPosition += 10;
     
-    // Academic Information Section
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Academic Information', margin, yPosition);
+    if (isStaff) {
+      // Staff Details Section
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Staff Details', margin, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      const staffInfo = [
+        ['Employee Type:', selectedApp.employeeType || '-'],
+        ['Department:', selectedApp.department || '-'],
+        ['Start Date:', formatDate(selectedApp.startDate)],
+        ['Duration (days):', String(selectedApp.durationDays || '-')],
+        ['Purpose/Reason:', selectedApp.purpose || '-']
+      ];
+      
+      staffInfo.forEach(([label, value]) => {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 30;
+        }
+        doc.text(label, margin, yPosition);
+        doc.text(value, margin + 50, yPosition);
+        yPosition += 6;
+      });
+    } else {
+      // Academic Information Section
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Academic Information', margin, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      const academicInfo = [
+        ['College:', selectedApp.college || '-'],
+        ['Program:', selectedApp.program || '-'],
+        ['Section:', selectedApp.collegeProgram || '-']
+      ];
+      
+      academicInfo.forEach(([label, value]) => {
+        doc.text(label, margin, yPosition);
+        doc.text(value, margin + 50, yPosition);
+        yPosition += 6;
+      });
+      
+      yPosition += 10;
+      
+      // Address Information Section
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Address Information', margin, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      const addressInfo = [
+        ['House No:', selectedApp.houseNo || '-'],
+        ['Street Name:', selectedApp.streetName || '-'],
+        ['Barangay:', selectedApp.barangay || '-'],
+        ['Municipality:', selectedApp.municipality || '-'],
+        ['Province:', selectedApp.province || '-']
+      ];
+      
+      addressInfo.forEach(([label, value]) => {
+        doc.text(label, margin, yPosition);
+        doc.text(value, margin + 50, yPosition);
+        yPosition += 6;
+      });
+      
+      yPosition += 10;
+      
+      // Other Details Section
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Other Details', margin, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      const otherInfo = [
+        ['Distance from Campus:', selectedApp.distanceFromCampus || '-'],
+        ['Monthly Family Income:', selectedApp.familyIncome || '-'],
+        ['Intended Duration:', selectedApp.intendedDuration || '-'],
+        ['Intended Duration (Other):', selectedApp.intendedDurationOther || '-']
+      ];
+      
+      otherInfo.forEach(([label, value]) => {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 30;
+        }
+        doc.text(label, margin, yPosition);
+        doc.text(value, margin + 50, yPosition);
+        yPosition += 6;
+      });
+    }
+    
     yPosition += 10;
     
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    const academicInfo = [
-      ['College:', selectedApp.college || '-'],
-      ['Program:', selectedApp.program || '-'],
-      ['Section:', selectedApp.collegeProgram || '-']
-    ];
-    
-    academicInfo.forEach(([label, value]) => {
-      doc.text(label, margin, yPosition);
-      doc.text(value, margin + 50, yPosition);
-      yPosition += 6;
-    });
-    
-    yPosition += 10;
-    
-    // Address Information Section
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Address Information', margin, yPosition);
-    yPosition += 10;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    const addressInfo = [
-      ['House No:', selectedApp.houseNo || '-'],
-      ['Street Name:', selectedApp.streetName || '-'],
-      ['Barangay:', selectedApp.barangay || '-'],
-      ['Municipality:', selectedApp.municipality || '-'],
-      ['Province:', selectedApp.province || '-']
-    ];
-    
-    addressInfo.forEach(([label, value]) => {
-      doc.text(label, margin, yPosition);
-      doc.text(value, margin + 50, yPosition);
-      yPosition += 6;
-    });
-    
-    yPosition += 10;
-    
-    // Other Details Section
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Other Details', margin, yPosition);
-    yPosition += 10;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    const otherInfo = [
-      ['Distance from Campus:', selectedApp.distanceFromCampus || '-'],
-      ['Monthly Family Income:', selectedApp.familyIncome || '-'],
-      ['Intended Duration:', selectedApp.intendedDuration || '-'],
-      ['Intended Duration (Other):', selectedApp.intendedDurationOther || '-'],
-      ['Status:', selectedApp.status],
-      ['Assigned Bike:', selectedApp.bike?.name || '-'],
-      ['Application Date:', formatDate(selectedApp.createdAt)]
-    ];
-    
-    otherInfo.forEach(([label, value]) => {
-      if (yPosition > 270) {
-        doc.addPage();
-        yPosition = 30;
-      }
-      doc.text(label, margin, yPosition);
-      doc.text(value, margin + 50, yPosition);
-      yPosition += 6;
-    });
-    
-    yPosition += 10;
-    
-    // Documents Section
+    // Status Information
     if (yPosition > 250) {
       doc.addPage();
       yPosition = 30;
@@ -359,28 +423,58 @@ export default function AdminApplicationsPage() {
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Documents', margin, yPosition);
+    doc.text('Application Status', margin, yPosition);
     yPosition += 10;
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     
-    const documents = [
-      ['Certificate of Indigency:', selectedApp.certificatePath ? 'Uploaded' : 'Not provided'],
-      ['General Weighted Average:', selectedApp.gwaDocumentPath ? 'Uploaded' : 'Not provided'],
-      ['Extra Curricular Activities:', selectedApp.ecaDocumentPath ? 'Uploaded' : 'Not provided'],
-      ['ITR Document:', selectedApp.itrDocumentPath ? 'Uploaded' : 'Not provided']
+    const statusInfo = [
+      ['Status:', selectedApp.status],
+      ['Assigned Bike:', selectedApp.bike?.name || '-'],
+      ['Application Date:', formatDate(selectedApp.createdAt)]
     ];
     
-    documents.forEach(([label, value]) => {
-      if (yPosition > 270) {
-        doc.addPage();
-        yPosition = 30;
-      }
+    statusInfo.forEach(([label, value]) => {
       doc.text(label, margin, yPosition);
       doc.text(value, margin + 50, yPosition);
       yPosition += 6;
     });
+    
+    // Documents Section - only for students
+    if (!isStaff) {
+      yPosition += 10;
+      
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 30;
+      }
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Documents', margin, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      const documents = [
+        ['Certificate of Indigency:', selectedApp.certificatePath ? 'Uploaded' : 'Not provided'],
+        ['General Weighted Average:', selectedApp.gwaDocumentPath ? 'Uploaded' : 'Not provided'],
+        ['Extra Curricular Activities:', selectedApp.ecaDocumentPath ? 'Uploaded' : 'Not provided'],
+        ['ITR Document:', selectedApp.itrDocumentPath ? 'Uploaded' : 'Not provided']
+      ];
+      
+      documents.forEach(([label, value]) => {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 30;
+        }
+        doc.text(label, margin, yPosition);
+        doc.text(value, margin + 50, yPosition);
+        yPosition += 6;
+      });
+    }
     
     // Save the PDF
     doc.save(`application_${selectedApp.lastName}_${selectedApp.firstName}_${selectedApp.id}.pdf`);
@@ -388,6 +482,8 @@ export default function AdminApplicationsPage() {
 
   // Generate print content
   const generatePrintContent = (app: Application) => {
+    const isStaff = app.applicationType === 'staff';
+    
     return `
       <!DOCTYPE html>
       <html>
@@ -453,7 +549,7 @@ export default function AdminApplicationsPage() {
       </head>
       <body>
         <div class="header">
-          <h1>Bike Rental Application Details</h1>
+          <h1>Bike Rental Application Details (${isStaff ? 'Staff' : 'Student'})</h1>
           <p>Application ID: ${app.id}</p>
         </div>
         
@@ -473,9 +569,10 @@ export default function AdminApplicationsPage() {
               <div class="field-value">${app.middleName || '-'}</div>
             </div>
             <div class="field">
-              <div class="field-label">SR Code</div>
-              <div class="field-value">${app.srCode || '-'}</div>
+              <div class="field-label">${isStaff ? 'Staff ID' : 'SR Code'}</div>
+              <div class="field-value">${isStaff ? (app.staffId || '-') : (app.srCode || '-')}</div>
             </div>
+            ${!isStaff ? `
             <div class="field">
               <div class="field-label">Sex</div>
               <div class="field-value">${app.sex || '-'}</div>
@@ -488,6 +585,7 @@ export default function AdminApplicationsPage() {
               <div class="field-label">Phone Number</div>
               <div class="field-value">${app.phoneNumber || '-'}</div>
             </div>
+            ` : ''}
             <div class="field">
               <div class="field-label">Email</div>
               <div class="field-value">${app.email}</div>
@@ -495,6 +593,33 @@ export default function AdminApplicationsPage() {
           </div>
         </div>
         
+        ${isStaff ? `
+        <div class="section">
+          <div class="section-title">Staff Details</div>
+          <div class="field-grid">
+            <div class="field">
+              <div class="field-label">Employee Type</div>
+              <div class="field-value">${app.employeeType || '-'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Department</div>
+              <div class="field-value">${app.department || '-'}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Start Date</div>
+              <div class="field-value">${formatDate(app.startDate)}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Duration (days)</div>
+              <div class="field-value">${app.durationDays || '-'}</div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Purpose/Reason</div>
+            <div class="field-value">${app.purpose || '-'}</div>
+          </div>
+        </div>
+        ` : `
         <div class="section">
           <div class="section-title">Academic Information</div>
           <div class="field-grid">
@@ -558,6 +683,13 @@ export default function AdminApplicationsPage() {
               <div class="field-label">Intended Duration (Other)</div>
               <div class="field-value">${app.intendedDurationOther || '-'}</div>
             </div>
+          </div>
+        </div>
+        `}
+        
+        <div class="section">
+          <div class="section-title">Application Status</div>
+          <div class="field-grid">
             <div class="field">
               <div class="field-label">Status</div>
               <div class="field-value">
@@ -575,6 +707,7 @@ export default function AdminApplicationsPage() {
           </div>
         </div>
         
+        ${!isStaff ? `
         <div class="section">
           <div class="section-title">Documents</div>
           <div class="field-grid">
@@ -596,6 +729,7 @@ export default function AdminApplicationsPage() {
             </div>
           </div>
         </div>
+        ` : ''}
       </body>
       </html>
     `;
@@ -605,36 +739,88 @@ export default function AdminApplicationsPage() {
   const handleBulkCSVExport = () => {
     if (filteredApplications.length === 0) return;
     
-    const csvData = filteredApplications.map(app => ({
-      'Application ID': app.id,
-      'Last Name': app.lastName,
-      'First Name': app.firstName,
-      'Middle Name': app.middleName || '',
-      'SR Code': app.srCode || '',
-      'Sex': app.sex || '',
-      'Date of Birth': formatDate(app.dateOfBirth),
-      'Phone Number': app.phoneNumber || '',
-      'Email': app.email,
-      'College': (app as any).college || '',
-      'Program': (app as any).program || '',
-      'Section': app.collegeProgram || '',
-      'House No': app.houseNo || '',
-      'Street Name': app.streetName || '',
-      'Barangay': app.barangay || '',
-      'Municipality': app.municipality || '',
-      'Province': app.province || '',
-      'Distance from Campus': app.distanceFromCampus || '',
-      'Family Income': app.familyIncome || '',
-      'Intended Duration': app.intendedDuration || '',
-      'Intended Duration Other': app.intendedDurationOther || '',
-      'Status': app.status,
-      'Assigned Bike': app.bike?.name || '',
-      'Certificate of Indigency': app.certificatePath || '',
-      'General Weighted Average Document': app.gwaDocumentPath || '',
-      'Extra Curricular Activities Document': app.ecaDocumentPath || '',
-      'ITR Document': app.itrDocumentPath || '',
-      'Created At': formatDate(app.createdAt)
-    }));
+    const csvData = filteredApplications.map(app => {
+      const isStaff = app.applicationType === 'staff';
+      
+      // Common fields for all applications
+      const baseData: any = {
+        'Application ID': app.id,
+        'Application Type': isStaff ? 'Staff' : 'Student',
+        'Last Name': app.lastName,
+        'First Name': app.firstName,
+        'Middle Name': app.middleName || '',
+        'Email': app.email,
+        'Status': app.status,
+        'Assigned Bike': app.bike?.name || '',
+        'Created At': formatDate(app.createdAt)
+      };
+      
+      if (isStaff) {
+        // Staff-specific fields
+        return {
+          ...baseData,
+          'Staff ID': app.staffId || '',
+          'Employee Type': app.employeeType || '',
+          'Department': app.department || '',
+          'Purpose/Reason': app.purpose || '',
+          'Start Date': formatDate(app.startDate),
+          'Duration (days)': app.durationDays || '',
+          // Empty student fields for consistency
+          'SR Code': '',
+          'Sex': '',
+          'Date of Birth': '',
+          'Phone Number': '',
+          'College': '',
+          'Program': '',
+          'Section': '',
+          'House No': '',
+          'Street Name': '',
+          'Barangay': '',
+          'Municipality': '',
+          'Province': '',
+          'Distance from Campus': '',
+          'Family Income': '',
+          'Intended Duration': '',
+          'Intended Duration Other': '',
+          'Certificate of Indigency': '',
+          'General Weighted Average Document': '',
+          'Extra Curricular Activities Document': '',
+          'ITR Document': ''
+        };
+      } else {
+        // Student-specific fields
+        return {
+          ...baseData,
+          'SR Code': app.srCode || '',
+          'Sex': app.sex || '',
+          'Date of Birth': formatDate(app.dateOfBirth),
+          'Phone Number': app.phoneNumber || '',
+          'College': (app as any).college || '',
+          'Program': (app as any).program || '',
+          'Section': app.collegeProgram || '',
+          'House No': app.houseNo || '',
+          'Street Name': app.streetName || '',
+          'Barangay': app.barangay || '',
+          'Municipality': app.municipality || '',
+          'Province': app.province || '',
+          'Distance from Campus': app.distanceFromCampus || '',
+          'Family Income': app.familyIncome || '',
+          'Intended Duration': app.intendedDuration || '',
+          'Intended Duration Other': app.intendedDurationOther || '',
+          'Certificate of Indigency': app.certificatePath || '',
+          'General Weighted Average Document': app.gwaDocumentPath || '',
+          'Extra Curricular Activities Document': app.ecaDocumentPath || '',
+          'ITR Document': app.itrDocumentPath || '',
+          // Empty staff fields for consistency
+          'Staff ID': '',
+          'Employee Type': '',
+          'Department': '',
+          'Purpose/Reason': '',
+          'Start Date': '',
+          'Duration (days)': ''
+        };
+      }
+    });
     
     const csv = Papa.unparse(csvData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -843,69 +1029,102 @@ export default function AdminApplicationsPage() {
                 <div style={{ padding: 20 }}>
                   {/* Sections */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    {/* Personal Section */}
                     <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Personal</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <Field label="Last Name" value={selectedApp.lastName} bold />
                         <Field label="First Name" value={selectedApp.firstName} bold />
                         <Field label="Middle Name" value={selectedApp.middleName || '-'} />
-                        <Field label="SR Code" value={selectedApp.srCode || '-'} />
-                        <Field label="Sex" value={selectedApp.sex || '-'} />
-                        <Field label="Date of Birth" value={formatDate(selectedApp.dateOfBirth)} />
-                        <Field label="Phone" value={selectedApp.phoneNumber || '-'} />
+                        {selectedApp.applicationType === 'staff' ? (
+                          <Field label="Staff ID" value={selectedApp.staffId || '-'} />
+                        ) : (
+                          <Field label="SR Code" value={selectedApp.srCode || '-'} />
+                        )}
+                        {selectedApp.applicationType !== 'staff' && (
+                          <>
+                            <Field label="Sex" value={selectedApp.sex || '-'} />
+                            <Field label="Date of Birth" value={formatDate(selectedApp.dateOfBirth)} />
+                            <Field label="Phone" value={selectedApp.phoneNumber || '-'} />
+                          </>
+                        )}
                         <Field label="Email" value={selectedApp.email} />
                       </div>
                     </div>
 
-                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Academic</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <Field label="College" value={(selectedApp as any).college || '-'} />
-                        <Field label="Program" value={(selectedApp as any).program || '-'} />
-                        <Field label="Section" value={selectedApp.collegeProgram || '-'} />
+                    {/* Academic/Staff Section */}
+                    {selectedApp.applicationType === 'staff' ? (
+                      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Staff Details</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <Field label="Employee Type" value={selectedApp.employeeType || '-'} />
+                          <Field label="Department" value={selectedApp.department || '-'} />
+                          <Field label="Start Date" value={formatDate(selectedApp.startDate)} />
+                          <Field label="Duration (days)" value={String(selectedApp.durationDays || '-')} />
+                        </div>
+                        <div style={{ marginTop: 12 }}>
+                          <Field label="Purpose/Reason" value={selectedApp.purpose || '-'} />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Academic</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <Field label="College" value={(selectedApp as any).college || '-'} />
+                          <Field label="Program" value={(selectedApp as any).program || '-'} />
+                          <Field label="Section" value={selectedApp.collegeProgram || '-'} />
+                        </div>
+                      </div>
+                    )}
 
-                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Address</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <Field label="House No." value={selectedApp.houseNo || '-'} />
-                        <Field label="Street" value={selectedApp.streetName || '-'} />
-                        <Field label="Barangay" value={selectedApp.barangay || '-'} />
-                        <Field label="Municipality" value={selectedApp.municipality || '-'} />
-                        <Field label="Province" value={selectedApp.province || '-'} />
+                    {/* Address Section - only for students */}
+                    {selectedApp.applicationType !== 'staff' && (
+                      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Address</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <Field label="House No." value={selectedApp.houseNo || '-'} />
+                          <Field label="Street" value={selectedApp.streetName || '-'} />
+                          <Field label="Barangay" value={selectedApp.barangay || '-'} />
+                          <Field label="Municipality" value={selectedApp.municipality || '-'} />
+                          <Field label="Province" value={selectedApp.province || '-'} />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Other Details</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <Field label="Distance from Campus" value={selectedApp.distanceFromCampus || '-'} />
-                        <Field label="Monthly Family Income" value={selectedApp.familyIncome || '-'} />
-                        <Field label="Intended Duration" value={selectedApp.intendedDuration || '-'} />
-                        <Field label="Intended Duration (Other)" value={selectedApp.intendedDurationOther || '-'} />
+                    {/* Other Details Section - only for students */}
+                    {selectedApp.applicationType !== 'staff' && (
+                      <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Other Details</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <Field label="Distance from Campus" value={selectedApp.distanceFromCampus || '-'} />
+                          <Field label="Monthly Family Income" value={selectedApp.familyIncome || '-'} />
+                          <Field label="Intended Duration" value={selectedApp.intendedDuration || '-'} />
+                          <Field label="Intended Duration (Other)" value={selectedApp.intendedDurationOther || '-'} />
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Documents */}
-                  <div style={{ marginTop: 16 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Documents</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
-                      {selectedApp.certificatePath && (
-                        <DocCard title="Certificate of Indigency" url={selectedApp.certificatePath} />
-                      )}
-                      {selectedApp.gwaDocumentPath && (
-                        <DocCard title="General Weighted Average" url={selectedApp.gwaDocumentPath} />
-                      )}
-                      {selectedApp.ecaDocumentPath && (
-                        <DocCard title="Extra Curricular Activities" url={selectedApp.ecaDocumentPath} />
-                      )}
-                      {selectedApp.itrDocumentPath && (
-                        <DocCard title="ITR" url={selectedApp.itrDocumentPath} />
-                      )}
+                  {/* Documents - only for students */}
+                  {selectedApp.applicationType !== 'staff' && (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Documents</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+                        {selectedApp.certificatePath && (
+                          <DocCard title="Certificate of Indigency" url={selectedApp.certificatePath} />
+                        )}
+                        {selectedApp.gwaDocumentPath && (
+                          <DocCard title="General Weighted Average" url={selectedApp.gwaDocumentPath} />
+                        )}
+                        {selectedApp.ecaDocumentPath && (
+                          <DocCard title="Extra Curricular Activities" url={selectedApp.ecaDocumentPath} />
+                        )}
+                        {selectedApp.itrDocumentPath && (
+                          <DocCard title="ITR" url={selectedApp.itrDocumentPath} />
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
                 <div style={{ padding: 16, display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', borderTop: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

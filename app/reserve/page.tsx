@@ -15,6 +15,7 @@ export default function BikeRentalPage() {
   const [swiperWidth, setSwiperWidth] = useState<number | string>(900);
   const [bikes, setBikes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     function handleResize() {
@@ -32,6 +33,15 @@ export default function BikeRentalPage() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -100,7 +110,10 @@ export default function BikeRentalPage() {
                 textShadow: '0 2px 8px var(--shadow-color)',
                 userSelect: 'none',
               }}
-              onClick={() => router.push('/reserve/apply')}
+              onClick={() => {
+                const isStaff = user?.role === 'teaching_staff' || user?.role === 'non_teaching_staff';
+                router.push(isStaff ? '/reserve/apply-staff' : '/reserve/apply');
+              }}
               onMouseOver={e => {
                 e.currentTarget.style.background = 'linear-gradient(90deg, #64b5f6 0%, #90caf9 100%)';
                 e.currentTarget.style.boxShadow = '0 14px 40px rgba(33,150,243,0.35), 0 6px 14px rgba(0,0,0,0.12)';

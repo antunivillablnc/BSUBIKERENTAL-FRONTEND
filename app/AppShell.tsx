@@ -17,12 +17,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isAdmin = pathname?.startsWith('/admin');
-  const isStaff = pathname === '/staff' || pathname?.startsWith('/staff/');
-  const shouldHideNavbar = isAdmin || isStaff || pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password';
+  const shouldHideNavbar = isAdmin || pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password';
 
   return (
     <>
-      {isAdmin || isStaff ? (
+      {isAdmin ? (
         <>{children}</>
       ) : (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
