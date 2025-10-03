@@ -198,7 +198,9 @@ export default function AdminApplicationsPage() {
   const handleCSVExport = () => {
     if (!selectedApp) return;
     
-    const csvData = selectedApp.applicationType === 'staff' ? [{
+    const isStaff = selectedApp.applicationType === 'staff';
+    
+    const csvData: any[] = isStaff ? [{
       'Application ID': selectedApp.id,
       'Application Type': 'Staff',
       'Last Name': selectedApp.lastName,
