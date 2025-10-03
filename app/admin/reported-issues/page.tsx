@@ -17,58 +17,8 @@ interface ReportedIssue {
   adminNotes?: string;
 }
 
-// Mock data - in a real app, this would come from your backend
-const mockIssues: ReportedIssue[] = [
-  {
-    id: '1',
-    subject: 'Bike chain keeps falling off',
-    message: 'The bike I rented yesterday has a loose chain that keeps falling off while riding. This is very dangerous and needs immediate attention.',
-    category: 'bike_damage',
-    priority: 'high',
-    status: 'open',
-    imageUrl: '/uploads/bike-chain-issue.jpg',
-    reportedBy: 'john.doe@student.batstate-u.edu.ph',
-    reportedAt: '2025-01-15T10:30:00Z',
-  },
-  {
-    id: '2',
-    subject: 'Cannot login to dashboard',
-    message: 'I keep getting an error message when trying to log into my dashboard. The error says "Invalid credentials" but I know my password is correct.',
-    category: 'technical',
-    priority: 'medium',
-    status: 'in_progress',
-    reportedBy: 'jane.smith@student.batstate-u.edu.ph',
-    reportedAt: '2025-01-14T15:45:00Z',
-    assignedTo: 'admin@batstate-u.edu.ph',
-  },
-  {
-    id: '3',
-    subject: 'Broken brake on bike #BSU-045',
-    message: 'The front brake on bike BSU-045 is not working properly. It makes a grinding noise and doesn\'t stop the bike effectively.',
-    category: 'safety',
-    priority: 'high',
-    status: 'resolved',
-    imageUrl: '/uploads/broken-brake.jpg',
-    reportedBy: 'mike.wilson@student.batstate-u.edu.ph',
-    reportedAt: '2025-01-13T09:15:00Z',
-    assignedTo: 'admin@batstate-u.edu.ph',
-    resolvedAt: '2025-01-14T11:30:00Z',
-    adminNotes: 'Brake pads replaced and brake cable adjusted. Bike is now safe to use.',
-  },
-  {
-    id: '4',
-    subject: 'App crashes when viewing map',
-    message: 'The mobile app crashes every time I try to view the bike map. This happens on both Android and iOS devices.',
-    category: 'technical',
-    priority: 'medium',
-    status: 'open',
-    reportedBy: 'sarah.jones@student.batstate-u.edu.ph',
-    reportedAt: '2025-01-12T14:20:00Z',
-  },
-];
-
 export default function AdminReportedIssuesPage() {
-  const [issues, setIssues] = useState<ReportedIssue[]>(mockIssues);
+  const [issues, setIssues] = useState<ReportedIssue[]>([]);
   const [selectedIssue, setSelectedIssue] = useState<ReportedIssue | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -147,26 +97,10 @@ export default function AdminReportedIssuesPage() {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`,
-      position: 'relative'
+      background: 'linear-gradient(135deg,rgb(247, 248, 250) 0%,rgb(247, 248, 250) 50%,rgb(247, 248, 250) 100%)',
+      padding: '32px 24px'
     }}>
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        background: 'rgba(80,80,80,0.75)', 
-        zIndex: 0, 
-        pointerEvents: 'none' 
-      }} />
-      
-      <div style={{ 
-        position: 'relative', 
-        zIndex: 1, 
-        padding: '32px 24px' 
-      }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           {/* Header */}
           <div style={{ 
             background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.95) 0%, rgba(13, 71, 161, 0.95) 100%)',
@@ -396,11 +330,11 @@ export default function AdminReportedIssuesPage() {
               <div style={{ 
                 padding: 48, 
                 textAlign: 'center',
-                color: 'var(--text-muted)'
+                color: '#4b5563'
               }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                <h3 style={{ fontSize: 20, marginBottom: 8 }}>No issues found</h3>
-                <p>Try adjusting your search or filter criteria</p>
+                <h3 style={{ fontSize: 20, marginBottom: 8, color: '#374151' }}>No issues found</h3>
+                <p style={{ color: '#6b7280' }}>Try adjusting your search or filter criteria</p>
               </div>
             ) : (
               filteredIssues.map((issue, index) => (
@@ -523,7 +457,6 @@ export default function AdminReportedIssuesPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Modal */}
       {showModal && selectedIssue && (
