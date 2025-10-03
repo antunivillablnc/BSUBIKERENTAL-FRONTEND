@@ -27,6 +27,66 @@ export default function AdminReportedIssuesPage() {
   const [showModal, setShowModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
   const [newStatus, setNewStatus] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+
+  const formatDateSafe = (value?: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    if (typeof value === 'string') {
+      const m = value.match(/([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})/);
+      if (m) return `${m[1]} ${m[2]}, ${m[3]}`;
+    }
+    return '—';
+  };
+
+  const formatDateTimeSafe = (value?: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    // Fallback to just month/day/year when a human string like "October 3, 2025 at ..." is stored
+    return formatDateSafe(value);
+  };
+
+  const fetchIssues = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      const res = await fetch(`${base.replace(/\/$/, '')}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const data = await res.json();
+      const normalized: ReportedIssue[] = (data || []).map((d: any) => ({
+        id: d.id,
+        subject: d.subject,
+        message: d.message,
+        category: d.category,
+        priority: d.priority,
+        status: d.status,
+        imageUrl: d.imageUrl,
+        reportedBy: d.reportedBy,
+        reportedAt: d.reportedAt?.toDate ? d.reportedAt.toDate().toISOString() : d.reportedAt,
+        assignedTo: d.assignedTo,
+        resolvedAt: d.resolvedAt?.toDate ? d.resolvedAt.toDate().toISOString() : d.resolvedAt,
+        adminNotes: d.adminNotes,
+      }));
+      setIssues(normalized);
+    } catch (e: any) {
+      console.error('Failed loading issues', e);
+      setError(e?.message || 'Failed to load issues');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIssues();
+  }, []);
 
   const filteredIssues = issues.filter(issue => {
     const matchesStatus = filterStatus === 'all' || issue.status === filterStatus;
@@ -38,6 +98,12 @@ export default function AdminReportedIssuesPage() {
     
     return matchesStatus && matchesPriority && matchesCategory && matchesSearch;
   });
+
+  const totalCount = issues.length;
+  const openCount = issues.filter(i => i.status === 'open').length;
+  const inProgressCount = issues.filter(i => i.status === 'in_progress').length;
+  const resolvedCount = issues.filter(i => i.status === 'resolved').length;
+  const closedCount = issues.filter(i => i.status === 'closed').length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -68,23 +134,40 @@ export default function AdminReportedIssuesPage() {
     }
   };
 
-  const handleStatusUpdate = (issueId: string, status: string, notes?: string) => {
-    setIssues(prev => prev.map(issue => {
-      if (issue.id === issueId) {
-        return {
-          ...issue,
-          status: status as any,
-          adminNotes: notes || issue.adminNotes,
-          resolvedAt: status === 'resolved' ? new Date().toISOString() : issue.resolvedAt,
-          assignedTo: status !== 'open' ? 'admin@batstate-u.edu.ph' : issue.assignedTo
-        };
-      }
-      return issue;
-    }));
-    setShowModal(false);
-    setSelectedIssue(null);
-    setAdminNotes('');
-    setNewStatus('');
+  const handleStatusUpdate = async (issueId: string, status: string, notes?: string) => {
+    try {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      await fetch(`${base.replace(/\/$/, '')}/reported-issues`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: issueId,
+          status,
+          adminNotes: notes,
+          resolvedAt: status === 'resolved' ? new Date().toISOString() : null,
+          assignedTo: status !== 'open' ? 'admin@batstate-u.edu.ph' : null,
+        }),
+      });
+      setIssues(prev => prev.map(issue => {
+        if (issue.id === issueId) {
+          return {
+            ...issue,
+            status: status as any,
+            adminNotes: notes || issue.adminNotes,
+            resolvedAt: status === 'resolved' ? new Date().toISOString() : undefined,
+            assignedTo: status !== 'open' ? 'admin@batstate-u.edu.ph' : undefined
+          };
+        }
+        return issue;
+      }));
+    } catch (e) {
+      console.error('Failed to update status', e);
+    } finally {
+      setShowModal(false);
+      setSelectedIssue(null);
+      setAdminNotes('');
+      setNewStatus('');
+    }
   };
 
   const openModal = (issue: ReportedIssue) => {
@@ -144,14 +227,46 @@ export default function AdminReportedIssuesPage() {
             <p style={{ 
               color: 'rgba(255, 255, 255, 0.95)', 
               fontSize: 18, 
-              marginBottom: 32,
+              marginBottom: 20,
               fontWeight: 500,
               position: 'relative',
               zIndex: 1
             }}>
               Manage and resolve user-reported issues
             </p>
-            
+
+            {/* Stats */}
+            <div style={{
+              display: 'flex',
+              gap: 12,
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              marginBottom: 18,
+              position: 'relative',
+              zIndex: 1
+            }}>
+              {[{label:'Total',value:totalCount,color:'#ffffff'},
+                {label:'Open',value:openCount,color:'#dc2626'},
+                {label:'In Progress',value:inProgressCount,color:'#f59e0b'},
+                {label:'Resolved',value:resolvedCount,color:'#22c55e'},
+                {label:'Closed',value:closedCount,color:'#6b7280'}].map((s,idx) => (
+                <div key={idx} style={{
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'rgba(255,255,255,0.12)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(6px)',
+                  color: '#fff',
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'baseline'
+                }}>
+                  <span style={{ fontSize: 12, opacity: 0.9 }}>{s.label}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+
             {/* Search and Filters */}
             <div style={{ 
               display: 'flex', 
@@ -160,8 +275,9 @@ export default function AdminReportedIssuesPage() {
               flexWrap: 'wrap',
               maxWidth: 900,
               margin: '0 auto',
-              position: 'relative',
-              zIndex: 1
+              position: 'sticky',
+              top: 12,
+              zIndex: 2
             }}>
               <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
                 <input
@@ -315,6 +431,22 @@ export default function AdminReportedIssuesPage() {
                 <option value="safety">Safety</option>
                 <option value="other">Other</option>
               </select>
+              <button
+                onClick={() => fetchIssues()}
+                style={{
+                  padding: '14px 16px',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 12,
+                  fontSize: 15,
+                  background: '#0ea5e9',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                Refresh
+              </button>
             </div>
           </div>
 
@@ -326,6 +458,42 @@ export default function AdminReportedIssuesPage() {
             overflow: 'hidden',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
           }}>
+            {isLoading && (
+              <div style={{ padding: 28 }}>
+                {[...Array(4)].map((_,i) => (
+                  <div key={i} style={{
+                    display: 'grid',
+                    gridTemplateColumns: '60px 1fr 120px',
+                    gap: 16,
+                    alignItems: 'center',
+                    padding: '18px 0',
+                    borderBottom: i<3 ? '1px solid rgba(0,0,0,0.06)' : 'none'
+                  }}>
+                    <div style={{ height: 16, width: 16, borderRadius: 4, background: '#e5e7eb' }} />
+                    <div>
+                      <div style={{ height: 14, width: '40%', borderRadius: 6, background: '#e5e7eb', marginBottom: 10 }} />
+                      <div style={{ height: 12, width: '70%', borderRadius: 6, background: '#eef2f7' }} />
+                    </div>
+                    <div style={{ height: 24, width: 96, borderRadius: 12, background: '#e5e7eb', justifySelf: 'end' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+            {!!error && !isLoading && (
+              <div style={{ padding: 48, textAlign: 'center', color: '#b91c1c' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Failed to load issues</div>
+                <div style={{ color: '#7f1d1d', marginBottom: 16 }}>{error}</div>
+                <button onClick={() => fetchIssues()} style={{
+                  padding: '10px 16px',
+                  background: '#b91c1c',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}>Retry</button>
+              </div>
+            )}
             {filteredIssues.length === 0 ? (
               <div style={{ 
                 padding: 48, 
@@ -345,7 +513,9 @@ export default function AdminReportedIssuesPage() {
                     padding: '24px 28px',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    position: 'relative'
+                    position: 'relative',
+                    borderLeft: `6px solid ${getStatusColor(issue.status)}`,
+                    background: 'linear-gradient(90deg, rgba(2,132,199,0.03) 0%, transparent 14%)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'linear-gradient(to right, rgba(25, 118, 210, 0.04), rgba(25, 118, 210, 0.02))';
@@ -423,7 +593,7 @@ export default function AdminReportedIssuesPage() {
                       }}>
                         <span style={{ fontWeight: 600 }}>👤 {issue.reportedBy.split('@')[0]}</span>
                         <span style={{ color: '#cbd5e1' }}>•</span>
-                        <span style={{ fontWeight: 500 }}>📅 {new Date(issue.reportedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span style={{ fontWeight: 500 }}>📅 {formatDateSafe(issue.reportedAt)}</span>
                         {issue.assignedTo && (
                           <>
                             <span style={{ color: '#cbd5e1' }}>•</span>
@@ -471,21 +641,24 @@ export default function AdminReportedIssuesPage() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: 20
+          padding: 20,
+          backdropFilter: 'blur(3px)'
         }}>
           <div style={{
-            background: 'var(--card-bg)',
+            background: '#ffffff',
             borderRadius: 16,
             padding: 32,
             maxWidth: 600,
             width: '100%',
             maxHeight: '90vh',
             overflow: 'auto',
-            border: '1px solid var(--border-color)'
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+            color: '#000'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
               <h2 style={{ 
-                color: 'var(--text-primary)', 
+                color: '#000', 
                 fontSize: 24, 
                 fontWeight: 700,
                 margin: 0
@@ -499,7 +672,7 @@ export default function AdminReportedIssuesPage() {
                   border: 'none',
                   fontSize: 24,
                   cursor: 'pointer',
-                  color: 'var(--text-muted)'
+                  color: '#000'
                 }}
               >
                 ×
@@ -510,7 +683,7 @@ export default function AdminReportedIssuesPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <span style={{ fontSize: 24 }}>{getCategoryIcon(selectedIssue.category)}</span>
                 <h3 style={{ 
-                  color: 'var(--text-primary)', 
+                  color: '#000', 
                   fontSize: 20, 
                   fontWeight: 600,
                   margin: 0
@@ -545,9 +718,9 @@ export default function AdminReportedIssuesPage() {
               </div>
             </div>
 
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: '#ffffff', border: '1px solid var(--border-color)' }}>
               <h4 style={{ 
-                color: 'var(--text-primary)', 
+                color: '#000', 
                 fontSize: 16, 
                 fontWeight: 600,
                 marginBottom: 8
@@ -555,7 +728,7 @@ export default function AdminReportedIssuesPage() {
                 Description
               </h4>
               <p style={{ 
-                color: 'var(--text-secondary)', 
+                color: '#000', 
                 fontSize: 14, 
                 lineHeight: 1.6,
                 margin: 0
@@ -565,9 +738,9 @@ export default function AdminReportedIssuesPage() {
             </div>
 
             {selectedIssue.imageUrl && (
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: '#ffffff', border: '1px solid var(--border-color)' }}>
                 <h4 style={{ 
-                  color: 'var(--text-primary)', 
+                  color: '#000', 
                   fontSize: 16, 
                   fontWeight: 600,
                   marginBottom: 8
@@ -587,30 +760,30 @@ export default function AdminReportedIssuesPage() {
               </div>
             )}
 
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: '#ffffff', border: '1px solid var(--border-color)' }}>
               <h4 style={{ 
-                color: 'var(--text-primary)', 
+                color: '#000', 
                 fontSize: 16, 
                 fontWeight: 600,
                 marginBottom: 8
               }}>
                 Issue Information
               </h4>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 14, color: '#000', lineHeight: 1.6 }}>
                 <p><strong>Reported by:</strong> {selectedIssue.reportedBy}</p>
-                <p><strong>Reported at:</strong> {new Date(selectedIssue.reportedAt).toLocaleString()}</p>
+                <p><strong>Reported at:</strong> {formatDateTimeSafe(selectedIssue.reportedAt)}</p>
                 {selectedIssue.assignedTo && (
                   <p><strong>Assigned to:</strong> {selectedIssue.assignedTo}</p>
                 )}
                 {selectedIssue.resolvedAt && (
-                  <p><strong>Resolved at:</strong> {new Date(selectedIssue.resolvedAt).toLocaleString()}</p>
+                  <p><strong>Resolved at:</strong> {formatDateTimeSafe(selectedIssue.resolvedAt)}</p>
                 )}
               </div>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 24, padding: 16, borderRadius: 12, background: '#ffffff', border: '1px solid var(--border-color)' }}>
               <h4 style={{ 
-                color: 'var(--text-primary)', 
+                color: '#000', 
                 fontSize: 16, 
                 fontWeight: 600,
                 marginBottom: 8
@@ -627,7 +800,7 @@ export default function AdminReportedIssuesPage() {
                   borderRadius: 8,
                   fontSize: 16,
                   background: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
+                  color: '#000',
                   outline: 'none',
                   marginBottom: 12
                 }}
@@ -646,14 +819,22 @@ export default function AdminReportedIssuesPage() {
                 style={{
                   width: '100%',
                   padding: '12px 16px',
-                  border: '2px solid var(--border-color)',
+                  border: '1px solid #cbd5e1',
                   borderRadius: 8,
                   fontSize: 16,
                   background: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
+                  color: '#000',
                   outline: 'none',
                   resize: 'vertical',
                   fontFamily: 'inherit'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#0ea5e9';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(14,165,233,0.2)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               />
             </div>
