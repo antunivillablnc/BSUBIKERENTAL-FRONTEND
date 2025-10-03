@@ -530,9 +530,9 @@ export default function Navbar() {
          transition: 'background-color 0.3s ease, border-color 0.3s ease',
        }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', height: 64, width: '100%' }}>
+          <div className="navbar-container" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', height: 64, width: '100%' }}>
             {/* Logo/Brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-start' }}>
+            <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-start' }}>
               <Link href="/home" style={{ textDecoration: 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, objectFit: 'contain', marginRight: 4 }} />
@@ -596,8 +596,32 @@ export default function Navbar() {
               </nav>
             </div>
 
-            {/* Right actions: notifications + user profile */}
+            {/* Right actions: notifications + user profile + hamburger */}
             <div className="header-actions" style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'flex-end' }}>
+              {/* Mobile hamburger - moved here for right alignment */}
+              {!menuOpen && (
+                <button
+                  className="hamburger"
+                  aria-label="Open menu"
+                  onClick={() => setMenuOpen(true)}
+                  style={{
+                    display: 'none',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: 30,
+                    color: 'var(--accent-color)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    width: 40,
+                    height: 40,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  &#9776;
+                </button>
+              )}
+
               {/* Notifications */}
               <div
                 style={{ position: 'relative' }}
@@ -934,25 +958,6 @@ export default function Navbar() {
                  )}
               </div>
             </div>
-
-            {/* Mobile hamburger (inside header) */}
-            {!menuOpen && (
-              <button
-                className="hamburger"
-                aria-label="Open menu"
-                onClick={() => setMenuOpen(true)}
-                style={{
-                  display: 'none',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: 30,
-                  color: 'var(--accent-color)',
-                  cursor: 'pointer'
-                }}
-              >
-                &#9776;
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -1263,15 +1268,17 @@ export default function Navbar() {
              {/* Responsive styles */}
        <style>{`
          @media (max-width: 700px) {
+           .navbar-container {
+             grid-template-columns: 1fr auto !important;
+           }
            .navbar-links {
              display: none !important;
            }
-           .header-actions {
+           .header-actions > div {
              display: none !important;
            }
            .hamburger {
-             display: block !important;
-             position: static !important;
+             display: flex !important;
            }
          }
 
