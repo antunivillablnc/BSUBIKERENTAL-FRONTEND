@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { db } from '@/lib/firebase';
+import { db } from '../lib/firebase';
 
 async function upsertAdmin() {
   const email = 'sdobsulipa@g.batstate-u.edu.ph';
@@ -50,6 +50,23 @@ async function seedBikes() {
 async function main() {
   await upsertAdmin();
   await seedBikes();
+  const issues = await db.collection('reported_issues').limit(1).get();
+  if (issues.empty) {
+    await db.collection('reported_issues').add({
+      subject: 'Brake issue',
+      message: 'Rear brake squeaks when stopping',
+      category: 'bike_damage',
+      priority: 'medium',
+      status: 'open',
+      imageUrl: null,
+      reportedBy: 'user@example.com',
+      reportedAt: new Date(),
+      assignedTo: null,
+      resolvedAt: null,
+      adminNotes: '',
+    });
+    console.log('Seeded reported_issues with one item.');
+  }
 }
 
 main().catch(err => {
