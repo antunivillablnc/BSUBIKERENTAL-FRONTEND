@@ -410,11 +410,29 @@ export default function DashboardPage() {
       <style jsx>{`
         .dashboard-container {
           min-height: 100vh;
-          background: #f1f5f9;
+          background: url('/car-rental-app.jpg') center center / cover no-repeat fixed;
           padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 20px;
+          position: relative;
+        }
+
+        .dashboard-container::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(80,80,80,0.7);
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .dashboard-container > * {
+          position: relative;
+          z-index: 1;
         }
 
         .map-section {

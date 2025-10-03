@@ -58,6 +58,7 @@ export default function AdminLayout({
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/applications", label: "Applications", icon: "📋" },
     { href: "/admin/bikes", label: "Bikes", icon: "🚲" },
+    { href: "/admin/reported-issues", label: "Reported Issues", icon: "🚨" },
     { href: "/admin/rental-history", label: "Rental History", icon: "📜" },
     { href: "/admin/activity-log", label: "Activity Log", icon: "📝" },
   ];
