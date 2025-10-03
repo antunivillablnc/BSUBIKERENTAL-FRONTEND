@@ -137,7 +137,7 @@ export default function AdminReportedIssuesPage() {
   const handleStatusUpdate = async (issueId: string, status: string, notes?: string) => {
     try {
       const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      await fetch(`${base.replace(/\/$/, '')}`, {
+      await fetch(`${base.replace(/\/$/, '')}/reported-issues`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
