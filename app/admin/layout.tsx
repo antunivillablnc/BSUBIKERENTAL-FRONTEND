@@ -21,7 +21,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function fetchPending() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, { credentials: 'include', headers: (() => { try { const t = localStorage.getItem('token'); return t ? { Authorization: `Bearer ${t}` } : {}; } catch { return {}; } })() });
         const data = await res.json();
         if (data.success && Array.isArray(data.applications)) {
           const pending = data.applications.filter((app: any) => app.status === 'pending');
@@ -404,7 +404,13 @@ export default function AdminLayout({
               </button>
               <button
                 role="menuitem"
-                onClick={() => { localStorage.removeItem('user'); setShowProfileMenu(false); router.push('/'); }}
+                onClick={async () => {
+                  try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+                  localStorage.removeItem('user');
+                  try { localStorage.removeItem('token'); } catch {}
+                  setShowProfileMenu(false);
+                  router.push('/');
+                }}
                 style={{
                   width: '100%',
                   textAlign: 'left',

@@ -6,7 +6,14 @@ export function getApiBaseUrl(): string {
 export async function apiFetch(input: string, init?: RequestInit) {
   const base = getApiBaseUrl();
   const url = `${base}${input.startsWith('/') ? input : `/${input}`}`;
-  return fetch(url, init);
+  const headers = new Headers(init?.headers || {});
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  } catch {}
+  return fetch(url, { ...init, headers, credentials: 'include' });
 }
 
 
