@@ -57,8 +57,8 @@ export default function AdminReportedIssuesPage() {
     try {
       setIsLoading(true);
       setError('');
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${base.replace(/\/$/, '')}`, { cache: 'no-store' });
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      const res = await fetch(`${base.replace(/\/$/, '')}/reported-issues`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = await res.json();
       const normalized: ReportedIssue[] = (data || []).map((d: any) => ({
