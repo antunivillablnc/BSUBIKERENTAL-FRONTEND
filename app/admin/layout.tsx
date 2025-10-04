@@ -3,7 +3,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { apiFetch } from "@/lib/apiClient";
 
 export default function AdminLayout({
   children,
@@ -22,7 +21,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function fetchPending() {
       try {
-        const res = await apiFetch('/admin/applications');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`);
         const data = await res.json();
         if (data.success && Array.isArray(data.applications)) {
           const pending = data.applications.filter((app: any) => app.status === 'pending');
@@ -405,13 +404,7 @@ export default function AdminLayout({
               </button>
               <button
                 role="menuitem"
-                onClick={async () => {
-                  try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
-                  localStorage.removeItem('user');
-                  try { localStorage.removeItem('token'); } catch {}
-                  setShowProfileMenu(false);
-                  router.push('/');
-                }}
+                onClick={() => { localStorage.removeItem('user'); setShowProfileMenu(false); router.push('/'); }}
                 style={{
                   width: '100%',
                   textAlign: 'left',

@@ -55,16 +55,6 @@ export default function LoginPage() {
           console.log('Is admin?', data.user.role === "admin");
           console.log('Is staff?', data.user.role === "teaching_staff" || data.user.role === "non_teaching_staff");
           localStorage.setItem('user', JSON.stringify(data.user));
-          if (data.token) {
-            try { localStorage.setItem('token', data.token); } catch {}
-          }
-          try {
-            await fetch('/api/auth/set-cookie', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role: data.user.role }),
-            });
-          } catch {}
           if (data.user.role === "admin") {
             console.log('Redirecting admin to /admin');
             router.push("/admin");

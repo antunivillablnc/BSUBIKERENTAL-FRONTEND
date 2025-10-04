@@ -118,6 +118,7 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
             style={{
               flex: 1,
               padding: '8px 12px',
+              border: 'none',
               background: activeMetric === metric ? 'var(--card-bg)' : 'transparent',
               borderRadius: '6px',
               fontSize: '12px',
@@ -624,7 +625,7 @@ export default function DashboardPage() {
         .settings-button:hover {
           opacity: 1;
           background-color: var(--hover-bg);
-          border-color: #1976d2;
+          border-color: var(--accent-color);
           transform: scale(1.05);
           box-shadow: 0 4px 12px var(--shadow-color);
         }
