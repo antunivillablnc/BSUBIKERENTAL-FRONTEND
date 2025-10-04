@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import BikeLoader from "@/app/components/BikeLoader";
 
 interface User {
   id: string;
@@ -177,9 +178,7 @@ export default function AdminUsersPage() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ color: '#1976d2', marginBottom: 16 }}>Loading users...</h2>
-        </div>
+        <BikeLoader size={96} label="Loading users..." />
       </div>
     );
   }

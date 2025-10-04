@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import BikeLoader from '../../components/BikeLoader';
 
 interface ReportedIssue {
   id: string;
@@ -58,7 +59,7 @@ export default function AdminReportedIssuesPage() {
       setIsLoading(true);
       setError('');
       const base = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${base.replace(/\/$/, '')}`, { cache: 'no-store' });
+      const res = await fetch(`${base.replace(/\/$/, '')}/reported-issues`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = await res.json();
       const normalized: ReportedIssue[] = (data || []).map((d: any) => ({
@@ -136,7 +137,7 @@ export default function AdminReportedIssuesPage() {
 
   const handleStatusUpdate = async (issueId: string, status: string, notes?: string) => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
       await fetch(`${base.replace(/\/$/, '')}/reported-issues`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -459,24 +460,24 @@ export default function AdminReportedIssuesPage() {
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
           }}>
             {isLoading && (
-              <div style={{ padding: 28 }}>
-                {[...Array(4)].map((_,i) => (
-                  <div key={i} style={{
-                    display: 'grid',
-                    gridTemplateColumns: '60px 1fr 120px',
-                    gap: 16,
-                    alignItems: 'center',
-                    padding: '18px 0',
-                    borderBottom: i<3 ? '1px solid rgba(0,0,0,0.06)' : 'none'
-                  }}>
-                    <div style={{ height: 16, width: 16, borderRadius: 4, background: '#e5e7eb' }} />
-                    <div>
-                      <div style={{ height: 14, width: '40%', borderRadius: 6, background: '#e5e7eb', marginBottom: 10 }} />
-                      <div style={{ height: 12, width: '70%', borderRadius: 6, background: '#eef2f7' }} />
-                    </div>
-                    <div style={{ height: 24, width: 96, borderRadius: 12, background: '#e5e7eb', justifySelf: 'end' }} />
-                  </div>
-                ))}
+              <div style={{ 
+                padding: '80px 40px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                gap: 24 
+              }}>
+                <BikeLoader size={96} />
+                <h3 style={{ 
+                  color: '#1976d2', 
+                  fontSize: 20, 
+                  fontWeight: 700, 
+                  margin: 0,
+                  textAlign: 'center'
+                }}>
+                  Loading reported issues...
+                </h3>
               </div>
             )}
             {!!error && !isLoading && (

@@ -293,7 +293,7 @@ export default function AdminBikesPage() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f8fa' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <BikeLoader />
+          <BikeLoader size={96} />
           <h2 style={{ color: '#1976d2', margin: 0 }}>Loading bikes...</h2>
         </div>
       </div>
