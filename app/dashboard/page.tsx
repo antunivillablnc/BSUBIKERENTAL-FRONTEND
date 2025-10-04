@@ -625,7 +625,7 @@ export default function DashboardPage() {
         .settings-button:hover {
           opacity: 1;
           background-color: var(--hover-bg);
-          border-color: var(--accent-color);
+          border-color: #1976d2;
           transform: scale(1.05);
           box-shadow: 0 4px 12px var(--shadow-color);
         }
