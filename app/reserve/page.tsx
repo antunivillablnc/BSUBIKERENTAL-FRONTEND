@@ -80,7 +80,7 @@ export default function BikeRentalPage() {
       <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 8px', position: 'relative', zIndex: 1, background: 'transparent' }}>
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
-            <BikeLoader />
+            <BikeLoader size={96} />
             <div style={{ color: '#ffffff', fontWeight: 800, fontSize: 18, letterSpacing: 1, textShadow: '0 2px 8px rgba(0,0,0,0.45)' }}>Loading bikes...</div>
           </div>
         ) : bikes.length === 0 ? (

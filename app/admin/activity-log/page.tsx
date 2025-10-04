@@ -30,7 +30,7 @@ export default function AdminActivityLogPage() {
           </h1>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginTop: 20 }}>
-              <BikeLoader />
+              <BikeLoader size={96} />
               <div style={{ color: '#1976d2', fontWeight: 700 }}>Loading activity log...</div>
             </div>
           ) : (

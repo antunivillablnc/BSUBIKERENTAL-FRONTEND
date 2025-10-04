@@ -52,7 +52,7 @@ export default function AdminRentalHistoryPage() {
     return (
       <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <BikeLoader />
+          <BikeLoader size={96} />
           <h2 style={{ color: '#1976d2', margin: 0 }}>Loading rental history...</h2>
         </div>
       </div>
