@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { apiFetch } from "@/lib/apiClient";
 
 export default function AdminLayout({
   children,
@@ -21,7 +22,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function fetchPending() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, { credentials: 'include', headers: (() => { try { const t = localStorage.getItem('token'); return t ? { Authorization: `Bearer ${t}` } : {}; } catch { return {}; } })() });
+        const res = await apiFetch('/admin/applications');
         const data = await res.json();
         if (data.success && Array.isArray(data.applications)) {
           const pending = data.applications.filter((app: any) => app.status === 'pending');

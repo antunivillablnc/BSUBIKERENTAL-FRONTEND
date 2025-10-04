@@ -118,7 +118,6 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
             style={{
               flex: 1,
               padding: '8px 12px',
-              border: 'none',
               background: activeMetric === metric ? 'var(--card-bg)' : 'transparent',
               borderRadius: '6px',
               fontSize: '12px',
