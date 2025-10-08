@@ -129,6 +129,7 @@ export default function StaffBikeRentalApplication() {
       const res = await fetch(`${getApiBaseUrl()}/applications/staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           ...form,
           userId,

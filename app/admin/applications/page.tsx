@@ -89,8 +89,8 @@ export default function AdminApplicationsPage() {
     setError("");
     try {
       const [appsRes, bikesRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, { credentials: 'include' }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, { credentials: 'include' }),
       ]);
       const appsData = await appsRes.json();
       const bikesData = await bikesRes.json();
@@ -113,6 +113,7 @@ export default function AdminApplicationsPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/assign-bike`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ applicationId: appId, bikeId }),
       });
       const data = await res.json();
@@ -133,6 +134,7 @@ export default function AdminApplicationsPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ applicationId: appId, status }),
       });
       const data = await res.json();

@@ -89,7 +89,9 @@ export default function AdminBikesPage() {
 
   const fetchBikes = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
+        credentials: 'include'
+      });
       const data = await response.json();
       
       if (data.success) {
@@ -116,6 +118,7 @@ export default function AdminBikesPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ name: addName.trim(), status: "available" }),
       });
       const data = await res.json();
@@ -212,6 +215,7 @@ export default function AdminBikesPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ id: bikeId, status: "available" }),
       });
       const data = await res.json();
@@ -249,6 +253,7 @@ export default function AdminBikesPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ id: bikeId, name: editName.trim(), status: editStatus }),
       });
       const data = await res.json();
@@ -275,6 +280,7 @@ export default function AdminBikesPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ id: bikeId }),
       });
       const data = await res.json();

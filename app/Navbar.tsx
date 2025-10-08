@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import apiClient from "@/lib/api";
 
 type Notification = {
   id: string;
@@ -73,17 +74,13 @@ function ProfileSettingsForm({
     formData.append('photo', file);
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-profile-photo`, {
-        method: 'POST',
-        body: formData,
+      const response = await apiClient.post('/upload-profile-photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to upload photo');
-      }
-      
-      const data = await response.json();
-      return data.photoUrl;
+      return response.data.photoUrl;
     } catch (error) {
       throw new Error('Failed to upload photo');
     }
@@ -411,9 +408,9 @@ export default function Navbar() {
       setLoadingNotifs(false);
     };
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard?${query}`)
-      .then(res => res.json())
-      .then(data => {
+    apiClient.get(`/dashboard?${query}`)
+      .then(response => {
+        const data = response.data;
         if (data.success && Array.isArray(data.applications)) buildNotifs(data.applications); else { setNotifications([]); setLoadingNotifs(false); }
       })
       .catch(() => { setNotifications([]); setLoadingNotifs(false); });
@@ -846,7 +843,7 @@ export default function Navbar() {
                              {userName || 'User'}
                            </div>
                            <div style={{ color: 'var(--text-muted)', fontSize: 14, transition: 'color 0.3s ease' }}>
-                             {userEmail || 'user@example.com'}
+                             {userEmail || 'No email'}
                            </div>
                          </div>
                        </div>
@@ -930,7 +927,19 @@ export default function Navbar() {
                          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                        </button>
                        <button
-                         onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}
+                         onClick={async () => { 
+                           try {
+                             await apiClient.post('/auth/logout');
+                           } catch (error) {
+                             console.log('Logout error:', error);
+                           }
+                           // Clear localStorage
+                           localStorage.removeItem('user'); 
+                           // Manually clear cookies as backup
+                           document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                           document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                           window.location.href = '/'; 
+                         }}
                          style={{
                            width: '100%',
                            padding: '12px 20px',
@@ -1122,7 +1131,19 @@ export default function Navbar() {
                           {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                         </button>
                         <button
-                          onClick={() => { localStorage.removeItem('user'); window.location.href = '/'; }}
+                          onClick={async () => { 
+                            try {
+                              await apiClient.post('/auth/logout');
+                            } catch (error) {
+                              console.log('Logout error:', error);
+                            }
+                            // Clear localStorage
+                            localStorage.removeItem('user'); 
+                            // Manually clear cookies as backup
+                            document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            window.location.href = '/'; 
+                          }}
                           style={{ width: '100%', textAlign: 'left', background: 'var(--accent-color)', border: 'none', color: '#fff', padding: '12px 14px', cursor: 'pointer', fontWeight: 800 }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent-color)')}

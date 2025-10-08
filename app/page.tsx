@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import { apiFetch } from "@/lib/apiClient";
+import apiClient from "@/lib/api";
 
 function Icon({ type }: { type: string }) {
   switch (type) {
@@ -41,35 +41,29 @@ export default function LoginPage() {
       recaptchaTimerRef.current = null;
     }
     try {
-      const res = await apiFetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, recaptchaToken: token }),
+      const response = await apiClient.post("/auth/login", {
+        username,
+        password,
+        recaptchaToken: token,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setSuccess("Login successful!");
-        if (data.user) {
-          console.log('Saving user to localStorage:', data.user);
-          console.log('User role:', data.user.role);
-          console.log('Is admin?', data.user.role === "admin");
-          console.log('Is staff?', data.user.role === "teaching_staff" || data.user.role === "non_teaching_staff");
-          localStorage.setItem('user', JSON.stringify(data.user));
-          if (data.user.role === "admin") {
-            console.log('Redirecting admin to /admin');
-            router.push("/admin");
-          } else {
-            console.log('Redirecting user to /home');
-            router.push("/home");
-          }
+      console.log('Login response:', response);
+      console.log('Response headers:', response.headers);
+      console.log('Response data:', response.data);
+      const data = response.data;
+      setSuccess("Login successful!");
+      if (data.user) {
+        console.log('Saving user to localStorage:', data.user);
+        console.log('User role:', data.user.role);
+        console.log('Is admin?', data.user.role === "admin");
+        console.log('Is staff?', data.user.role === "teaching_staff" || data.user.role === "non_teaching_staff");
+        localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user.role === "admin") {
+          console.log('Redirecting admin to /admin');
+          router.push("/admin");
+        } else {
+          console.log('Redirecting user to /home');
+          router.push("/home");
         }
-      } else {
-        let data = null;
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          data = await res.json();
-        }
-        setError((data && data.error) || "Login failed");
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

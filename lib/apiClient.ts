@@ -6,7 +6,11 @@ export function getApiBaseUrl(): string {
 export async function apiFetch(input: string, init?: RequestInit) {
   const base = getApiBaseUrl();
   const url = `${base}${input.startsWith('/') ? input : `/${input}`}`;
-  return fetch(url, init);
+  const merged: RequestInit = {
+    credentials: 'include',
+    ...init,
+  };
+  return fetch(url, merged);
 }
 
 

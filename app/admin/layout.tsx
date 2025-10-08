@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import apiClient from "@/lib/api";
 
 export default function AdminLayout({
   children,
@@ -11,6 +12,30 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [initializing, setInitializing] = useState(true);
+
+  // Authentication check
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.role === 'admin') {
+          setUser(parsed);
+        } else {
+          // Not admin, redirect to home
+          router.push('/home');
+          return;
+        }
+      } else {
+        // No user, redirect to login
+        router.push('/');
+        return;
+      }
+    }
+    setInitializing(false);
+  }, [router]);
 
   // Notification badge and dropdown for pending applications
   const [pendingCount, setPendingCount] = useState(0);
@@ -21,8 +46,8 @@ export default function AdminLayout({
   useEffect(() => {
     async function fetchPending() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`);
-        const data = await res.json();
+        const response = await apiClient.get("/admin/applications");
+        const data = response.data;
         if (data.success && Array.isArray(data.applications)) {
           const pending = data.applications.filter((app: any) => app.status === 'pending');
           setPendingCount(pending.length);
@@ -100,6 +125,28 @@ export default function AdminLayout({
     }
     return () => document.removeEventListener('mousedown', closeOnOutside);
   }, [showProfileMenu]);
+
+  // Show loading while checking authentication
+  if (initializing) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: '#f5f5f5'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '16px' }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user after initialization, don't render anything (redirect is in progress)
+  if (!user) {
+    return null;
+  }
 
   // Smoothly animate profile menu when it opens
   useEffect(() => {
@@ -404,7 +451,20 @@ export default function AdminLayout({
               </button>
               <button
                 role="menuitem"
-                onClick={() => { localStorage.removeItem('user'); setShowProfileMenu(false); router.push('/'); }}
+                onClick={async () => { 
+                  try {
+                    await apiClient.post('/auth/logout');
+                  } catch (error) {
+                    console.log('Logout error:', error);
+                  }
+                  // Clear localStorage
+                  localStorage.removeItem('user'); 
+                  // Manually clear cookies as backup
+                  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  setShowProfileMenu(false); 
+                  router.push('/'); 
+                }}
                 style={{
                   width: '100%',
                   textAlign: 'left',

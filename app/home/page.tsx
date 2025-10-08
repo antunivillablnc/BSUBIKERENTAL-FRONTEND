@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import BikeLoader from '../components/BikeLoader';
 
 export default function HomePage() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [initializing, setInitializing] = useState(true);
+  
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('user');
@@ -13,10 +16,15 @@ export default function HomePage() {
         const parsed = JSON.parse(stored);
         console.log('Home read user from localStorage:', parsed);
         setUser(parsed);
+      } else {
+        // No user found, redirect to login
+        console.log('No user found, redirecting to login');
+        router.push('/');
+        return;
       }
     }
     setInitializing(false);
-  }, []);
+  }, [router]);
 
   if (initializing) {
     return (
@@ -29,6 +37,11 @@ export default function HomePage() {
         
       </div>
     );
+  }
+
+  // If no user after initialization, don't render anything (redirect is in progress)
+  if (!user) {
+    return null;
   }
 
   if (user && user.role === 'admin') {

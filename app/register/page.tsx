@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { apiFetch } from "@/lib/apiClient";
+import apiClient from "@/lib/api";
 
 const roles = [
   { value: "", label: "Select your role" },
@@ -46,17 +46,14 @@ export default function RegisterPage() {
       setError("Please fill in all fields.");
       return;
     }
-    const res = await apiFetch("/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, password, role }),
+    const response = await apiClient.post("/auth/register", {
+      fullName,
+      email,
+      password,
+      role,
     });
-    let data = null;
-    const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      data = await res.json();
-    }
-    if (res.ok) {
+    const data = response.data;
+    if (response.status === 200) {
       setSuccess("Registration successful! You can now log in.");
     } else {
       setError((data && data.error) || "Registration failed");

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import apiClient from "@/lib/api";
 
 interface User {
   id: string;
@@ -38,8 +39,8 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`);
-      const data = await response.json();
+      const response = await apiClient.get("/admin/users");
+      const data = response.data;
       
       if (data.success) {
         setUsers(data.users);
@@ -74,12 +75,8 @@ export default function AdminUsersPage() {
 
     setFormLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
+      const res = await apiClient.post("/admin/users", formData);
+      const data = res.data;
       if (data.success) {
         resetForm();
         setShowAddForm(false);
@@ -106,18 +103,14 @@ export default function AdminUsersPage() {
 
     setFormLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingUser.id,
-          email: formData.email,
-          password: formData.password || undefined,
-          name: formData.name,
-          role: formData.role,
-        }),
+      const res = await apiClient.put("/admin/users", {
+        id: editingUser.id,
+        email: formData.email,
+        password: formData.password || undefined,
+        name: formData.name,
+        role: formData.role,
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.success) {
         resetForm();
         setEditingUser(null);
@@ -136,12 +129,8 @@ export default function AdminUsersPage() {
     
     setDeletingUserId(userId);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/users`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId }),
-      });
-      const data = await res.json();
+      const res = await apiClient.delete("/admin/users", { data: { id: userId } });
+      const data = res.data;
       if (data.success) {
         fetchUsers();
       } else {

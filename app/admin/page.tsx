@@ -57,9 +57,9 @@ export default function AdminDashboard() {
     setError("");
     try {
       const [appsRes, bikesRes, lbRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard?limit=5`),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, { credentials: 'include' }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, { credentials: 'include' }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard?limit=5`, { credentials: 'include' }),
       ]);
       
       const appsData = await appsRes.json();
@@ -357,6 +357,7 @@ export default function AdminDashboard() {
                   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(payload),
                   });
                   const data = await res.json();
@@ -406,6 +407,7 @@ export default function AdminDashboard() {
                             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json' },
+                              credentials: 'include',
                               body: JSON.stringify({ id: entry.id, name, distanceKm, co2SavedKg }),
                             });
                             const data = await res.json();

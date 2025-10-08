@@ -319,6 +319,7 @@ export default function BikeRentalApplication() {
       formData.append("itrFile", itrFile);
       const res = await fetch(`${getApiBaseUrl()}/applications`, {
         method: "POST",
+        credentials: 'include',
         body: formData,
       });
       if (res.ok) {
