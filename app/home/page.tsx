@@ -44,6 +44,12 @@ export default function HomePage() {
     return null;
   }
 
+  // Redirect admin users to admin dashboard
+  if (user && user.role === 'admin') {
+    router.push('/admin');
+    return null;
+  }
+
   if (user && user.role === 'admin') {
     return (
       <div style={{ minHeight: '100vh', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`, display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -67,7 +73,7 @@ export default function HomePage() {
     );
   }
 
-  // Regular user home (restored to original, always shown if not admin)
+  // Regular user home (students and staff)
   const userName = user && user.name ? user.name : "Student";
   return (
     <div style={{
