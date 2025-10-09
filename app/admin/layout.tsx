@@ -339,29 +339,45 @@ export default function AdminLayout({
 
         {/* Nav Items */}
         <nav style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                textDecoration: 'none',
-                padding: '10px 12px',
-                borderRadius: 10,
-                fontSize: 15,
-                fontWeight: 700,
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                color: pathname === item.href ? '#1976d2' : '#111111',
-                background: pathname === item.href ? '#e3f2fd' : 'transparent',
-                border: pathname === item.href ? '1px solid #1976d2' : '1px solid transparent',
-              }}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            const baseBg = isActive ? '#e3f2fd' : 'transparent';
+            const baseBorder = isActive ? '1px solid #1976d2' : '1px solid transparent';
+            const baseColor = isActive ? '#1976d2' : '#111111';
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  textDecoration: 'none',
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  transition: 'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: baseColor,
+                  background: baseBg,
+                  border: baseBorder,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = isActive ? '#daeafc' : '#f5f7fb';
+                  e.currentTarget.style.border = isActive ? '1px solid #1976d2' : '1px solid #e5e7eb';
+                  e.currentTarget.style.transform = 'translateX(2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = baseBg;
+                  e.currentTarget.style.border = baseBorder;
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                <span>{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div style={{ marginTop: 'auto', padding: 16, borderTop: '1px solid #f1f5f9', position: 'relative' }}>

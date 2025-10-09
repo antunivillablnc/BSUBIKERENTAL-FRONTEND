@@ -27,6 +27,8 @@ export default function DashboardMap({
 }: DashboardMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const startMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const endMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
   const token = (process.env.NEXT_PUBLIC_MAPBOX_TOKEN || FALLBACK_TOKEN).trim();
 
@@ -53,27 +55,21 @@ export default function DashboardMap({
 
     let cancelled = false;
     let rafId = 0;
+    let classObserver: MutationObserver | null = null;
 
-    const init = () => {
-      if (cancelled) return;
-      if (!containerRef.current || !(containerRef.current as any).isConnected) return;
+    const isDark = () => {
+      if (typeof document !== "undefined") {
+        return document.documentElement.classList.contains("dark");
+      }
+      if (typeof window !== "undefined" && window.matchMedia) {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches;
+      }
+      return false;
+    };
 
-      try {
-        mapboxgl.accessToken = token;
-        const map = new mapboxgl.Map({
-          container: containerRef.current,
-          style: "mapbox://styles/mapbox/light-v11",
-          center: defaultCenter,
-          zoom,
-          attributionControl: false,
-        });
-        mapRef.current = map;
+    const getMapStyle = (dark: boolean) => dark ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11";
 
-        // Swallow non-critical mapbox errors that can appear on rapid mount/unmount
-        map.on("error", () => {});
-
-        map.on("load", () => {
-          if (cancelled) return;
+    const applyRouteAndMarkers = (map: mapboxgl.Map) => {
       const lineCoordinates: Position[] = defaultRoute.map(([lng, lat]) => [lng, lat]);
       const geojson: FeatureCollection<LineString> = {
         type: "FeatureCollection",
@@ -89,26 +85,21 @@ export default function DashboardMap({
         ],
       };
 
-      // Fit bounds to route
-      const bounds = new mapboxgl.LngLatBounds();
-      defaultRoute.forEach((c) => bounds.extend(c as any));
-      try {
-        map.fitBounds(bounds, { padding: 40, duration: 600 });
-      } catch {}
-
-      map.addSource("route", { type: "geojson", data: geojson });
-      map.addLayer({
-        id: "route-line",
-        type: "line",
-        source: "route",
-        paint: {
-          "line-color": "#22c55e",
-          "line-width": 5,
-          "line-opacity": 0.95,
-        },
-      });
-
-      // Optional: add waypoint circles by sampling the line
+      if (!map.getSource("route")) {
+        map.addSource("route", { type: "geojson", data: geojson });
+      }
+      if (!map.getLayer("route-line")) {
+        map.addLayer({
+          id: "route-line",
+          type: "line",
+          source: "route",
+          paint: {
+            "line-color": "#22c55e",
+            "line-width": 5,
+            "line-opacity": 0.95,
+          },
+        });
+      }
 
       // Start/End markers
       const start = defaultRoute[0];
@@ -128,9 +119,58 @@ export default function DashboardMap({
       endEl.style.background = "#ef4444";
       endEl.style.boxShadow = "0 0 0 3px rgba(239,68,68,0.35)";
 
-      new mapboxgl.Marker(startEl).setLngLat(start).addTo(map);
-      new mapboxgl.Marker(endEl).setLngLat(end).addTo(map);
+      startMarkerRef.current?.remove();
+      endMarkerRef.current?.remove();
+      startMarkerRef.current = new mapboxgl.Marker(startEl).setLngLat(start).addTo(map);
+      endMarkerRef.current = new mapboxgl.Marker(endEl).setLngLat(end).addTo(map);
+    };
+
+    const init = () => {
+      if (cancelled) return;
+      if (!containerRef.current || !(containerRef.current as any).isConnected) return;
+
+      try {
+        mapboxgl.accessToken = token;
+        const map = new mapboxgl.Map({
+          container: containerRef.current,
+          style: getMapStyle(isDark()),
+          center: defaultCenter,
+          zoom,
+          attributionControl: false,
+        });
+        mapRef.current = map;
+
+        // Swallow non-critical mapbox errors that can appear on rapid mount/unmount
+        map.on("error", () => {});
+
+        map.on("load", () => {
+          if (cancelled) return;
+      // Fit bounds to route
+      const bounds = new mapboxgl.LngLatBounds();
+      defaultRoute.forEach((c) => bounds.extend(c as any));
+      try {
+        map.fitBounds(bounds, { padding: 40, duration: 600 });
+      } catch {}
+      applyRouteAndMarkers(map);
     });
+
+        // Observe theme changes on <html class="dark"> and switch style accordingly
+        classObserver = new MutationObserver(() => {
+          if (!mapRef.current) return;
+          const dark = isDark();
+          const nextStyle = getMapStyle(dark);
+          // Avoid redundant setStyle calls by checking current style id
+          const styleUrl = (mapRef.current as any).getStyle()?.sprite as string | undefined;
+          if (styleUrl && styleUrl.includes(dark ? "dark" : "light")) return;
+          mapRef.current.setStyle(nextStyle);
+          mapRef.current.once("styledata", () => {
+            if (cancelled || !mapRef.current) return;
+            try {
+              applyRouteAndMarkers(mapRef.current);
+            } catch {}
+          });
+        });
+        classObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
       } catch {
         // no-op; mapbox may throw if container disappears mid-init
       }
@@ -142,6 +182,9 @@ export default function DashboardMap({
     return () => {
       cancelled = true;
       if (rafId) cancelAnimationFrame(rafId);
+      classObserver?.disconnect();
+      startMarkerRef.current?.remove();
+      endMarkerRef.current?.remove();
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -161,14 +204,13 @@ export default function DashboardMap({
           borderRadius: 16,
           overflow: "hidden",
           border: "1px solid var(--border-color, #e5e7eb)",
-          background:
-            "linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%)",
+          background: "var(--card-bg, #ffffff)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <div style={{ textAlign: "center", color: "#334155" }}>
+        <div style={{ textAlign: "center", color: "var(--text-secondary, #334155)" }}>
           <div style={{ fontWeight: 800, marginBottom: 6 }}>
             Map unavailable
           </div>
@@ -201,10 +243,10 @@ export default function DashboardMap({
           position: "absolute",
           right: 12,
           top: 12,
-          background: "#ffffff",
-          color: "#0f172a",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+          background: "var(--card-bg)",
+          color: "var(--text-primary)",
+          border: "1px solid var(--border-color)",
+          boxShadow: "0 6px 18px var(--shadow-color)",
           borderRadius: 12,
           padding: "10px 12px",
           fontSize: 14,

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import DashboardMap from "../components/DashboardMap";
+import BikeLoader from "../components/BikeLoader";
 
 // Simple circular progress component
 function CircularProgress({ value, max, color, size = 80, strokeWidth = 8, unit, goal }: { 
@@ -51,14 +52,14 @@ function CircularProgress({ value, max, color, size = 80, strokeWidth = 8, unit,
         transform: 'translate(-50%, -50%)',
         textAlign: 'center',
       }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#1e293b' }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
           {value.toFixed(1)}
         </div>
-        <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
           {unit || 'units'}
         </div>
         {goal && (
-          <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
             Goal: {goal}
           </div>
         )}
@@ -105,9 +106,10 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
         display: 'flex', 
         gap: '8px', 
         marginBottom: '20px',
-        background: '#f8fafc',
+        background: 'var(--bg-tertiary)',
         padding: '4px',
-        borderRadius: '8px'
+        borderRadius: '8px',
+        border: '1px solid var(--border-color)'
       }}>
         {(['distance', 'calories', 'co2'] as const).map((metric) => (
           <button
@@ -117,13 +119,13 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
               flex: 1,
               padding: '8px 12px',
               border: 'none',
-              background: activeMetric === metric ? 'white' : 'transparent',
+              background: activeMetric === metric ? 'var(--card-bg)' : 'transparent',
               borderRadius: '6px',
               fontSize: '12px',
               fontWeight: '500',
-              color: activeMetric === metric ? '#1e293b' : '#64748b',
+              color: activeMetric === metric ? 'var(--text-primary)' : 'var(--text-secondary)',
               cursor: 'pointer',
-              boxShadow: activeMetric === metric ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+              boxShadow: activeMetric === metric ? '0 1px 3px var(--shadow-color)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -174,7 +176,7 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
               <div style={{ 
                 fontSize: '11px', 
                 fontWeight: '500', 
-                color: '#64748b' 
+                color: 'var(--text-secondary)'
               }}>
                 {item.day}
               </div>
@@ -187,24 +189,24 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
       <div style={{ 
         marginTop: '16px',
         paddingTop: '16px',
-        borderTop: '1px solid #e5e7eb',
+        borderTop: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-between',
         gap: '16px'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>
             Total this week:
           </span>
-          <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>
+          <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
             {data.reduce((sum, item) => sum + getValue(item), 0).toFixed(1)} {getUnit()}
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>
             Daily average:
           </span>
-          <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>
+          <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
             {(data.reduce((sum, item) => sum + getValue(item), 0) / data.length).toFixed(1)} {getUnit()}
           </span>
         </div>
@@ -214,6 +216,13 @@ function WeeklyActivity({ data }: { data: { day: string; distance: number; calor
 }
 
 export default function DashboardPage() {
+  // Loading indicator like Home page
+  const [initializing, setInitializing] = useState(true);
+  useEffect(() => {
+    const id = setTimeout(() => setInitializing(false), 800);
+    return () => clearTimeout(id);
+  }, []);
+
   // Simulated data matching the design
   const [distanceKm] = useState(15.2);
   const [co2SavedKg] = useState(1.8);
@@ -255,6 +264,18 @@ export default function DashboardPage() {
       localStorage.setItem('bikeRentalGoals', JSON.stringify(goals));
     }
   }, [goals]);
+
+  if (initializing) {
+    return (
+      <div style={{ minHeight: '100vh', background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(80,80,80,0.7)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <BikeLoader />
+          <div style={{ color: '#ffffff', fontWeight: 800, fontSize: 18, letterSpacing: 1, textShadow: '0 2px 8px rgba(0,0,0,0.45)' }}>Loading dashboard...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
@@ -430,6 +451,28 @@ export default function DashboardPage() {
           pointer-events: none;
         }
 
+        /* Dark mode overrides: keep image background, adjust card/text only */
+        :global(.dark) .metric-card,
+        :global(.dark) .activity-card,
+        :global(.dark) .personal-bests-card {
+          background: var(--card-bg);
+          box-shadow: 0 8px 24px var(--shadow-color);
+        }
+
+        :global(.dark) .metric-label,
+        :global(.dark) .best-item,
+        :global(.dark) .goal-settings h4,
+        :global(.dark) .goal-progress-item {
+          color: var(--text-secondary);
+        }
+
+        :global(.dark) .best-value,
+        :global(.dark) .activity-card h3,
+        :global(.dark) .bests-header h3,
+        :global(.dark) .progress-text {
+          color: var(--text-primary);
+        }
+
         .dashboard-container > * {
           position: relative;
           z-index: 1;
@@ -451,7 +494,7 @@ export default function DashboardPage() {
         }
 
         .metric-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 20px;
           padding: 32px 24px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -487,7 +530,7 @@ export default function DashboardPage() {
         .metric-label {
           font-size: 16px;
           font-weight: 600;
-          color: #64748b;
+          color: var(--text-secondary);
           text-align: center;
         }
 
@@ -500,7 +543,7 @@ export default function DashboardPage() {
         }
 
         .activity-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 16px;
           padding: 24px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -511,11 +554,11 @@ export default function DashboardPage() {
           margin: 0 0 20px 0;
           font-size: 18px;
           font-weight: 700;
-          color: #1e293b;
+          color: var(--text-primary);
         }
 
         .personal-bests-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 16px;
           padding: 24px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -533,23 +576,28 @@ export default function DashboardPage() {
           margin: 0;
           font-size: 18px;
           font-weight: 700;
-          color: #1e293b;
+          color: var(--text-primary);
         }
 
         .settings-button {
-          background: none;
-          border: none;
-          font-size: 16px;
-          opacity: 0.6;
+          background: var(--card-bg);
+          border: 2px solid var(--border-color);
+          font-size: 22px;
+          opacity: 0.9;
           cursor: pointer;
-          padding: 4px;
-          border-radius: 4px;
-          transition: opacity 0.2s ease, background-color 0.2s ease;
+          padding: 8px 12px;
+          border-radius: 10px;
+          transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
+          box-shadow: 0 2px 6px var(--shadow-color);
         }
 
         .settings-button:hover {
           opacity: 1;
-          background-color: #f1f5f9;
+          background-color: var(--hover-bg);
+        }
+
+        .settings-button:active {
+          transform: scale(0.98);
         }
 
         .best-item {
@@ -558,27 +606,27 @@ export default function DashboardPage() {
           align-items: center;
           margin-bottom: 16px;
           font-size: 14px;
-          color: #64748b;
+          color: var(--text-secondary);
         }
 
         .best-value {
           font-weight: 700;
-          color: #1e293b;
+          color: var(--text-primary);
         }
 
         .goal-settings {
-          background: #f8fafc;
+          background: var(--bg-tertiary);
           border-radius: 8px;
           padding: 16px;
           margin-bottom: 20px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--border-color);
         }
 
         .goal-settings h4 {
           margin: 0 0 16px 0;
           font-size: 14px;
           font-weight: 600;
-          color: #475569;
+          color: var(--text-secondary);
         }
 
         .goal-input-group {
@@ -590,14 +638,16 @@ export default function DashboardPage() {
 
         .goal-input-group label {
           font-size: 13px;
-          color: #64748b;
+          color: var(--text-secondary);
           font-weight: 500;
         }
 
         .goal-input-group input {
           width: 80px;
           padding: 6px 8px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--input-border);
+          background: var(--input-bg);
+          color: var(--text-primary);
           border-radius: 4px;
           font-size: 13px;
           text-align: right;
@@ -605,8 +655,8 @@ export default function DashboardPage() {
 
         .goal-input-group input:focus {
           outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          border-color: var(--accent-color);
+          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
         }
 
         .goal-progress-section {
@@ -619,7 +669,7 @@ export default function DashboardPage() {
           margin: 0 0 12px 0;
           font-size: 14px;
           font-weight: 600;
-          color: #475569;
+          color: var(--text-secondary);
         }
 
         .goal-progress-item {
@@ -628,12 +678,12 @@ export default function DashboardPage() {
           align-items: center;
           margin-bottom: 8px;
           font-size: 13px;
-          color: #64748b;
+          color: var(--text-secondary);
         }
 
         .progress-text {
           font-weight: 600;
-          color: #1e293b;
+          color: var(--text-primary);
         }
 
 
