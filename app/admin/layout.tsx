@@ -126,6 +126,22 @@ export default function AdminLayout({
     return () => document.removeEventListener('mousedown', closeOnOutside);
   }, [showProfileMenu]);
 
+  // Smoothly animate profile menu when it opens
+  useEffect(() => {
+    if (showProfileMenu && profileMenuRef.current) {
+      const el = profileMenuRef.current;
+      // Reset to initial hidden state, then animate to visible
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(6px) scale(0.98)';
+      el.style.transition = 'opacity 160ms ease, transform 160ms ease';
+      // Next frame: animate in
+      requestAnimationFrame(() => {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0) scale(1)';
+      });
+    }
+  }, [showProfileMenu]);
+
   // Show loading while checking authentication
   if (initializing) {
     return (
@@ -147,22 +163,6 @@ export default function AdminLayout({
   if (!user) {
     return null;
   }
-
-  // Smoothly animate profile menu when it opens
-  useEffect(() => {
-    if (showProfileMenu && profileMenuRef.current) {
-      const el = profileMenuRef.current;
-      // Reset to initial hidden state, then animate to visible
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(6px) scale(0.98)';
-      el.style.transition = 'opacity 160ms ease, transform 160ms ease';
-      // Next frame: animate in
-      requestAnimationFrame(() => {
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0) scale(1)';
-      });
-    }
-  }, [showProfileMenu]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f7f8fa", display: "flex", flexDirection: "row" }}>
