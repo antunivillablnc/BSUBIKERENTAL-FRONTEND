@@ -305,7 +305,7 @@ export default function AdminLayout({
                           {app.email}
                         </div>
                         <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 8 }}>
-                          Applied: {new Date(app.createdAt).toLocaleDateString()}
+                          Applied: {new Date(new Date(app.createdAt).getTime() + (new Date().getTimezoneOffset() * -60000) + 8*60*60000).toLocaleDateString('en-PH')}
                         </div>
                         <a
                           href="/admin/applications"
