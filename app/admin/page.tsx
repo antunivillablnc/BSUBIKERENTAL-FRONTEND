@@ -46,6 +46,7 @@ export default function AdminDashboard() {
   const [applications, setApplications] = useState<any[]>([]);
   const [reportedIssues, setReportedIssues] = useState<any[]>([]);
   const [usageRange, setUsageRange] = useState<'week' | 'month' | 'year'>('week');
+  const [collegeRange, setCollegeRange] = useState<'week' | 'month' | 'year'>('week');
 
   // Timezone helpers: force Asia/Manila (UTC+8) regardless of client tz
   const toManila = (date: Date) => {
@@ -283,16 +284,90 @@ export default function AdminDashboard() {
     return { labels, rentals, apps: appsArr };
   }, [applications, usageRange]);
 
-  const rentalsPerCollege = useMemo(() => {
-    const colleges = ['CICS', 'CABEIHM', 'CAS', 'CIT'];
-    const counts = [0, 0, 0, 0];
-    applications.forEach((a) => {
-      const college = (a.college || '').toUpperCase();
-      const i = colleges.indexOf(college);
-      if (i >= 0 && a.bikeId) counts[i] += 1;
+  const collegeAnalytics = useMemo(() => {
+    const colleges = ['CTE', 'CET', 'CAS', 'CABE', 'CICS'];
+    const now = nowManila();
+    
+    // Filter applications based on collegeRange
+    let filteredApplications = applications;
+    
+    if (collegeRange === 'week') {
+      const todayM = new Date(now);
+      todayM.setHours(0,0,0,0);
+      const start = new Date(todayM);
+      start.setDate(todayM.getDate() - 6);
+      filteredApplications = applications.filter((a) => {
+        const d = toManila(new Date(a.createdAt));
+        const dm = new Date(d);
+        dm.setHours(0,0,0,0);
+        return dm >= start && dm <= todayM;
+      });
+    } else if (collegeRange === 'month') {
+      const firstOfMonth = new Date(now);
+      firstOfMonth.setHours(0,0,0,0);
+      firstOfMonth.setDate(1);
+      const end = new Date(now);
+      end.setHours(0,0,0,0);
+      filteredApplications = applications.filter((a) => {
+        const d = toManila(new Date(a.createdAt));
+        const dm = new Date(d);
+        dm.setHours(0,0,0,0);
+        return dm >= firstOfMonth && dm <= end;
+      });
+    } else if (collegeRange === 'year') {
+      const anchor = new Date(now);
+      anchor.setHours(0,0,0,0);
+      anchor.setDate(1);
+      const start = new Date(anchor);
+      start.setMonth(anchor.getMonth() - 11);
+      filteredApplications = applications.filter((a) => {
+        const d = toManila(new Date(a.createdAt));
+        const dm = new Date(d);
+        dm.setHours(0,0,0,0);
+        dm.setDate(1);
+        return dm >= start && dm <= anchor;
+      });
+    }
+    
+    const rentalCounts = [0, 0, 0, 0, 0];
+    const applicationCounts = [0, 0, 0, 0, 0];
+    
+    // Create a mapping for flexible college name matching
+    const collegeMapping: Record<string, number> = {
+      'CTE': 0, 'COLLEGE OF TEACHER EDUCATION': 0, 'TEACHER EDUCATION': 0,
+      'CET': 1, 'COLLEGE OF ENGINEERING TECHNOLOGY': 1, 'ENGINEERING TECHNOLOGY': 1,
+      'CAS': 2, 'COLLEGE OF ARTS AND SCIENCES': 2, 'ARTS AND SCIENCES': 2,
+      'CABE': 3, 'COLLEGE OF ACCOUNTANCY BUSINESS AND ECONOMICS': 3, 'ACCOUNTANCY BUSINESS ECONOMICS': 3,
+      'CICS': 4, 'COLLEGE OF INFORMATICS AND COMPUTING SCIENCES': 4, 'INFORMATICS COMPUTING SCIENCES': 4
+    };
+    
+    filteredApplications.forEach((a) => {
+      const college = (a.college || '').toUpperCase().trim();
+      
+      // Try exact match first
+      let collegeIndex = colleges.indexOf(college);
+      
+      // If no exact match, try flexible matching
+      if (collegeIndex === -1) {
+        for (const [key, index] of Object.entries(collegeMapping)) {
+          if (college.includes(key) || key.includes(college)) {
+            collegeIndex = index;
+            break;
+          }
+        }
+      }
+      
+      if (collegeIndex >= 0) {
+        applicationCounts[collegeIndex] += 1;
+        // Check multiple possible field names for bike assignment
+        if (a.bikeId || a.bike_id || a.assignedBikeId || a.assignedBike || a.status === 'assigned' || a.status === 'Assigned') {
+          rentalCounts[collegeIndex] += 1;
+        }
+      }
     });
-    return { colleges, counts };
-  }, [applications]);
+    
+    return { colleges, rentalCounts, applicationCounts };
+  }, [applications, collegeRange]);
 
   const maintenanceAnalytics = useMemo(() => {
     const typeCounts: Record<string, number> = {};
@@ -463,8 +538,36 @@ export default function AdminDashboard() {
         <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ color: '#111827', fontWeight: 800, fontSize: 20, margin: 0 }}>College Analytics</h3>
+            <div style={{ display: 'flex', gap: 8, background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: 4 }}>
+              {(['week','month','year'] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setCollegeRange(r)}
+                  style={{
+                    border: 'none',
+                    borderRadius: 8,
+                    background: collegeRange === r ? '#ffffff' : 'transparent',
+                    padding: '6px 10px',
+                    fontWeight: 700,
+                    color: collegeRange === r ? '#111827' : '#6b7280',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {r === 'week' ? 'Week' : r === 'month' ? 'Month' : 'Year'}
+                </button>
+              ))}
+            </div>
           </div>
-          <BarChart data={rentalsPerCollege.counts} labels={rentalsPerCollege.colleges} color="#8b5cf6" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div>
+              <div style={{ color: '#6b7280', fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Bikes Rented by College</div>
+              <BarChart data={collegeAnalytics.rentalCounts} labels={collegeAnalytics.colleges} color="#8b5cf6" />
+            </div>
+            <div>
+              <div style={{ color: '#6b7280', fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Applications Submitted by College</div>
+              <BarChart data={collegeAnalytics.applicationCounts} labels={collegeAnalytics.colleges} color="#06b6d4" />
+            </div>
+          </div>
         </div>
 
         {/* Maintenance Analytics */}
