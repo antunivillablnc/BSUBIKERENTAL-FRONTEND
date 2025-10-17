@@ -92,6 +92,11 @@ async function deleteAllApplications() {
   await deleteCollection('applications'); // ← Change 'applications' to your actual collection name if different
 }
 
+// Function to delete all applications
+async function deleteAllBikes() {
+  await deleteCollection('bikes'); // ← Change 'applications' to your actual collection name if different
+}
+
 // If this file is run directly, execute example queries
 if (require.main === module) {
   require('dotenv').config({ path: '.env.local' });
@@ -117,7 +122,21 @@ if (require.main === module) {
         console.error('❌ Failed to delete applications:', error);
         process.exit(1);
       });
-  } else {
+  } else if (command === 'delete-bikes') {
+    console.log('🚨 WARNING: You are about to delete ALL bikes from Firestore!');
+    console.log('This action cannot be undone. All bike data will be permanently lost.');
+    console.log('');
+
+    deleteAllBikes()
+      .then(() => {
+        console.log('✅ All bikes deleted successfully');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to delete bikes:', error);
+        process.exit(1);
+      });
+  }else {
     console.log('Running example queries...');
     console.log('Available commands:');
     console.log('  node scripts/firestore.js delete-applications  - Delete all applications');
