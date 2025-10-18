@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import "leaflet/dist/leaflet.css";
-import type * as Leaflet from "leaflet";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface Bike {
   id: string;
@@ -13,10 +13,12 @@ interface Bike {
 }
 
 export default function AdminBikesMapPage() {
-  const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<Leaflet.Map | null>(null);
-  const markersRef = useRef<Leaflet.LayerGroup | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [bikes, setBikes] = useState<Bike[]>([]);
+
+  const token = (process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "").trim();
 
   // Parse query params for optional single-bike focus
   const query = useMemo(() => (typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null), []);
@@ -27,71 +29,102 @@ export default function AdminBikesMapPage() {
   const selectedLng = qLng ? Number(qLng) : undefined;
 
   useEffect(() => {
-    let isCancelled = false;
-    (async () => {
-      const leafletModule = await import("leaflet");
-      const L: typeof import("leaflet") = (leafletModule as any).default || (leafletModule as any);
+    if (!containerRef.current) return;
+    if (!token) return;
+    if (mapRef.current) return;
 
-      if (isCancelled) return;
-      const startCenter: [number, number] = [13.7565, 121.0583];
-      const startZoom = typeof selectedLat === 'number' && typeof selectedLng === 'number' && !Number.isNaN(selectedLat) && !Number.isNaN(selectedLng) ? 17 : 15;
+    mapboxgl.accessToken = token;
 
-      // Initialize map once
-      if (!mapInstanceRef.current && mapRef.current) {
-        const map = L.map(mapRef.current).setView(startCenter, startZoom);
-        mapInstanceRef.current = map;
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap contributors",
-          maxZoom: 19,
-        }).addTo(map);
+    const isDark = () => {
+      if (typeof document !== "undefined") {
+        return document.documentElement.classList.contains("dark");
       }
-
-      if (!mapInstanceRef.current) return;
-      const map = mapInstanceRef.current;
-
-      // Create or clear markers layer
-      if (!markersRef.current) {
-        markersRef.current = L.layerGroup().addTo(map);
-      } else {
-        markersRef.current.clearLayers();
+      if (typeof window !== "undefined" && window.matchMedia) {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches;
       }
+      return false;
+    };
 
-      const defaultIcon = L.icon({
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
-      });
+    const style = isDark() ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11";
 
-      // Single-bike focus if coords provided
-      if (typeof selectedLat === 'number' && !Number.isNaN(selectedLat) && typeof selectedLng === 'number' && !Number.isNaN(selectedLng)) {
-        map.setView([selectedLat, selectedLng], 17);
-        L.marker([selectedLat, selectedLng], { icon: defaultIcon }).addTo(markersRef.current).bindPopup(qLabel || 'Bike');
-        return;
-      }
+    const center: [number, number] = [121.0583, 13.7565];
+    const startZoom = typeof selectedLat === 'number' && typeof selectedLng === 'number' && !Number.isNaN(selectedLat) && !Number.isNaN(selectedLng) ? 17 : 15;
 
-      // All bikes with coordinates
-      const points: [number, number, string][] = [];
-      for (const b of bikes) {
-        if (typeof b.latitude === 'number' && typeof b.longitude === 'number') {
-          points.push([b.latitude, b.longitude, b.name]);
-        }
-      }
-      for (const [lat, lng, name] of points) {
-        L.marker([lat, lng], { icon: defaultIcon }).addTo(markersRef.current).bindPopup(name);
-      }
-      if (points.length > 0) {
-        map.fitBounds(L.latLngBounds(points.map(([lat, lng]) => [lat, lng] as [number, number])).pad(0.2));
-      }
-    })();
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style,
+      center,
+      zoom: startZoom,
+      attributionControl: false,
+    });
+    map.on("error", () => {});
+    mapRef.current = map;
+
+    // Observe theme changes to swap styles
+    const classObserver = new MutationObserver(() => {
+      if (!mapRef.current) return;
+      const next = isDark() ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11";
+      try { mapRef.current.setStyle(next); } catch {}
+    });
+    classObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
     return () => {
-      isCancelled = true;
+      classObserver.disconnect();
     };
-  }, [bikes, qLabel, selectedLat, selectedLng]);
+  }, [selectedLat, selectedLng, token]);
+
+  // Render markers whenever bikes or selected coords change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear existing markers
+    for (const m of markersRef.current) m.remove();
+    markersRef.current = [];
+
+    // If single selection provided, place that marker and center
+    if (typeof selectedLat === 'number' && !Number.isNaN(selectedLat) && typeof selectedLng === 'number' && !Number.isNaN(selectedLng)) {
+      const el = document.createElement('div');
+      el.style.width = '12px';
+      el.style.height = '12px';
+      el.style.borderRadius = '9999px';
+      el.style.background = '#2563eb';
+      el.style.boxShadow = '0 0 0 4px rgba(37,99,235,0.35)';
+      if (qLabel) el.title = qLabel;
+      const marker = new mapboxgl.Marker(el).setLngLat([selectedLng, selectedLat]).addTo(map);
+      markersRef.current.push(marker);
+      try {
+        map.flyTo({ center: [selectedLng, selectedLat], zoom: 17 });
+      } catch {}
+      return;
+    }
+
+    // Otherwise, plot all bikes with coordinates and fit bounds
+    const coords: [number, number, string][] = [];
+    for (const b of bikes) {
+      if (typeof b.latitude === 'number' && typeof b.longitude === 'number') {
+        coords.push([b.longitude, b.latitude, b.name]);
+      }
+    }
+    for (const [lng, lat, name] of coords) {
+      const el = document.createElement('div');
+      el.title = name;
+      el.style.width = '10px';
+      el.style.height = '10px';
+      el.style.borderRadius = '9999px';
+      el.style.background = '#22c55e';
+      el.style.boxShadow = '0 0 0 3px rgba(34,197,94,0.35)';
+      const marker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
+      markersRef.current.push(marker);
+    }
+    if (coords.length > 0) {
+      const bounds = new mapboxgl.LngLatBounds();
+      coords.forEach(([lng, lat]) => bounds.extend([lng, lat] as [number, number]));
+      try {
+        map.fitBounds(bounds, { padding: 40, duration: 600 });
+      } catch {}
+    }
+  }, [bikes, selectedLat, selectedLng]);
 
   useEffect(() => {
     // Load bikes for all-markers view
@@ -109,11 +142,10 @@ export default function AdminBikesMapPage() {
   // Cleanup map on unmount
   useEffect(() => {
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-      markersRef.current = null;
+      for (const m of markersRef.current) m.remove();
+      markersRef.current = [];
+      mapRef.current?.remove();
+      mapRef.current = null;
     };
   }, []);
 
@@ -131,9 +163,15 @@ export default function AdminBikesMapPage() {
             No GPS coordinates set for this bike yet. Showing default campus view.
           </div>
         )}
-        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e0e0e0', overflow: 'hidden' }}>
-          <div ref={mapRef} style={{ height: '70vh', width: '100%' }} />
-        </div>
+        {!token ? (
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e0e0e0', padding: 24 }}>
+            Set NEXT_PUBLIC_MAPBOX_TOKEN to enable the map.
+          </div>
+        ) : (
+          <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e0e0e0', overflow: 'hidden' }}>
+            <div ref={containerRef} style={{ height: '70vh', width: '100%' }} />
+          </div>
+        )}
       </div>
     </div>
   );

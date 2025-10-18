@@ -97,6 +97,101 @@ async function deleteAllBikes() {
   await deleteCollection('bikes'); // ← Change 'applications' to your actual collection name if different
 }
 
+async function deleteAllRentalHistory() {
+  await deleteCollection('rentalHistory'); // ← Change 'applications' to your actual collection name if different
+}
+
+// Seed rental history for specific users with random completed rentals
+async function seedRentalHistoryForUsers() {
+  const targetNames = [
+    'Anthony Villablanca',
+    'Brian Neil Babasa',
+    'Adrian Camota',
+    'Teaching',
+    'non teaching',
+  ].map((s) => s.toLowerCase());
+
+  const colleges = [
+    'College of Informatics and Computing Sciences (CICS)',
+    'College of Nursing (CON)',
+    'College of Education (COE)',
+    'College of Arts and Sciences (CAS)',
+    'College of Engineering (CEN)',
+    'College of Business Administration (CBA)',
+  ];
+
+  const usersSnap = await db.collection('users').get();
+  const allUsers = usersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  // Always seed all users; names list is only used for logging/verification
+  const namedUsers = allUsers.filter((u) => (u.name || '').toLowerCase && targetNames.includes((u.name || '').toLowerCase()));
+  const users = allUsers;
+  const missingNamed = targetNames.filter((n) => !allUsers.some((u) => ((u.name || '').toLowerCase && (u.name || '').toLowerCase() === n)));
+  console.log(`Seeding rental history for ALL users (${users.length}). Matched named users: ${namedUsers.length}. Missing from users collection: ${missingNamed.join(', ') || 'none'}.`);
+
+  const bikesSnap = await db.collection('bikes').get();
+  const bikes = bikesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  let created = 0;
+  const batchSize = 400; // commit in chunks
+  let batch = db.batch();
+  let batchCount = 0;
+
+  function randomBetween(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  for (const user of users) {
+    const countForUser = randomBetween(1, 3);
+    for (let i = 0; i < countForUser; i++) {
+      const daysAgoStart = randomBetween(1, 90);
+      const start = new Date();
+      start.setDate(start.getDate() - daysAgoStart);
+      start.setHours(randomBetween(7, 20), randomBetween(0, 59), randomBetween(0, 59), 0);
+      const end = new Date(start.getTime() + randomBetween(30, 60 * 24 * 7) * 60 * 1000); // 30 minutes to 7 days later
+      const createdAt = new Date(start.getTime() + randomBetween(0, Math.max(1, (end.getTime() - start.getTime()) / 2)));
+
+      const bike = bikes.length > 0 ? bikes[randomBetween(0, bikes.length - 1)] : null;
+      const bikeId = bike ? bike.id : null;
+      const bikeName = bike ? bike.name || null : null;
+      const college = colleges[randomBetween(0, colleges.length - 1)];
+
+      // optional: link to any existing application for this user (if present)
+      let applicationId = null;
+      try {
+        const appSnap = await db.collection('applications').where('userId', '==', user.id).limit(1).get();
+        applicationId = appSnap.empty ? null : appSnap.docs[0].id;
+      } catch (_) {
+        applicationId = null;
+      }
+
+      const ref = db.collection('rentalHistory').doc();
+      batch.set(ref, {
+        applicationId,
+        userId: user.id,
+        bikeId,
+        bikeName,
+        college, // stored on history; backend prefers app/user college but falls back when needed
+        startDate: start,
+        endDate: end,
+        createdAt,
+      });
+      created++;
+      batchCount++;
+      if (batchCount >= batchSize) {
+        await batch.commit();
+        batch = db.batch();
+        batchCount = 0;
+      }
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+  console.log(`✅ Seeded ${created} rental history records for ${users.length} user(s).`);
+  return created;
+}
+
 // If this file is run directly, execute example queries
 if (require.main === module) {
   require('dotenv').config({ path: '.env.local' });
@@ -136,7 +231,31 @@ if (require.main === module) {
         console.error('❌ Failed to delete bikes:', error);
         process.exit(1);
       });
-  }else {
+  }else if (command === 'delete-rental-history') {
+    console.log('🚨 WARNING: You are about to delete ALL rental history from Firestore!');
+    console.log('This action cannot be undone. All rental history will be permanently lost.');
+    console.log('');
+
+    deleteAllRentalHistory()
+      .then(() => {
+        console.log('✅ All rental history deleted successfully');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to delete rental history:', error);
+        process.exit(1);
+      });
+  } else if (command === 'seed-rental-history') {
+    seedRentalHistoryForUsers()
+      .then((count) => {
+        console.log(`✅ Done seeding rental history (${count} records).`);
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to seed rental history:', error);
+        process.exit(1);
+      });
+  } else {
     console.log('Running example queries...');
     console.log('Available commands:');
     console.log('  node scripts/firestore.js delete-applications  - Delete all applications');
