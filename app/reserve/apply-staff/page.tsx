@@ -242,14 +242,20 @@ export default function StaffBikeRentalApplication() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
             <div>
               <label style={labelStyle}>Department*</label>
-              <input 
+              <select 
                 name="department" 
                 value={form.department} 
                 onChange={handleChange} 
                 required 
-                style={inputStyle} 
-                placeholder="Department" 
-              />
+                style={inputStyle}
+              >
+                <option value="">Select Department</option>
+                <option value="College of Teacher Education (CTE)">College of Teacher Education (CTE)</option>
+                <option value="College of Engineering Technology (CET)">College of Engineering Technology (CET)</option>
+                <option value="College of Arts and Sciences (CAS)">College of Arts and Sciences (CAS)</option>
+                <option value="College of Accountancy, Business and Economics (CABE)">College of Accountancy, Business and Economics (CABE)</option>
+                <option value="College of Informatics and Computing Sciences (CICS)">College of Informatics and Computing Sciences (CICS)</option>
+              </select>
             </div>
             <div>
               <label style={labelStyle}>Staff ID*</label>
