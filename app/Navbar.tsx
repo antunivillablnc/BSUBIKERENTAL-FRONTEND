@@ -9,6 +9,7 @@ type Notification = {
   message: string;
   date: string;
   status: string;
+  ts: number; // timestamp for sorting (ms since epoch)
 };
 
 type UserProfile = {
@@ -387,9 +388,11 @@ export default function Navbar() {
      setUserName(user.name || null);
      setUserPhoto(user.photo || null);
      setSeenIdsSnapshot(loadSeenSnapshot(user.email || '')); 
-    // Initial fetch
+    // Initial fetch for application-based notifications
     const query = user?.id ? `userId=${encodeURIComponent(user.id)}` : `email=${encodeURIComponent(user.email)}`;
-    const buildNotifs = (apps: any[]) => {
+    // Always use email for notifications to support existing data
+    const notifQuery = `email=${encodeURIComponent(user.email)}`;
+    const buildNotifsFromApps = (apps: any[]) => {
       const dismissed = loadDismissed(user.email || '');
       const notifs = apps
         .map((app: any) => {
@@ -401,35 +404,94 @@ export default function Navbar() {
           const kind = isApproved ? 'approved' : isRejected ? 'rejected' : 'pending';
           const id = `${app.id}:${kind}`;
           if (dismissed.includes(id)) return null;
-          return { id, message: isApproved ? 'Your bike rental was approved!' : isRejected ? 'Your application was rejected.' : 'Your application is pending review.', date: app.createdAt ? app.createdAt.split('T')[0] : '', status: kind } as Notification;
+          const createdAt: string = app.createdAt || '';
+          const ts = createdAt ? Date.parse(createdAt) : Date.now();
+          return { id, message: isApproved ? 'Your bike rental was approved!' : isRejected ? 'Your application was rejected.' : 'Your application is pending review.', date: createdAt ? createdAt.split('T')[0] : '', status: kind, ts } as Notification;
         })
         .filter(Boolean) as Notification[];
-      setNotifications(notifs);
+      setNotifications(prev => {
+        const merged = [...notifs, ...prev];
+        const dedup = new Map(merged.map(n => [n.id, n]));
+        const arr = Array.from(dedup.values());
+        arr.sort((a, b) => b.ts - a.ts);
+        return arr.slice(0, 50);
+      });
       setLoadingNotifs(false);
     };
 
     apiClient.get(`/dashboard?${query}`)
       .then(response => {
         const data = response.data;
-        if (data.success && Array.isArray(data.applications)) buildNotifs(data.applications); else { setNotifications([]); setLoadingNotifs(false); }
+        if (data.success && Array.isArray(data.applications)) buildNotifsFromApps(data.applications); else { setNotifications([]); setLoadingNotifs(false); }
       })
       .catch(() => { setNotifications([]); setLoadingNotifs(false); });
 
+    // Initial fetch of in-app notifications
+    apiClient.get(`/notifications?${notifQuery}`)
+      .then(resp => {
+        const data = resp.data;
+        if (data?.success && Array.isArray(data.notifications)) {
+          const fromServer = data.notifications.map((n: any) => {
+            const createdAt: string = n.createdAt || '';
+            const ts = createdAt ? Date.parse(createdAt) : Date.now();
+            return { id: n.id, message: n.message, date: (createdAt || '').split('T')[0] || '', status: String(n.status || 'info'), ts } as Notification;
+          });
+          setNotifications(prev => {
+            const merged = [...fromServer, ...prev];
+            const dedup = new Map(merged.map(n => [n.id, n]));
+            const arr = Array.from(dedup.values());
+            arr.sort((a, b) => b.ts - a.ts);
+            return arr.slice(0, 50);
+          });
+        }
+      })
+      .catch(() => {});
+
     // Live updates via SSE
+    // Live updates: applications
+    let ev1: EventSource | null = null;
     try {
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/stream?${query}`;
-      const ev = new EventSource(url, { withCredentials: false } as any);
-      ev.onmessage = (evt) => {
+      ev1 = new EventSource(url, { withCredentials: false } as any);
+      ev1.onmessage = (evt) => {
         try {
           const payload = JSON.parse(evt.data);
           if (payload?.success && Array.isArray(payload.applications)) {
-            buildNotifs(payload.applications);
+            buildNotifsFromApps(payload.applications);
           }
         } catch {}
       };
-      ev.onerror = () => { /* ignore; connection may auto-retry */ };
-      return () => { ev.close(); };
+      ev1.onerror = () => { /* ignore */ };
     } catch {}
+
+    // Live updates: issue notifications
+    let ev2: EventSource | null = null;
+    try {
+      const nurl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/notifications/stream?${notifQuery}`;
+      ev2 = new EventSource(nurl, { withCredentials: false } as any);
+      ev2.onmessage = (evt) => {
+        try {
+          const payload = JSON.parse(evt.data);
+          if (payload?.success && Array.isArray(payload.notifications)) {
+            const fromServer = payload.notifications.map((n: any) => {
+              const createdAt: string = n.createdAt || '';
+              const ts = createdAt ? Date.parse(createdAt) : Date.now();
+              return { id: n.id, message: n.message, date: (createdAt || '').split('T')[0] || '', status: String(n.status || 'info'), ts } as Notification[] extends Array<infer T> ? T : never;
+            }) as Notification[];
+            setNotifications(prev => {
+              const merged = [...fromServer, ...prev];
+              const dedup = new Map(merged.map(n => [n.id, n]));
+              const arr = Array.from(dedup.values());
+              arr.sort((a, b) => b.ts - a.ts);
+              return arr.slice(0, 50);
+            });
+          }
+        } catch {}
+      };
+      ev2.onerror = () => { /* ignore */ };
+    } catch {}
+
+    return () => { if (ev1) ev1.close(); if (ev2) ev2.close(); };
   }, []);
 
   // Load theme preference from localStorage
