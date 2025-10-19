@@ -11,6 +11,7 @@ interface ReportedIssue {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   imageUrl?: string;
   reportedBy: string;
+  reportedByName?: string | null;
   reportedAt: string;
   assignedTo?: string;
   resolvedAt?: string;
@@ -73,6 +74,7 @@ export default function AdminReportedIssuesPage() {
         status: d.status,
         imageUrl: d.imageUrl,
         reportedBy: d.reportedBy,
+        reportedByName: d.reportedByName ?? null,
         reportedAt: d.reportedAt?.toDate ? d.reportedAt.toDate().toISOString() : d.reportedAt,
         assignedTo: d.assignedTo,
         resolvedAt: d.resolvedAt?.toDate ? d.resolvedAt.toDate().toISOString() : d.resolvedAt,
@@ -97,7 +99,8 @@ export default function AdminReportedIssuesPage() {
     const matchesCategory = filterCategory === 'all' || issue.category === filterCategory;
     const matchesSearch = issue.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          issue.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         issue.reportedBy.toLowerCase().includes(searchQuery.toLowerCase());
+                         issue.reportedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (issue.reportedByName || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesStatus && matchesPriority && matchesCategory && matchesSearch;
   });
@@ -595,7 +598,7 @@ export default function AdminReportedIssuesPage() {
                         flexWrap: 'wrap',
                         alignItems: 'center'
                       }}>
-                        <span style={{ fontWeight: 600 }}>👤 {issue.reportedBy.split('@')[0]}</span>
+                        <span style={{ fontWeight: 600 }}>👤 {issue.reportedByName || issue.reportedBy.split('@')[0]}</span>
                         <span style={{ color: '#cbd5e1' }}>•</span>
                         <span style={{ fontWeight: 500 }}>📅 {formatDateSafe(issue.reportedAt)}</span>
                         {issue.assignedTo && (
@@ -774,7 +777,7 @@ export default function AdminReportedIssuesPage() {
                 Issue Information
               </h4>
               <div style={{ fontSize: 14, color: '#000', lineHeight: 1.6 }}>
-                <p><strong>Reported by:</strong> {selectedIssue.reportedBy}</p>
+                <p><strong>Reported by:</strong> {selectedIssue.reportedByName || selectedIssue.reportedBy.split('@')[0]}</p>
                 <p><strong>Reported at:</strong> {formatDateTimeSafe(selectedIssue.reportedAt)}</p>
                 {selectedIssue.assignedTo && (
                   <p><strong>Assigned to:</strong> {selectedIssue.assignedTo}</p>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { apiFetch } from '../../lib/apiClient';
 
 interface FAQItem {
   id: string;
@@ -186,6 +187,21 @@ export default function HelpCenterPage() {
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ visible: boolean; type: 'success' | 'error'; message: string }>({ visible: false, type: 'success', message: '' });
+  const toastTimerRef = useRef<number | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setToast({ visible: true, type, message });
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(prev => ({ ...prev, visible: false }));
+      toastTimerRef.current = null;
+    }, 3000) as unknown as number;
+  };
 
   const filteredFAQs = faqData.filter(faq => {
     const matchesCategory = selectedCategory === 'All' || faq.category === selectedCategory;
@@ -223,9 +239,40 @@ export default function HelpCenterPage() {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      // 1) Upload image if present
+      let imageUrl: string | null = null;
+      if (reportForm.image) {
+        const formData = new FormData();
+        formData.append('file', reportForm.image);
+        const uploadRes = await apiFetch('/upload-issue', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          const errBody = await uploadRes.json().catch(() => ({}));
+          throw new Error(errBody?.error || `Image upload failed (${uploadRes.status})`);
+        }
+        const uploadJson = await uploadRes.json();
+        imageUrl = uploadJson?.imageUrl || null;
+      }
+
+      // 2) Submit the report
+      const createRes = await apiFetch('/reported-issues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: reportForm.subject,
+          message: reportForm.message,
+          category: reportForm.category,
+          priority: reportForm.priority,
+          imageUrl,
+        }),
+      });
+      if (!createRes.ok) {
+        const errBody = await createRes.json().catch(() => ({}));
+        throw new Error(errBody?.error || `Submit failed (${createRes.status})`);
+      }
+
       // Reset form
       setReportForm({
         subject: '',
@@ -236,10 +283,9 @@ export default function HelpCenterPage() {
       });
       setImagePreview(null);
       setShowReportForm(false);
-      
-      alert('Issue reported successfully! We will get back to you soon.');
-    } catch (error) {
-      alert('Failed to submit report. Please try again.');
+      setSuccessOpen(true);
+    } catch (error: any) {
+      showToast(error?.message || 'Failed to submit report. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -256,6 +302,124 @@ export default function HelpCenterPage() {
       background: `url('/car-rental-app.jpg') center center / cover no-repeat fixed`,
       position: 'relative'
     }}>
+      {/* Success Modal */}
+      {successOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1100,
+          padding: 16,
+          animation: 'fadeIn 200ms ease-out'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: 420,
+            background: '#ffffff',
+            borderRadius: 16,
+            border: '1px solid rgba(0,0,0,0.08)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            padding: 24,
+            textAlign: 'center',
+            color: '#0f172a',
+            animation: 'popIn 220ms cubic-bezier(0.22, 1, 0.36, 1)'
+          }}>
+            <div style={{
+              width: 72,
+              height: 72,
+              borderRadius: '50%',
+              margin: '0 auto 16px',
+              background: '#d1fae5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'pulseScale 800ms ease-out 120ms both'
+            }}>
+              <span style={{ fontSize: 36, color: '#10b981', animation: 'checkPop 300ms ease-out 180ms both' }}>✓</span>
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#065f46' }}>Submission Successful!</h3>
+            <p style={{ fontSize: 14, color: '#334155', lineHeight: 1.6, margin: '0 0 16px' }}>
+              Thank you for your submission. We have received your information and will process it shortly.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                onClick={() => setSuccessOpen(false)}
+                style={{
+                  padding: '10px 16px',
+                  background: 'transparent',
+                  color: '#0f172a',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+              <a
+                href="/home"
+                style={{
+                  padding: '10px 16px',
+                  background: '#10b981',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  textDecoration: 'none'
+                }}
+              >
+                Back to Home
+              </a>
+            </div>
+            <style>{`
+              @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+              @keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+              @keyframes pulseScale { 0% { transform: scale(0.9) } 50% { transform: scale(1.05) } 100% { transform: scale(1) } }
+              @keyframes checkPop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+            `}</style>
+          </div>
+        </div>
+      )}
+      {toast.visible && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 1000,
+          maxWidth: 420,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '14px 16px',
+          borderRadius: 12,
+          border: '1px solid rgba(0,0,0,0.1)',
+          boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
+          color: toast.type === 'success' ? '#065f46' : '#7f1d1d',
+          background: toast.type === 'success' ? 'linear-gradient(135deg,#ecfdf5,#d1fae5)' : 'linear-gradient(135deg,#fee2e2,#fecaca)'
+        }}>
+          <div style={{ fontSize: 20 }}>
+            {toast.type === 'success' ? '✅' : '⚠️'}
+          </div>
+          <div style={{ flex: 1, fontWeight: 600 }}>{toast.message}</div>
+          <button
+            onClick={() => setToast(prev => ({ ...prev, visible: false }))}
+            aria-label="Close notification"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              fontSize: 18,
+              lineHeight: 1
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div style={{ 
         position: 'fixed', 
         top: 0, 
