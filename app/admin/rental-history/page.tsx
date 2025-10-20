@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import BikeLoader from "../../components/BikeLoader";
+import AdminHeader from "../../components/AdminHeader";
 
 interface HistoryItem {
   id: string;
@@ -167,6 +168,21 @@ export default function AdminRentalHistoryPage() {
     setShowActions(false);
   }
 
+  function getStatusStyles(status?: string) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'rejected') {
+      return { accent: '#ef4444', badgeBg: '#fee2e2', badgeColor: '#b91c1c', text: '#b91c1c' };
+    }
+    if (s === 'approved') {
+      return { accent: '#3b82f6', badgeBg: '#e0f2fe', badgeColor: '#0369a1', text: '#0369a1' };
+    }
+    if (s === 'rented') {
+      return { accent: '#1976d2', badgeBg: '#e8f0fe', badgeColor: '#1d4ed8', text: '#1d4ed8' };
+    }
+    // Completed / default
+    return { accent: '#22c55e', badgeBg: '#e8f5ee', badgeColor: '#16a34a', text: '#16a34a' };
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -181,63 +197,68 @@ export default function AdminRentalHistoryPage() {
   return (
     <div style={{ padding: '48px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <AdminHeader
+          title="Rental History"
+          subtitle="View completed, approved, and rejected rentals"
+          stats={[
+            { label: 'Total', value: history.length, color: '#ffffff' },
+            { label: 'Completed', value: history.filter(h => h.status === 'Completed' || !h.status).length, color: '#22c55e' },
+            { label: 'Rejected', value: history.filter(h => h.status === 'Rejected').length, color: '#ef4444' },
+          ]}
+        >
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { setSelectedUserId(''); setSelectedCollegeName(''); setShowUsers(false); setShowColleges(false); }}
+              title="Show all records"
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: (!selectedUserId && !selectedCollegeName) ? '2px solid rgba(255,255,255,0.35)' : '2px solid rgba(255,255,255,0.2)',
+                background: (!selectedUserId && !selectedCollegeName) ? '#1976d2' : 'rgba(255,255,255,0.95)',
+                color: (!selectedUserId && !selectedCollegeName) ? '#ffffff' : '#1e293b',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setShowUsers(true)}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: (selectedUserId ? '2px solid rgba(255,255,255,0.35)' : '2px solid rgba(255,255,255,0.2)'),
+                background: (selectedUserId ? '#1976d2' : 'rgba(255,255,255,0.95)'),
+                color: (selectedUserId ? '#ffffff' : '#1e293b'),
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              User
+            </button>
+            <button
+              onClick={() => setShowColleges(true)}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: (selectedCollegeName ? '2px solid rgba(255,255,255,0.35)' : '2px solid rgba(255,255,255,0.2)'),
+                background: (selectedCollegeName ? '#1976d2' : 'rgba(255,255,255,0.95)'),
+                color: (selectedCollegeName ? '#ffffff' : '#1e293b'),
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              College
+            </button>
+          </div>
+        </AdminHeader>
         <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', padding: 32 }}>
-          <h1 style={{ color: '#0f172a', fontWeight: 800, fontSize: 32, marginBottom: 24, textAlign: 'center' }}>
-            Rental History
-          </h1>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 12, alignItems: 'center', flexWrap: 'wrap' as any }}>
-            <div>
-              <button
-                onClick={() => { setSelectedUserId(''); setSelectedCollegeName(''); setShowUsers(false); setShowColleges(false); }}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  border: '1.5px solid #e0e0e0',
-                  background: '#f8fafc',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-                title="Show all records"
-              >
-                All
-              </button>
-              <button
-                onClick={() => setShowUsers(true)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  border: '1.5px solid #e0e0e0',
-                  background: '#f8fafc',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  marginLeft: 8
-                }}
-              >
-                User
-              </button>
-              <button
-                onClick={() => setShowColleges(true)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  border: '1.5px solid #e0e0e0',
-                  background: '#f8fafc',
-                  color: '#0f172a',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  marginLeft: 8
-                }}
-              >
-                College
-              </button>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space_between', marginBottom: 16, gap: 12, alignItems: 'center', flexWrap: 'wrap' as any }}>
             <div ref={actionsRef} style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
               <label style={{ color: '#334155', fontSize: 14 }}>From</label>
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1.5px solid #e0e0e0' }} />
+              <input className="rental-date" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#ffffff', color: '#111111' }} />
               <label style={{ color: '#334155', fontSize: 14 }}>To</label>
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1.5px solid #e0e0e0' }} />
+              <input className="rental-date" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1.5px solid #e0e0e0', background: '#ffffff', color: '#111111' }} />
               <button onClick={() => { setDateFrom(''); setDateTo(''); }} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', cursor: 'pointer' }}>Clear</button>
               <input
                 value={query}
@@ -366,34 +387,68 @@ export default function AdminRentalHistoryPage() {
             </div>
           )}
           {error && <div style={{ color: '#b22222', fontWeight: 600, marginBottom: 18 }}>{error}</div>}
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9', color: '#0f172a' }}>
-                <th style={{ padding: 12, textAlign: 'left' }}>User</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>Email</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>College</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>Bike</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>Start</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>End</th>
-                <th style={{ padding: 12, textAlign: 'left' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((h) => (
-                <tr key={h.id} style={{ borderBottom: '1px solid #e5e7eb', color: '#111111' }}>
-                  <td style={{ padding: 10 }}>{h.user?.name || `${h.application?.firstName} ${h.application?.lastName}`}</td>
-                  <td style={{ padding: 10 }}>{h.user?.email || h.application?.email}</td>
-                  <td style={{ padding: 10 }}>{h.college || h.application?.college || '-'}</td>
-                  <td style={{ padding: 10 }}>{h.bike?.name || h.bikeName || '-'}</td>
-                  <td style={{ padding: 10 }}>{h.startDate ? new Date(h.startDate).toLocaleString() : '-'}</td>
-                  <td style={{ padding: 10 }}>{h.endDate ? new Date(h.endDate).toLocaleString() : '-'}</td>
-                  <td style={{ padding: 10, fontWeight: 700, color: h.status === 'Rejected' ? '#ef4444' : h.status === 'Approved' ? '#22c55e' : h.status === 'Rented' ? '#1976d2' : '#111111' }}>{h.status || 'Completed'}</td>
+          <div style={{ overflow: 'hidden', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky' as any, top: 0, zIndex: 1 }}>
+                <tr style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%)', color: '#0f172a' }}>
+                  <th style={{ padding: 14, textAlign: 'left' }}>User</th>
+                  <th style={{ padding: 14, textAlign: 'left' }}>Email</th>
+                  <th style={{ padding: 14, textAlign: 'left' }}>College</th>
+                  <th style={{ padding: 14, textAlign: 'left' }}>Bike</th>
+                  <th style={{ padding: 14, textAlign: 'left' }}>Start</th>
+                  <th style={{ padding: 14, textAlign: 'left' }}>End</th>
+                  <th style={{ padding: 14, textAlign: 'left' }}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((h, idx) => {
+                  const s = getStatusStyles(h.status);
+                  return (
+                    <tr
+                      key={h.id}
+                      style={{
+                        background: idx % 2 === 0 ? '#ffffff' : '#f9fafb',
+                        transition: 'background 200ms ease'
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = '#eef6ff'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = idx % 2 === 0 ? '#ffffff' : '#fcfcfd'; }}
+                    >
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7', color: '#0f172a' }}>{h.user?.name || `${h.application?.firstName} ${h.application?.lastName}`}</td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7', color: '#334155' }}>{h.user?.email || h.application?.email}</td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7', color: '#0f172a' }}>{h.college || h.application?.college || '-'}</td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7', color: '#0f172a' }}>{h.bike?.name || h.bikeName || '-'}</td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7', color: '#0f172a' }}>{h.startDate ? new Date(h.startDate).toLocaleString() : '-'}</td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7', color: '#0f172a' }}>{h.endDate ? new Date(h.endDate).toLocaleString() : '-'}</td>
+                      <td style={{ padding: 12, borderBottom: '1px solid #eef2f7' }}>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '6px 10px',
+                          borderRadius: 9999,
+                          fontWeight: 800,
+                          fontSize: 12,
+                          background: s.badgeBg,
+                          color: s.badgeColor,
+                          letterSpacing: 0.3
+                        }}>
+                          {h.status || 'Completed'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+      <style>{`
+        /* Make the native calendar icon black where supported */
+        input.rental-date::-webkit-calendar-picker-indicator {
+          filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
+          opacity: 1;
+        }
+        input.rental-date::-ms-clear { display: none; }
+      `}</style>
     </div>
   );
 }

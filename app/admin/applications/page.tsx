@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import BikeLoader from "../../components/BikeLoader";
+import AdminHeader from "../../components/AdminHeader";
 import jsPDF from 'jspdf';
 import Papa from 'papaparse';
 
@@ -77,7 +78,7 @@ export default function AdminApplicationsPage() {
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState("");
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'assigned' | 'completed'>('all');
-  const [emailFilter, setEmailFilter] = useState("");
+  const [query, setQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   useEffect(() => {
@@ -153,8 +154,14 @@ export default function AdminApplicationsPage() {
 
   // Filtered applications based on statusFilter and emailFilter
   const filteredApplications = applications.filter(app => {
-    const matchesEmail = app.email.toLowerCase().includes(emailFilter.toLowerCase());
-    if (!matchesEmail) return false;
+    const needle = query.toLowerCase();
+    const fullName = `${app.firstName || ''} ${app.middleName || ''} ${app.lastName || ''}`.replace(/\s+/g,' ').trim().toLowerCase();
+    const matchesQuery = !needle
+      || app.email.toLowerCase().includes(needle)
+      || fullName.includes(needle)
+      || (app.firstName || '').toLowerCase().includes(needle)
+      || (app.lastName || '').toLowerCase().includes(needle);
+    if (!matchesQuery) return false;
     if (statusFilter === 'all') return true;
     if (statusFilter === 'pending') return app.status === 'pending';
     if (statusFilter === 'assigned') return app.status === 'assigned' || !!app.bikeId;
@@ -174,6 +181,62 @@ export default function AdminApplicationsPage() {
     if (diff !== 0) return diff;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  const getStatusColor = (status: string) => {
+    switch ((status || '').toLowerCase()) {
+      case 'pending':
+        return '#f59e0b';
+      case 'assigned':
+        return '#22c55e';
+      case 'completed':
+        return '#6b7280';
+      case 'rejected':
+        return '#dc2626';
+      case 'approved':
+        return '#3b82f6';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  const getStatusHoverColor = (status: string) => {
+    switch ((status || '').toLowerCase()) {
+      case 'pending':
+        return '#d97706'; // deeper amber
+      case 'assigned':
+        return '#16a34a'; // deeper green
+      case 'completed':
+        return '#374151'; // darker gray
+      case 'rejected':
+        return '#b91c1c'; // deeper red
+      case 'approved':
+        return '#1d4ed8'; // deeper blue
+      default:
+        return '#374151';
+    }
+  };
+
+  const getStatusBaseBg = (status: string) => {
+    switch ((status || '').toLowerCase()) {
+      case 'pending':
+        return 'rgba(245, 158, 11, 0.06)'; // amber-500 @ 6%
+      case 'assigned':
+        return 'rgba(34, 197, 94, 0.06)'; // green-500 @ 6%
+      case 'completed':
+        return 'rgba(107, 114, 128, 0.06)'; // gray-500 @ 6%
+      case 'rejected':
+        return 'rgba(220, 38, 38, 0.06)'; // red-600 @ 6%
+      case 'approved':
+        return 'rgba(59, 130, 246, 0.06)'; // blue-500 @ 6%
+      default:
+        return 'rgba(148, 163, 184, 0.05)'; // slate-400 @ 5%
+    }
+  };
+
+  const getStatusHoverBg = (_status: string) => {
+    // Neutral hover tint for all cards, regardless of status
+    return 'rgba(0, 0, 0, 0.06)';
+  };
 
   function formatDate(value?: string) {
     if (!value) return '-';
@@ -852,10 +915,37 @@ export default function AdminApplicationsPage() {
   return (
     <div style={{ padding: '48px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <AdminHeader
+          title="Applications"
+          subtitle="Manage and review rental applications"
+          stats={[
+            { label: 'Total', value: applications.length, color: '#ffffff' },
+            { label: 'Pending', value: applications.filter(a => a.status === 'pending').length, color: '#f59e0b' },
+            { label: 'Assigned', value: applications.filter(a => a.status === 'assigned' || !!a.bikeId).length, color: '#22c55e' },
+            { label: 'Completed', value: applications.filter(a => a.status === 'completed').length, color: '#6b7280' },
+          ]}
+        >
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            style={{
+              padding: '10px 16px',
+              borderRadius: 10,
+              border: '2px solid rgba(255,255,255,0.2)',
+              fontSize: 15,
+              minWidth: 240,
+              outline: 'none',
+              fontFamily: 'inherit',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#1e293b',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              fontWeight: 500
+            }}
+          />
+        </AdminHeader>
         <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', padding: 32 }}>
-          <h1 style={{ color: '#1976d2', fontWeight: 800, fontSize: 32, marginBottom: 32, textAlign: 'center' }}>
-            Rental Applications Management
-          </h1>
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: 0 }}>
             <div style={{
               display: 'inline-flex',
@@ -892,8 +982,8 @@ export default function AdminApplicationsPage() {
               ))}
             </div>
           </div>
-          {/* Email filter input and bulk export */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0 20px 0' }}>
+          {/* Bulk export */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', margin: '10px 0 20px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button
                 onClick={handleBulkCSVExport}
@@ -916,88 +1006,125 @@ export default function AdminApplicationsPage() {
                 📊 Export All to CSV ({filteredApplications.length})
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="Search by email..."
-              value={emailFilter}
-              onChange={e => setEmailFilter(e.target.value)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: '1.5px solid #e0e0e0',
-                fontSize: 16,
-                minWidth: 220,
-                outline: 'none',
-                fontFamily: 'inherit',
-                background: '#fff',
-                color: '#222',
-              }}
-            />
           </div>
           {error && <div style={{ color: '#b22222', fontWeight: 600, marginBottom: 18 }}>{error}</div>}
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9' }}>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Name</th>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Email</th>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Bike</th>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Applied</th>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Details</th>
-                <th style={{ padding: 12, textAlign: 'left', fontWeight: 700, color: '#111' }}>Assign Bike</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedApplications.map(app => (
-                <tr key={app.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: 10, color: '#111' }}>{app.lastName}, {app.firstName}</td>
-                  <td style={{ padding: 10, color: '#111' }}>{app.email}</td>
-                  <td style={{ padding: 10, color: '#111' }}>{app.bike ? app.bike.name : '-'}</td>
-                  <td style={{ padding: 10, color: '#111' }}>{new Date(app.createdAt).toLocaleDateString()}</td>
-                  <td style={{ padding: 10 }}>
-                    <button
-                      onClick={() => setSelectedApp(app)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 6,
-                        border: '1.5px solid #e0e0e0',
-                        background: '#fff',
-                        cursor: 'pointer',
-                        color: '#1976d2',
-                        fontWeight: 700
-                      }}
-                    >
-                      View
-                    </button>
-                  </td>
-                  <td style={{ padding: 10 }}>
-                    {app.bikeId ? (
-                      <span style={{ color: '#22c55e', fontWeight: 600 }}>Assigned</span>
-                    ) : app.status === 'completed' ? (
-                      <span style={{ color: '#6b7280', fontWeight: 600 }}>Completed</span>
-                    ) : app.status === 'rejected' ? (
-                      <span style={{ color: '#ef4444', fontWeight: 700 }}>Rejected</span>
-                    ) : (
-                      <>
-                        <select
-                          style={{ padding: '6px 12px', borderRadius: 6, border: '1.5px solid #e0e0e0', fontSize: 15, marginRight: 8 }}
-                          disabled={assigning === app.id || app.status !== 'approved'}
-                          defaultValue=""
-                          onChange={e => handleAssign(app.id, e.target.value)}
-                        >
-                          <option value="" disabled>{app.status !== 'approved' ? 'Approval First' : 'Select bike'}</option>
-                          {bikes.filter(b => b.status === 'available').map(bike => (
-                            <option key={bike.id} value={bike.id}>{bike.name}</option>
-                          ))}
-                        </select>
-                        {assigning === app.id && <span style={{ color: '#1976d2' }}>Assigning...</span>}
-                        {assignError && <span style={{ color: '#b22222', fontWeight: 500 }}>{assignError}</span>}
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.98)', 
+            borderRadius: 20, 
+            border: '1px solid rgba(0, 0, 0, 0.08)', 
+            overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
+          }}>
+            {sortedApplications.length === 0 ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#4b5563' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+                <h3 style={{ fontSize: 20, marginBottom: 8, color: '#374151' }}>No applications found</h3>
+                <p style={{ color: '#6b7280' }}>Try adjusting your search or filter criteria</p>
+              </div>
+            ) : (
+              sortedApplications.map((app, index) => (
+                <div
+                  key={app.id}
+                  style={{
+                    borderBottom: index < sortedApplications.length - 1 ? '1px solid rgba(0, 0, 0, 0.06)' : 'none',
+                    padding: '24px 28px',
+                    transition: 'background 220ms ease, box-shadow 220ms ease, transform 220ms ease, border-left-color 220ms ease, color 220ms ease',
+                    position: 'relative',
+                    borderLeft: `6px solid ${getStatusColor(app.status)}`,
+                    background: getStatusBaseBg(app.status),
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setSelectedApp(app)}
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setSelectedApp(app); }}
+                  onMouseEnter={(e) => {
+                    const el = (e.currentTarget as HTMLDivElement);
+                    el.style.background = getStatusHoverBg(app.status);
+                    el.style.transform = 'translateX(4px)';
+                    el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                    el.style.borderLeft = `6px solid ${getStatusHoverColor(app.status)}`;
+                    const title = el.querySelector('h3') as HTMLElement | null;
+                    if (title) title.style.color = '#0f172a';
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = (e.currentTarget as HTMLDivElement);
+                    el.style.background = getStatusBaseBg(app.status);
+                    el.style.transform = 'translateX(0)';
+                    el.style.boxShadow = 'none';
+                    el.style.borderLeft = `6px solid ${getStatusColor(app.status)}`;
+                    const title = el.querySelector('h3') as HTMLElement | null;
+                    if (title) title.style.color = '#1e293b';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+                        <h3 style={{ color: '#1e293b', fontSize: 19, fontWeight: 800, margin: 0, letterSpacing: '-0.3px' }}>
+                          {app.firstName} {app.lastName}
+                        </h3>
+                        <span style={{
+                          background: getStatusColor(app.status),
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          padding: '5px 10px',
+                          borderRadius: 20,
+                          textTransform: 'capitalize',
+                          letterSpacing: '0.3px',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                        }}>
+                          {app.status}
+                        </span>
+                        {app.bike && (
+                          <span style={{
+                            background: '#1976d2', color: '#fff', fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 20
+                          }}>
+                            {app.bike.name}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#64748b', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600 }}>📧 {app.email}</span>
+                        <span style={{ color: '#cbd5e1' }}>•</span>
+                        <span style={{ fontWeight: 500 }}>📅 {new Date(app.createdAt).toLocaleDateString()}</span>
+                        {app.bikeId && (
+                          <>
+                            <span style={{ color: '#cbd5e1' }}>•</span>
+                            <span style={{ fontWeight: 500 }}>🔧 Assigned</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      {app.bikeId ? (
+                        <span style={{ color: '#22c55e', fontWeight: 700 }}>Assigned</span>
+                      ) : app.status === 'completed' ? (
+                        <span style={{ color: '#6b7280', fontWeight: 700 }}>Completed</span>
+                      ) : app.status === 'rejected' ? (
+                        <span style={{ color: '#ef4444', fontWeight: 800 }}>Rejected</span>
+                      ) : (
+                        <>
+                          <select
+                            style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: 14 }}
+                            disabled={assigning === app.id || app.status !== 'approved'}
+                            defaultValue=""
+                            onChange={e => handleAssign(app.id, e.target.value)}
+                          >
+                            <option value="" disabled>{app.status !== 'approved' ? 'Approve first' : 'Select bike'}</option>
+                            {bikes.filter(b => b.status === 'available').map(bike => (
+                              <option key={bike.id} value={bike.id}>{bike.name}</option>
+                            ))}
+                          </select>
+                          {assigning === app.id && <span style={{ color: '#1976d2' }}>Assigning...</span>}
+                          {assignError && <span style={{ color: '#b22222', fontWeight: 700 }}>{assignError}</span>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
           {selectedApp && (
             <div
               role="dialog"

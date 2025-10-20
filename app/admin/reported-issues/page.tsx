@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface ReportedIssue {
   id: string;
@@ -30,6 +30,8 @@ export default function AdminReportedIssuesPage() {
   const [newStatus, setNewStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [showActions, setShowActions] = useState(false);
+  const actionsRef = useRef<HTMLDivElement | null>(null);
 
   const formatDateSafe = (value?: string) => {
     if (!value) return '—';
@@ -93,6 +95,16 @@ export default function AdminReportedIssuesPage() {
     fetchIssues();
   }, []);
 
+  useEffect(() => {
+    if (!showActions) return;
+    function handleClickOutside(e: MouseEvent) {
+      const el = actionsRef.current;
+      if (el && !el.contains(e.target as Node)) setShowActions(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showActions]);
+
   const filteredIssues = issues.filter(issue => {
     const matchesStatus = filterStatus === 'all' || issue.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || issue.priority === filterPriority;
@@ -110,6 +122,45 @@ export default function AdminReportedIssuesPage() {
   const inProgressCount = issues.filter(i => i.status === 'in_progress').length;
   const resolvedCount = issues.filter(i => i.status === 'resolved').length;
   const closedCount = issues.filter(i => i.status === 'closed').length;
+
+  const toCsvValue = (value: any): string => {
+    const s = value == null ? '' : String(value);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+
+  const exportCsv = () => {
+    const headers = ['ID','Subject','Message','Category','Priority','Status','Reported By','Reported At','Resolved At','Assigned To','Admin Notes'];
+    const lines: string[] = [];
+    lines.push(headers.join(','));
+    filteredIssues.forEach((it) => {
+      const row = [
+        it.id,
+        it.subject,
+        it.message || '',
+        it.category,
+        it.priority,
+        it.status,
+        it.reportedByName || it.reportedBy,
+        it.reportedAt ? new Date(it.reportedAt).toISOString() : '',
+        it.resolvedAt ? new Date(it.resolvedAt).toISOString() : '',
+        it.assignedTo || '',
+        it.adminNotes || ''
+      ];
+      lines.push(row.map(toCsvValue).join(','));
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    a.href = url;
+    a.download = `reported_issues_${iso}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -212,13 +263,7 @@ export default function AdminReportedIssuesPage() {
               background: 'radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
               pointerEvents: 'none'
             }} />
-            <div style={{ 
-              fontSize: 64, 
-              marginBottom: 20,
-              filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))',
-              position: 'relative',
-              zIndex: 1
-            }}>🚨</div>
+            
             <h1 style={{ 
               color: '#ffffff', 
               fontWeight: 800, 
@@ -280,6 +325,7 @@ export default function AdminReportedIssuesPage() {
               gap: 12, 
               justifyContent: 'center', 
               flexWrap: 'wrap',
+              alignItems: 'center',
               maxWidth: 900,
               margin: '0 auto',
               position: 'sticky',
@@ -454,6 +500,37 @@ export default function AdminReportedIssuesPage() {
               >
                 Refresh
               </button>
+              <div ref={actionsRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <button
+                  onClick={() => setShowActions(v => !v)}
+                  aria-label="More actions"
+                  title="More actions"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 10,
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                    background: 'transparent',
+                    color: '#ffffff',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⋯
+                </button>
+                {showActions && (
+                  <div style={{ position: 'absolute', right: 0, top: '110%', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', minWidth: 160, zIndex: 10 }}>
+                    <button
+                      onClick={() => { exportCsv(); setShowActions(false); }}
+                      style={{ width: '100%', textAlign: 'left', padding: '10px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#0f172a', fontWeight: 700 }}
+                    >
+                      Export CSV
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

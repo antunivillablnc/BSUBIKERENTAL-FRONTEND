@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import BikeLoader from "../../components/BikeLoader";
+import AdminHeader from "../../components/AdminHeader";
 import { FaPowerOff } from "react-icons/fa";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { FaEllipsisV } from "react-icons/fa";
@@ -309,63 +310,33 @@ export default function AdminBikesPage() {
   return (
     <div style={{ padding: '48px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 8px 32px 0 rgba(31,38,135,0.15)', border: '2px solid #e0e0e0', padding: 40 }}>
-          <h1 style={{ color: '#1976d2', fontWeight: 800, fontSize: 32, marginBottom: 32, textAlign: 'center' }}>
-            Bike Inventory Management
-          </h1>
-          
-          {error && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: 16, borderRadius: 8, marginBottom: 24 }}>
-              {error}
-            </div>
-          )}
-
-          {/* Summary Card - moved to top */}
-          <div style={{ marginBottom: 40, textAlign: 'center' }}>
-            <div style={{ background: '#f0f8ff', padding: 28, borderRadius: 14, border: '2px solid #b6d4fa', boxShadow: '0 2px 12px 0 rgba(31,38,135,0.07)' }}>
-              <h3 style={{ color: '#1976d2', fontWeight: 600, marginBottom: 8 }}>
-                Summary
-              </h3>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#22c55e', fontWeight: 700, fontSize: 24 }}>
-                    {bikes.filter(b => b.status === 'available').length}
-                  </div>
-                  <div style={{ color: '#6b7280', fontSize: 14 }}>Available</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#ef4444', fontWeight: 700, fontSize: 24 }}>
-                    {bikes.filter(b => b.status === 'rented').length}
-                  </div>
-                  <div style={{ color: '#6b7280', fontSize: 14 }}>Rented</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#1976d2', fontWeight: 700, fontSize: 24 }}>
-                    {bikes.length}
-                  </div>
-                  <div style={{ color: '#6b7280', fontSize: 14 }}>Total</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Add Bike Form */}
-          <form onSubmit={handleAddBike} style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <AdminHeader
+          title="Bikes"
+          subtitle="Manage the bike inventory"
+          stats={[
+            { label: 'Total', value: bikes.length, color: '#ffffff' },
+            { label: 'Available', value: bikes.filter(b => b.status === 'available').length, color: '#22c55e' },
+            { label: 'Rented', value: bikes.filter(b => b.status === 'rented').length, color: '#ef4444' },
+          ]}
+        >
+          <form onSubmit={handleAddBike} style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
             <input
               type="text"
-              placeholder="Plate Number (e.g. BSU 011)"
+              placeholder="Bike Number (e.g. BSU 011)"
               value={addName}
               onChange={e => setAddName(e.target.value)}
               style={{
                 padding: '10px 16px',
-                borderRadius: 8,
-                border: '1.5px solid #e0e0e0',
-                fontSize: 16,
-                minWidth: 180,
+                borderRadius: 10,
+                border: '2px solid rgba(255,255,255,0.2)',
+                fontSize: 15,
+                minWidth: 220,
                 outline: 'none',
                 fontFamily: 'inherit',
-                background: '#fff',
-                color: '#222',
+                background: 'rgba(255,255,255,0.95)',
+                color: '#1e293b',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                fontWeight: 500
               }}
               disabled={addLoading}
             />
@@ -374,27 +345,38 @@ export default function AdminBikesPage() {
               style={{
                 background: '#1976d2',
                 color: '#fff',
-                fontWeight: 700,
-                fontSize: 16,
+                fontWeight: 800,
+                fontSize: 15,
                 border: 'none',
-                borderRadius: 8,
-                padding: '10px 28px',
+                borderRadius: 10,
+                padding: '10px 18px',
                 cursor: 'pointer',
                 transition: 'background 0.2s',
-                letterSpacing: 0.1,
+                letterSpacing: 0.2,
               }}
               disabled={addLoading}
             >
               {addLoading ? 'Adding...' : 'Add Bike'}
             </button>
-            {addError && <span style={{ color: '#b22222', fontWeight: 600, fontSize: 15 }}>{addError}</span>}
           </form>
+        </AdminHeader>
+        <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 8px 32px 0 rgba(31,38,135,0.15)', border: '2px solid #e0e0e0', padding: 40 }}>
+          
+          {error && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: 16, borderRadius: 8, marginBottom: 24 }}>
+              {error}
+            </div>
+          )}
+
+          
+
+          {addError && <div style={{ color: '#b22222', fontWeight: 600, fontSize: 15, textAlign: 'center', marginBottom: 16 }}>{addError}</div>}
 
           {/* Filter and Sorting Controls - aligned horizontally */}
           <div style={{ display: 'flex', gap: 32, alignItems: 'center', marginBottom: 24, marginTop: 8, flexWrap: 'wrap' }}>
             <input
               type="text"
-              placeholder="Search by plate number..."
+              placeholder="Search by bike number..."
               value={plateFilter}
               onChange={e => setPlateFilter(e.target.value)}
               style={{
