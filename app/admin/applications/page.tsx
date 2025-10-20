@@ -1095,7 +1095,7 @@ export default function AdminApplicationsPage() {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
                       {app.bikeId ? (
                         <span style={{ color: '#22c55e', fontWeight: 700 }}>Assigned</span>
                       ) : app.status === 'completed' ? (
@@ -1108,6 +1108,9 @@ export default function AdminApplicationsPage() {
                             style={{ padding: '8px 10px', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: 14 }}
                             disabled={assigning === app.id || app.status !== 'approved'}
                             defaultValue=""
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                             onChange={e => handleAssign(app.id, e.target.value)}
                           >
                             <option value="" disabled>{app.status !== 'approved' ? 'Approve first' : 'Select bike'}</option>
