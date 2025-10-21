@@ -112,10 +112,10 @@ function ProfileSettingsForm({
   };
 
   return (
-    <form className="profile-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Profile Photo Section */}
       <div style={{ textAlign: 'center' }}>
-        <div className="profile-photo-container" style={{ 
+        <div style={{ 
           width: 100, 
           height: 100, 
           borderRadius: '50%', 
@@ -1177,16 +1177,13 @@ export default function Navbar() {
                         >
                           Profile Settings
                         </button>
-                        <Link href="/help-center" style={{ textDecoration: 'none' }}>
-                          <button
-                            onClick={() => setMobileProfileMenuOpen(false)}
-                            style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px 14px', cursor: 'pointer', fontWeight: 700 }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            Help Center
-                          </button>
-                        </Link>
+                        <button
+                          style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px 14px', cursor: 'pointer', fontWeight: 700 }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          Help Center
+                        </button>
                         <button
                           onClick={() => { toggleTheme(); setMobileProfileMenuOpen(false); }}
                           style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--text-primary)', padding: '12px 14px', cursor: 'pointer', fontWeight: 700 }}
@@ -1292,7 +1289,7 @@ export default function Navbar() {
         }}
           onClick={() => setProfileModalOpen(false)}
         >
-          <div className="profile-modal-content" style={{
+          <div style={{
             background: 'var(--card-bg)',
             borderRadius: 14,
             boxShadow: `0 8px 32px var(--shadow-color)`,
@@ -1517,51 +1514,7 @@ export default function Navbar() {
           100% { transform: translateX(0); opacity: 1; }
         }
         .mobile-menu { animation: mobileSlideIn 200ms ease forwards; }
-
-        /* Mobile profile modal styles */
-        @media (max-width: 480px) {
-          .profile-modal-content {
-            min-width: 95vw !important;
-            max-width: 95vw !important;
-            padding: 16px !important;
-            margin: 8px !important;
-          }
-          
-          .profile-modal-content h2 {
-            font-size: 20px !important;
-            margin-bottom: 6px !important;
-          }
-          
-          .profile-modal-content p {
-            font-size: 13px !important;
-          }
-          
-          .profile-photo-container {
-            width: 80px !important;
-            height: 80px !important;
-            margin-bottom: 12px !important;
-          }
-          
-          .profile-photo-container span {
-            font-size: 28px !important;
-          }
-          
-          .profile-form input {
-            padding: 10px 12px !important;
-            font-size: 13px !important;
-          }
-          
-          .profile-form button {
-            padding: 12px 20px !important;
-            font-size: 14px !important;
-          }
-          
-          .profile-form label {
-            font-size: 13px !important;
-            margin-bottom: 6px !important;
-          }
-        }
-      `}</style>
+       `}</style>
     </>
   );
 } 
