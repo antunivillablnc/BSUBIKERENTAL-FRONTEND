@@ -1,4 +1,7 @@
 const admin = require('firebase-admin');
+const fs = require('fs');
+const path = require('path');
+let csv;
 
 // Initialize Firebase Admin SDK (same as your lib/firebase.ts)
 let projectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT;
@@ -99,6 +102,130 @@ async function deleteAllBikes() {
 
 async function deleteAllRentalHistory() {
   await deleteCollection('rentalHistory'); // ← Change 'applications' to your actual collection name if different
+}
+
+// Initialize analytical_data collection with a meta document
+async function initAnalyticalData() {
+  const metaRef = db.collection('analytical_data').doc('meta');
+  await metaRef.set(
+    {
+      initialized: true,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      note: 'Initialized analytical_data collection via scripts/firestore.js',
+    },
+    { merge: true }
+  );
+
+  // Optional: add an example document to confirm writes
+  const exampleRef = db.collection('analytical_data').doc();
+  await exampleRef.set({
+    type: 'example',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log("✅ 'analytical_data' collection initialized (docs: meta, example)");
+}
+
+// Generic CSV → Firestore importer
+async function importCsvToCollection(filePath, collectionName, transformRow, options = {}) {
+  const batchLimit = options.batchSize || 400; // keep under 500
+  if (!csv) {
+    try {
+      csv = require('csv-parser');
+    } catch (e) {
+      console.error("csv-parser is not installed. Run: npm i csv-parser");
+      throw e;
+    }
+  }
+
+  const abs = path.resolve(filePath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`CSV file not found: ${abs}`);
+  }
+
+  let committed = 0;
+  let batch = db.batch();
+  let inBatch = 0;
+
+  function resetBatch() {
+    batch = db.batch();
+    inBatch = 0;
+  }
+
+  async function maybeCommitBatch() {
+    if (inBatch >= batchLimit) {
+      await batch.commit();
+      committed += inBatch;
+      resetBatch();
+      console.log(`Committed ${committed} doc(s) so far...`);
+    }
+  }
+
+  await new Promise((resolve, reject) => {
+    const stream = fs.createReadStream(abs).pipe(csv());
+
+    stream.on('data', (row) => {
+      stream.pause();
+      try {
+        const data = transformRow(row);
+        const ref = db.collection(collectionName).doc(String(row.ride_id || '')); // keep ride_id as a stable id if present
+        batch.set(ref, data, { merge: true });
+        inBatch += 1;
+        maybeCommitBatch().then(() => stream.resume()).catch(reject);
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+    stream.on('end', async () => {
+      try {
+        if (inBatch > 0) {
+          await batch.commit();
+          committed += inBatch;
+        }
+        console.log(`✅ Done. Imported ${committed} document(s) into '${collectionName}'.`);
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+    stream.on('error', reject);
+  });
+}
+
+// Transformer for CSV with bike_id
+function transformAnalyticalWithBikeIdRow(row) {
+  const parseNum = (v) => {
+    if (v === undefined || v === null || String(v).trim() === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const rideDateStr = (row.ride_date || '').trim();
+  const rideDate = rideDateStr ? new Date(rideDateStr) : null;
+
+  return {
+    ride_id: parseNum(row.ride_id),
+    bike_id: parseNum(row.bike_id),
+    ride_date: rideDate || null,
+    distance_km: parseNum(row.distance_km),
+    duration_min: parseNum(row.duration_min),
+    avg_speed_kmh: parseNum(row.avg_speed_kmh),
+    co2_saved_kg: parseNum(row.co2_saved_kg),
+    calories_burned_kcal: parseNum(row.calories_burned_kcal),
+    // convenience derived fields
+    duration_sec: (() => {
+      const m = parseNum(row.duration_min);
+      return m == null ? null : Math.round(m * 60);
+    })(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    source: 'csv:analytical_with_bike_id',
+  };
+}
+
+async function importAnalyticalCsvWithBikeId(filePath) {
+  await importCsvToCollection(filePath, 'analytical_data', transformAnalyticalWithBikeIdRow, { batchSize: 400 });
 }
 
 // Seed rental history for specific users with random completed rentals
@@ -245,6 +372,30 @@ if (require.main === module) {
         console.error('❌ Failed to delete rental history:', error);
         process.exit(1);
       });
+  } else if (command === 'init-analytical-data') {
+    initAnalyticalData()
+      .then(() => {
+        console.log("✅ 'analytical_data' collection created/updated successfully");
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to initialize analytical_data:', error);
+        process.exit(1);
+      });
+  } else if (command === 'import-analytical-csv') {
+    const fileArg = (args.find(a => a.startsWith('--file=')) || '').split('=')[1];
+    const defaultPath = 'C:/Users/Anthony/Downloads/bike_ride_dataset_with_bike_id (1).csv';
+    const filePath = fileArg || defaultPath;
+    console.log(`Importing analytical CSV from: ${filePath}`);
+    importAnalyticalCsvWithBikeId(filePath)
+      .then(() => {
+        console.log("✅ Analytical CSV import completed");
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to import analytical CSV:', error);
+        process.exit(1);
+      });
   } else if (command === 'seed-rental-history') {
     seedRentalHistoryForUsers()
       .then((count) => {
@@ -259,6 +410,8 @@ if (require.main === module) {
     console.log('Running example queries...');
     console.log('Available commands:');
     console.log('  node scripts/firestore.js delete-applications  - Delete all applications');
+    console.log("  node scripts/firestore.js init-analytical-data  - Create 'analytical_data' collection with sample docs");
+    console.log('  node scripts/firestore.js import-analytical-csv --file=PATH  - Import analytical CSV into analytical_data');
     console.log('');
     console.log('Example queries completed successfully');
     process.exit(0);
