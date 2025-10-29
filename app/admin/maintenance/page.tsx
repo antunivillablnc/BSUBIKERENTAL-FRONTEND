@@ -25,10 +25,24 @@ export default function AdminMaintenancePage() {
     return Number(n).toFixed(d);
   }
 
+  async function parseJsonOrThrow(res: Response) {
+    const contentType = res.headers.get('content-type') || '';
+    const bodyText = await res.text();
+    if (contentType.includes('application/json')) {
+      try {
+        return JSON.parse(bodyText);
+      } catch (e) {
+        throw new Error('Invalid JSON from API');
+      }
+    }
+    const snippet = bodyText.replace(/<[^>]*>/g, ' ').slice(0, 200).trim();
+    throw new Error(`Unexpected response from API (${res.status}). ${snippet || 'Non-JSON body'}`);
+  }
+
   async function fetchBikes() {
     try {
       const res = await fetch(`${base}/bikes`, { credentials: 'include', cache: 'no-store' });
-      const json = await res.json();
+      const json = await parseJsonOrThrow(res);
       if (json?.success && Array.isArray(json?.bikes)) {
         const map: Record<string, string> = {};
         for (const b of json.bikes) {
@@ -44,7 +58,7 @@ export default function AdminMaintenancePage() {
     setError("");
     try {
       const res = await fetch(`${base}/maintenance/predictions`, { credentials: 'include', cache: 'no-store' });
-      const json = await res.json();
+      const json = await parseJsonOrThrow(res);
       if (json?.success) {
         setMetrics(json?.model?.metrics || null);
         setPredictions(Array.isArray(json?.predictions) ? json.predictions : []);
@@ -59,7 +73,7 @@ export default function AdminMaintenancePage() {
     setTraining(true);
     try {
       const res = await fetch(`${base}/maintenance/train`, { method: 'POST', credentials: 'include' });
-      const json = await res.json();
+      const json = await parseJsonOrThrow(res);
       if (!json?.success) {
         alert(json?.error || 'Training failed');
       }
