@@ -16,6 +16,7 @@ interface ReportIssue {
   image: File | null;
   priority: 'low' | 'medium' | 'high';
   category: 'technical' | 'bike_damage' | 'safety' | 'other';
+  bikeName?: string; // optional; used when reporting bike-related issues
 }
 
 const faqData: FAQItem[] = [
@@ -183,7 +184,8 @@ export default function HelpCenterPage() {
     message: '',
     image: null,
     priority: 'medium',
-    category: 'other'
+    category: 'other',
+    bikeName: ''
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -266,6 +268,7 @@ export default function HelpCenterPage() {
           category: reportForm.category,
           priority: reportForm.priority,
           imageUrl,
+          bikeName: reportForm.bikeName && reportForm.category === 'bike_damage' ? reportForm.bikeName : undefined,
         }),
       });
       if (!createRes.ok) {
@@ -279,7 +282,8 @@ export default function HelpCenterPage() {
         message: '',
         image: null,
         priority: 'medium',
-        category: 'other'
+        category: 'other',
+        bikeName: ''
       });
       setImagePreview(null);
       setShowReportForm(false);
@@ -787,6 +791,43 @@ export default function HelpCenterPage() {
                   <option value="other">Other</option>
                 </select>
               </div>
+
+            {reportForm.category === 'bike_damage' && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: 14, 
+                  fontWeight: 600, 
+                  color: 'var(--text-primary)', 
+                  marginBottom: 8 
+                }}>
+                  Bike name (e.g., BSU 40) *
+                </label>
+                <input
+                  type="text"
+                  value={reportForm.bikeName || ''}
+                  onChange={(e) => handleFormChange('bikeName', e.target.value)}
+                  placeholder="Enter the bike name on the frame"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid var(--border-color)',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#1976d2'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                />
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>
+                  This helps maintenance link your report to the exact bike.
+                </div>
+              </div>
+            )}
 
               <div style={{ marginBottom: 20 }}>
                 <label style={{ 

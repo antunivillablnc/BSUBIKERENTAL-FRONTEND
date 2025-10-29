@@ -1,0 +1,36 @@
+Predictive Maintenance Analytics — TODO
+
+Backend
+- [ ] Add bikeId to reported issues POST route and persist
+- [ ] Create maintenance analytics route to build dataset, train linear regression, compute MAE/MSE/R2, and store predictions
+- [ ] Register maintenance router in backend index
+- [ ] Install backend dependency @tensorflow/tfjs
+
+Data
+- [ ] Import analytical_data CSV into Firestore via scripts/firestore.js
+      e.g.: node scripts/firestore.js import-analytical-csv --file=C:/path/to/your.csv
+- [ ] Verify mapping between CSV bike_id and Firestore bikes; implement mapping logic
+- [ ] Backfill bikeId for existing reported_issues documents
+
+Frontend
+- [ ] Add Admin maintenance page to view metrics and predictions
+- [ ] Add bikeId selector to Help Center issue form (when reporting issues)
+
+Validation
+- [ ] Trigger training and verify metrics and predictions are saved
+      POST /maintenance/train
+      GET  /maintenance/predictions
+- [ ] Check MAE, MSE, R² values are reasonable; iterate features if needed
+
+Operations
+- [ ] Set up scheduled retraining (cron) and basic model retention policy
+
+Quick commands (from backend/)
+- npm i @tensorflow/tfjs
+- node scripts/firestore.js init-analytical-data
+- node scripts/firestore.js import-analytical-csv --file=C:/path/to/your.csv
+
+Notes
+- Ensure reported_issues includes bikeId for new reports; backfill old entries.
+- If CSV bike_id does not match Firestore bikes, create an explicit mapping.
+- Start with linear regression; expand features over time based on results.

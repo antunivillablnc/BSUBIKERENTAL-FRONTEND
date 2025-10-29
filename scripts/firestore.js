@@ -104,6 +104,11 @@ async function deleteAllRentalHistory() {
   await deleteCollection('rentalHistory'); // ← Change 'applications' to your actual collection name if different
 }
 
+// Function to delete all analytical_data
+async function deleteAllAnalyticalData() {
+  await deleteCollection('analytical_data');
+}
+
 // Initialize analytical_data collection with a meta document
 async function initAnalyticalData() {
   const metaRef = db.collection('analytical_data').doc('meta');
@@ -168,7 +173,17 @@ async function importCsvToCollection(filePath, collectionName, transformRow, opt
       stream.pause();
       try {
         const data = transformRow(row);
-        const ref = db.collection(collectionName).doc(String(row.ride_id || '')); // keep ride_id as a stable id if present
+        // Prefer ride_id as a stable doc id when present; otherwise, generate a deterministic fallback key
+        const ridRaw = (row.ride_id ?? row.rideId ?? row.id ?? '').toString().trim();
+        let ref;
+        if (ridRaw) {
+          ref = db.collection(collectionName).doc(ridRaw);
+        } else {
+          const parts = [row.bike_id ?? '', row.ride_date ?? '', row.distance_km ?? '', row.duration_min ?? '']
+            .map(v => String(v ?? '').trim());
+          const fallbackKey = parts.join('|') || `auto_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+          ref = db.collection(collectionName).doc(fallbackKey);
+        }
         batch.set(ref, data, { merge: true });
         inBatch += 1;
         maybeCommitBatch().then(() => stream.resume()).catch(reject);
@@ -202,12 +217,36 @@ function transformAnalyticalWithBikeIdRow(row) {
     return Number.isFinite(n) ? n : null;
   };
 
-  const rideDateStr = (row.ride_date || '').trim();
-  const rideDate = rideDateStr ? new Date(rideDateStr) : null;
+  function parseDateFlexible(v) {
+    const s = (v || '').toString().trim();
+    if (!s) return null;
+    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (m) {
+      const day = Number(m[1]);
+      const mon = Number(m[2]) - 1;
+      const year = Number(m[3].length === 2 ? ('20' + m[3]) : m[3]);
+      const dt = new Date(year, mon, day);
+      return Number.isFinite(dt.getTime()) ? dt : null;
+    }
+    const dt = new Date(s);
+    return Number.isFinite(dt.getTime()) ? dt : null;
+  }
+
+  const rideDate = parseDateFlexible(row.ride_date);
+
+  // Support bike_name by extracting a numeric identifier, keep original label
+  const rawBikeName = (row.bike_name || row.bike || '').toString().trim();
+  const numFromNameMatch = rawBikeName.match(/(\d+)/);
+  const bikeNumFromName = numFromNameMatch ? Number(numFromNameMatch[1]) : null;
+  const csvBikeId = parseNum(row.bike_id);
+  const resolvedBikeId = csvBikeId != null ? csvBikeId : bikeNumFromName;
 
   return {
+    // Ensure ride_id is preserved as the logical identifier of a row (not bike_id)
     ride_id: parseNum(row.ride_id),
-    bike_id: parseNum(row.bike_id),
+    // Map to a numeric bike identifier derived from bike_id or bike_name digits
+    bike_id: resolvedBikeId,
+    bike_name: rawBikeName || null,
     ride_date: rideDate || null,
     distance_km: parseNum(row.distance_km),
     duration_min: parseNum(row.duration_min),
@@ -372,6 +411,20 @@ if (require.main === module) {
         console.error('❌ Failed to delete rental history:', error);
         process.exit(1);
       });
+  } else if (command === 'delete-analytical-data') {
+    console.log('🚨 WARNING: You are about to delete ALL analytical_data from Firestore!');
+    console.log('This action cannot be undone. All analytical rows will be permanently lost.');
+    console.log('');
+
+    deleteAllAnalyticalData()
+      .then(() => {
+        console.log('✅ All analytical_data deleted successfully');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to delete analytical_data:', error);
+        process.exit(1);
+      });
   } else if (command === 'init-analytical-data') {
     initAnalyticalData()
       .then(() => {
@@ -384,7 +437,7 @@ if (require.main === module) {
       });
   } else if (command === 'import-analytical-csv') {
     const fileArg = (args.find(a => a.startsWith('--file=')) || '').split('=')[1];
-    const defaultPath = 'C:/Users/Anthony/Downloads/bike_ride_dataset_with_bike_id (1).csv';
+    const defaultPath = 'C:/Users/Anthony/Downloads/Analytical_data.csv';
     const filePath = fileArg || defaultPath;
     console.log(`Importing analytical CSV from: ${filePath}`);
     importAnalyticalCsvWithBikeId(filePath)
@@ -410,6 +463,7 @@ if (require.main === module) {
     console.log('Running example queries...');
     console.log('Available commands:');
     console.log('  node scripts/firestore.js delete-applications  - Delete all applications');
+    console.log('  node scripts/firestore.js delete-analytical-data  - Delete all analytical_data');
     console.log("  node scripts/firestore.js init-analytical-data  - Create 'analytical_data' collection with sample docs");
     console.log('  node scripts/firestore.js import-analytical-csv --file=PATH  - Import analytical CSV into analytical_data');
     console.log('');

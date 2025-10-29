@@ -16,6 +16,8 @@ interface ReportedIssue {
   assignedTo?: string;
   resolvedAt?: string;
   adminNotes?: string;
+  bikeId?: string | null;
+  bikeName?: string | null;
 }
 
 export default function AdminReportedIssuesPage() {
@@ -32,6 +34,7 @@ export default function AdminReportedIssuesPage() {
   const [error, setError] = useState<string>('');
   const [showActions, setShowActions] = useState(false);
   const actionsRef = useRef<HTMLDivElement | null>(null);
+  const [bikeIdToName, setBikeIdToName] = useState<Record<string, string>>({});
 
   const formatDateSafe = (value?: string) => {
     if (!value) return '—';
@@ -81,6 +84,8 @@ export default function AdminReportedIssuesPage() {
         assignedTo: d.assignedTo,
         resolvedAt: d.resolvedAt?.toDate ? d.resolvedAt.toDate().toISOString() : d.resolvedAt,
         adminNotes: d.adminNotes,
+        bikeId: d.bikeId ?? null,
+        bikeName: d.bikeName ?? null,
       }));
       setIssues(normalized);
     } catch (e: any) {
@@ -93,6 +98,19 @@ export default function AdminReportedIssuesPage() {
 
   useEffect(() => {
     fetchIssues();
+    // preload bike names for quick lookup
+    (async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+        const bres = await fetch(`${base.replace(/\/$/, '')}/bikes`, { credentials: 'include', cache: 'no-store' });
+        const bjson = await bres.json();
+        if (bjson?.success && Array.isArray(bjson.bikes)) {
+          const map: Record<string, string> = {};
+          bjson.bikes.forEach((b: any) => { map[b.id] = b.name || b.id; });
+          setBikeIdToName(map);
+        }
+      } catch {}
+    })();
   }, []);
 
   useEffect(() => {
@@ -856,6 +874,9 @@ export default function AdminReportedIssuesPage() {
               <div style={{ fontSize: 14, color: '#000', lineHeight: 1.6 }}>
                 <p><strong>Reported by:</strong> {selectedIssue.reportedByName || selectedIssue.reportedBy.split('@')[0]}</p>
                 <p><strong>Reported at:</strong> {formatDateTimeSafe(selectedIssue.reportedAt)}</p>
+                <p>
+                  <strong>Bike:</strong> {selectedIssue.bikeId ? (bikeIdToName[selectedIssue.bikeId] || selectedIssue.bikeName || selectedIssue.bikeId) : (selectedIssue.bikeName || '—')}
+                </p>
                 {selectedIssue.assignedTo && (
                   <p><strong>Assigned to:</strong> {selectedIssue.assignedTo}</p>
                 )}
