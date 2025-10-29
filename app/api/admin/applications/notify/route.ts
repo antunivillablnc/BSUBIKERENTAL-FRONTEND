@@ -5,7 +5,7 @@ import { requireRole } from '@/lib/serverAuth';
 
 export async function POST(req: NextRequest) {
   try {
-    requireRole(['admin']);
+    requireRole(req, ['admin']);
     const body = await req.json().catch(() => ({}));
     const applicationId = String(body?.applicationId || '').trim();
     const status = String(body?.status || '').trim();

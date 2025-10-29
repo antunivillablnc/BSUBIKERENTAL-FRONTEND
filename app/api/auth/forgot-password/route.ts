@@ -31,9 +31,11 @@ export async function POST(req: NextRequest) {
         text: `Reset your password: ${resetLink}`,
         html: `<p>Click the link to reset your password:</p><p><a href="${resetLink}">${resetLink}</a></p>`,
       });
-    } catch (e) {
-      // do not reveal email send failures
+    } catch (e: any) {
       console.error('Failed to send reset email:', e);
+      if (process.env.EMAIL_DEBUG === 'true') {
+        return NextResponse.json({ error: e?.message || 'Email send failed' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ message: 'If this email is registered, a reset link has been sent.' });

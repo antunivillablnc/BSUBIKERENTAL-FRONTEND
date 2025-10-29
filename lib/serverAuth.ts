@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 
 export type JwtUserPayload = {
@@ -13,10 +13,17 @@ function getJwtSecret(): string {
   return secret;
 }
 
-export function getAuthUser(): JwtUserPayload | null {
+function extractBearerToken(req: NextRequest): string | undefined {
+  const header = req.headers.get('authorization');
+  if (!header) return undefined;
+  const [scheme, token] = header.split(' ');
+  if ((scheme || '').toLowerCase() !== 'bearer' || !token) return undefined;
+  return token;
+}
+
+export function getAuthUserFromRequest(req: NextRequest): JwtUserPayload | null {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('auth')?.value;
+    const token = req.cookies.get('auth')?.value || extractBearerToken(req);
     if (!token) return null;
     const decoded = jwt.verify(token, getJwtSecret()) as JwtUserPayload;
     return decoded;
@@ -25,8 +32,8 @@ export function getAuthUser(): JwtUserPayload | null {
   }
 }
 
-export function requireRole(allowedRoles: string[] = []): JwtUserPayload {
-  const user = getAuthUser();
+export function requireRole(req: NextRequest, allowedRoles: string[] = []): JwtUserPayload {
+  const user = getAuthUserFromRequest(req);
   if (!user) {
     throw Object.assign(new Error('Unauthorized'), { statusCode: 401 });
   }

@@ -23,12 +23,23 @@ function getTransporter(): nodemailer.Transporter {
     },
     tls: { rejectUnauthorized: false },
   });
+  // Optional connection verification on cold start for debugging
+  if (process.env.EMAIL_DEBUG === 'true') {
+    cachedTransporter.verify().then(() => {
+      console.log('[mailer] SMTP connection verified');
+    }).catch((err) => {
+      console.error('[mailer] SMTP verify failed:', err);
+    });
+  }
   return cachedTransporter;
 }
 
 export async function sendMail(options: SendMailOptions) {
   const transporter = getTransporter();
   const from = options.from || process.env.EMAIL_USER || '';
+  if (process.env.EMAIL_DEBUG === 'true') {
+    console.log('[mailer] Sending email', { to: options.to, subject: options.subject, from });
+  }
   return transporter.sendMail({
     from,
     to: options.to,
