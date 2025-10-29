@@ -119,6 +119,13 @@ export default function AdminApplicationsPage() {
       });
       const data = await res.json();
       if (data.success) {
+        // Fire-and-forget email notification via Next.js API (serverless)
+        fetch('/api/admin/assign-bike/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ applicationId: appId, bikeId }),
+        }).catch(() => {});
         fetchData();
       } else {
         setAssignError(data.error || "Failed to assign bike.");
@@ -141,6 +148,13 @@ export default function AdminApplicationsPage() {
       const data = await res.json();
       if (data.success) {
         setSelectedApp(prev => (prev && prev.id === appId ? { ...prev, status } : prev));
+        // Fire-and-forget email notification via Next.js API (serverless)
+        fetch('/api/admin/applications/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ applicationId: appId, status }),
+        }).catch(() => {});
         fetchData();
       } else {
         setError(data.error || 'Failed to update application status.');
