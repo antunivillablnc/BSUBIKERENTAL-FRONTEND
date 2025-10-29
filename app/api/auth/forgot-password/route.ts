@@ -21,8 +21,13 @@ export async function POST(req: NextRequest) {
     const expiry = new Date(Date.now() + 60 * 60 * 1000);
     await db.collection('users').doc(user.id).update({ passwordResetToken: token, passwordResetExpiry: expiry });
 
-    const baseUrl = (process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+    const baseUrlEnv = process.env.FRONTEND_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL;
+    const derivedOrigin = req.nextUrl.origin; // falls back to deployed domain
+    const baseUrl = (baseUrlEnv || derivedOrigin).replace(/\/$/, '');
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
+    if (process.env.EMAIL_DEBUG === 'true') {
+      console.log('[forgot-password] reset link origin used:', baseUrlEnv ? 'env' : 'request', baseUrl);
+    }
 
     try {
       await sendMail({
