@@ -5,7 +5,17 @@ import { requireRole } from '@/lib/serverAuth';
 
 export async function POST(req: NextRequest) {
   try {
-    requireRole(req, ['admin']);
+    // Authorize via admin cookie OR server-to-server secret
+    try {
+      requireRole(req, ['admin']);
+    } catch (e) {
+      const secret = process.env.NOTIFY_API_SECRET || '';
+      const authHeader = req.headers.get('authorization') || '';
+      const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!secret || bearer !== secret) {
+        throw Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+      }
+    }
     const body = await req.json().catch(() => ({}));
     const applicationId = String(body?.applicationId || '').trim();
     const status = String(body?.status || '').trim();
