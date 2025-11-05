@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const applicationId = String(body?.applicationId || '').trim();
     const status = String(body?.status || '').trim();
+    if (process.env.NOTIFY_DEBUG === 'true') {
+      console.log('[applications/notify] invoked', { applicationId, status });
+    }
     const allowed = new Set(['approved', 'rejected', 'pending']);
     if (!applicationId || !allowed.has(status)) {
       return NextResponse.json({ success: false, error: 'Invalid request' }, { status: 400 });
@@ -30,6 +33,9 @@ export async function POST(req: NextRequest) {
     }
     const application: any = { id: appDoc.id, ...appDoc.data() };
     const recipient = String(application.email || '').trim();
+    if (process.env.NOTIFY_DEBUG === 'true') {
+      console.log('[applications/notify] recipient', recipient);
+    }
     if (!recipient) {
       return NextResponse.json({ success: true });
     }
@@ -46,9 +52,15 @@ export async function POST(req: NextRequest) {
         : `<p>Your application status is now: <strong>${status}</strong>.</p>`;
 
     await sendMail({ to: recipient, subject, html: bodyHtml });
+    if (process.env.NOTIFY_DEBUG === 'true') {
+      console.log('[applications/notify] email sent');
+    }
     return NextResponse.json({ success: true });
   } catch (e: any) {
     const statusCode = (e as any)?.statusCode || 500;
+    if (process.env.NOTIFY_DEBUG === 'true') {
+      console.error('[applications/notify] error', e);
+    }
     return NextResponse.json({ success: false, error: e?.message || 'Failed to send email' }, { status: statusCode });
   }
 }
