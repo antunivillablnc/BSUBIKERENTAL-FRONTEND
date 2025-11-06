@@ -294,14 +294,7 @@ export default function AdminMaintenancePage() {
                   <CircularGauge value={Number((metrics as any).rmse ?? Math.sqrt(Number((metrics as any).mse || 0)))} size={128} strokeWidth={10} color="#06b6d4" />
                 </div>
               </div>
-              {metrics.val && (
-                <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', padding: 16 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-                    <div style={{ fontSize: 12, color: '#6b7280', alignSelf: 'stretch' }}>Val RMSE</div>
-                    <CircularGauge value={Number((metrics.val as any).rmse ?? Math.sqrt(Number((metrics.val as any).mse || 0)))} size={112} strokeWidth={9} color="#3b82f6" />
-                  </div>
-                </div>
-              )}
+              {/* Val RMSE hidden intentionally */}
             </div>
           ) : (
             <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: '#374151', padding: 16 }}>No metrics yet. Train the model to generate predictions.</div>
