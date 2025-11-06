@@ -5,6 +5,77 @@ import { rtdb, onValue, ref } from '@/lib/firebaseClient';
 
 type Metrics = { mae: number; mse: number; r2: number; val?: { mae: number; mse: number; r2: number }; train?: { mae: number; mse: number; r2: number } };
 
+// Lightweight circular gauge used to visualize a single numeric metric
+function CircularGauge({
+  value,
+  size = 120,
+  strokeWidth = 10,
+  color = '#14b8a6',
+  unit,
+}: {
+  value: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+  unit?: string;
+}) {
+  // Choose a nice upper bound slightly above the value so the ring is informative
+  function niceMax(x: number) {
+    if (!isFinite(x) || x <= 0) return 1;
+    const exp = Math.floor(Math.log10(x));
+    const base = Math.pow(10, exp);
+    const scaled = x / base;
+    const nice = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+    return nice * base;
+  }
+
+  const max = Math.max(niceMax(value), 1);
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const percent = Math.min(100, (value / max) * 100);
+  const strokeDashoffset = circumference - (percent / 100) * circumference;
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size }} aria-label="circular gauge">
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#e5e7eb"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+        />
+      </svg>
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        lineHeight: 1.1,
+      }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{Number(value).toFixed(2)}</div>
+        {unit ? <div style={{ fontSize: 11, color: '#6b7280' }}>{unit}</div> : null}
+      </div>
+    </div>
+  );
+}
+
 type Prediction = {
   id?: string;
   bikeId: string;
@@ -218,14 +289,17 @@ export default function AdminMaintenancePage() {
           {metrics ? (
             <div style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr' }}>
               <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', padding: 16, boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>RMSE</div>
-                <div style={{ fontSize: 24, fontWeight: 600 }}>{fmt((metrics as any).rmse ?? Math.sqrt(Number((metrics as any).mse || 0)), 2)}</div>
-                <div style={{ fontSize: 12, color: '#9ca3af' }}>Lower is better</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                  <div style={{ fontSize: 12, color: '#6b7280', alignSelf: 'stretch' }}>RMSE</div>
+                  <CircularGauge value={Number((metrics as any).rmse ?? Math.sqrt(Number((metrics as any).mse || 0)))} size={128} strokeWidth={10} color="#06b6d4" />
+                </div>
               </div>
               {metrics.val && (
                 <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', padding: 16 }}>
-                  <div style={{ fontSize: 12, color: '#6b7280' }}>Val RMSE</div>
-                  <div style={{ fontSize: 24, fontWeight: 600 }}>{fmt((metrics.val as any).rmse ?? Math.sqrt(Number((metrics.val as any).mse || 0)), 2)}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                    <div style={{ fontSize: 12, color: '#6b7280', alignSelf: 'stretch' }}>Val RMSE</div>
+                    <CircularGauge value={Number((metrics.val as any).rmse ?? Math.sqrt(Number((metrics.val as any).mse || 0)))} size={112} strokeWidth={9} color="#3b82f6" />
+                  </div>
                 </div>
               )}
             </div>

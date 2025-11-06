@@ -66,8 +66,11 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
+      const resp: any = (err as any)?.response;
+      const serverMsg = resp?.data?.error || resp?.data?.message;
+      const status = resp?.status;
       const message = err instanceof Error ? err.message : String(err);
-      setError(`Login request failed: ${message}`);
+      setError(serverMsg ? `Login failed${status ? ` (${status})` : ''}: ${serverMsg}` : `Login request failed: ${message}`);
     } finally {
       recaptchaRef.current?.reset();
       setIsSubmitting(false);
