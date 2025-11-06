@@ -127,10 +127,12 @@ export default function AdminReportedIssuesPage() {
     const matchesStatus = filterStatus === 'all' || issue.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || issue.priority === filterPriority;
     const matchesCategory = filterCategory === 'all' || issue.category === filterCategory;
-    const matchesSearch = issue.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         issue.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         issue.reportedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (issue.reportedByName || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const q = (searchQuery || '').toLowerCase();
+    const toL = (v: unknown) => (typeof v === 'string' ? v : '').toLowerCase();
+    const matchesSearch = toL(issue.subject).includes(q) ||
+                         toL(issue.message).includes(q) ||
+                         toL(issue.reportedBy).includes(q) ||
+                         toL(issue.reportedByName).includes(q);
     
     return matchesStatus && matchesPriority && matchesCategory && matchesSearch;
   });
@@ -669,7 +671,7 @@ export default function AdminReportedIssuesPage() {
                           letterSpacing: '0.3px',
                           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
                         }}>
-                          {issue.status.replace('_', ' ')}
+                          {String(issue.status || '').replace('_', ' ') || '—'}
                         </span>
                       </div>
                       <p style={{ 
@@ -693,7 +695,7 @@ export default function AdminReportedIssuesPage() {
                         flexWrap: 'wrap',
                         alignItems: 'center'
                       }}>
-                        <span style={{ fontWeight: 600 }}>👤 {issue.reportedByName || issue.reportedBy.split('@')[0]}</span>
+                        <span style={{ fontWeight: 600 }}>👤 {issue.reportedByName || (typeof issue.reportedBy === 'string' ? issue.reportedBy.split('@')[0] : '—')}</span>
                         <span style={{ color: '#cbd5e1' }}>•</span>
                         <span style={{ fontWeight: 500 }}>📅 {formatDateSafe(issue.reportedAt)}</span>
                         {issue.assignedTo && (
