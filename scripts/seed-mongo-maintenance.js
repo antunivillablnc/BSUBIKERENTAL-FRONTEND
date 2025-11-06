@@ -25,7 +25,7 @@ const dotenv = require('dotenv');
   const DAYS = Number(process.env.SEED_DAYS || 35);
   const RIDE_PROB = Number(process.env.SEED_RIDE_PROB || 0.55);
 
-  const names = Array.from({ length: BIKES }, (_, i) => `Roadster ${String.fromCharCode(65 + i)}`);
+  const names = Array.from({ length: BIKES }, (_, i) => `BSU ${String(i + 1).toString().padStart(3, '0')}`);
 
   const client = new MongoClient(uri);
   await client.connect();

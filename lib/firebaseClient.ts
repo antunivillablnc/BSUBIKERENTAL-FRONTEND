@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
+export { onValue, ref } from 'firebase/database';
 
 // Initialize client-side Firebase app for Realtime Database usage
 const app = getApps().length

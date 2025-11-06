@@ -109,6 +109,20 @@ async function deleteAllAnalyticalData() {
   await deleteCollection('analytical_data');
 }
 
+// Delete reported_issues
+async function deleteAllReportedIssues() {
+  await deleteCollection('reported_issues');
+}
+
+// Delete maintenance models and predictions
+async function deleteAllMaintenanceModels() {
+  await deleteCollection('maintenance_models');
+}
+
+async function deleteAllMaintenancePredictions() {
+  await deleteCollection('maintenance_predictions');
+}
+
 // Initialize analytical_data collection with a meta document
 async function initAnalyticalData() {
   const metaRef = db.collection('analytical_data').doc('meta');
@@ -425,6 +439,48 @@ if (require.main === module) {
         console.error('❌ Failed to delete analytical_data:', error);
         process.exit(1);
       });
+  } else if (command === 'delete-reported-issues') {
+    console.log('🚨 WARNING: You are about to delete ALL reported_issues from Firestore!');
+    console.log('This action cannot be undone. All reported issues will be permanently lost.');
+    console.log('');
+
+    deleteAllReportedIssues()
+      .then(() => {
+        console.log('✅ All reported_issues deleted successfully');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to delete reported_issues:', error);
+        process.exit(1);
+      });
+  } else if (command === 'delete-maintenance-models') {
+    console.log('🚨 WARNING: You are about to delete ALL maintenance_models from Firestore!');
+    console.log('This action cannot be undone. All models will be permanently lost.');
+    console.log('');
+
+    deleteAllMaintenanceModels()
+      .then(() => {
+        console.log('✅ All maintenance_models deleted successfully');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to delete maintenance_models:', error);
+        process.exit(1);
+      });
+  } else if (command === 'delete-maintenance-predictions') {
+    console.log('🚨 WARNING: You are about to delete ALL maintenance_predictions from Firestore!');
+    console.log('This action cannot be undone. All predictions will be permanently lost.');
+    console.log('');
+
+    deleteAllMaintenancePredictions()
+      .then(() => {
+        console.log('✅ All maintenance_predictions deleted successfully');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('❌ Failed to delete maintenance_predictions:', error);
+        process.exit(1);
+      });
   } else if (command === 'init-analytical-data') {
     initAnalyticalData()
       .then(() => {
@@ -464,6 +520,9 @@ if (require.main === module) {
     console.log('Available commands:');
     console.log('  node scripts/firestore.js delete-applications  - Delete all applications');
     console.log('  node scripts/firestore.js delete-analytical-data  - Delete all analytical_data');
+    console.log('  node scripts/firestore.js delete-reported-issues  - Delete all reported_issues');
+    console.log('  node scripts/firestore.js delete-maintenance-models  - Delete maintenance_models');
+    console.log('  node scripts/firestore.js delete-maintenance-predictions  - Delete maintenance_predictions');
     console.log("  node scripts/firestore.js init-analytical-data  - Create 'analytical_data' collection with sample docs");
     console.log('  node scripts/firestore.js import-analytical-csv --file=PATH  - Import analytical CSV into analytical_data');
     console.log('');

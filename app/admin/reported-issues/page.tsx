@@ -72,13 +72,13 @@ export default function AdminReportedIssuesPage() {
       const data = await res.json();
       const normalized: ReportedIssue[] = (data || []).map((d: any) => ({
         id: d.id,
-        subject: d.subject,
-        message: d.message,
-        category: d.category,
-        priority: d.priority,
-        status: d.status,
+        subject: d.subject || d.message || (d.type ? `${String(d.type)} issue` : 'Issue'),
+        message: d.message || '',
+        category: d.category || d.type || 'other',
+        priority: d.priority || 'low',
+        status: d.status || 'open',
         imageUrl: d.imageUrl,
-        reportedBy: d.reportedBy,
+        reportedBy: d.reportedBy || 'system',
         reportedByName: d.reportedByName ?? null,
         reportedAt: d.reportedAt?.toDate ? d.reportedAt.toDate().toISOString() : d.reportedAt,
         assignedTo: d.assignedTo,
@@ -128,11 +128,10 @@ export default function AdminReportedIssuesPage() {
     const matchesPriority = filterPriority === 'all' || issue.priority === filterPriority;
     const matchesCategory = filterCategory === 'all' || issue.category === filterCategory;
     const q = (searchQuery || '').toLowerCase();
-    const toL = (v: unknown) => (typeof v === 'string' ? v : '').toLowerCase();
-    const matchesSearch = toL(issue.subject).includes(q) ||
-                         toL(issue.message).includes(q) ||
-                         toL(issue.reportedBy).includes(q) ||
-                         toL(issue.reportedByName).includes(q);
+    const matchesSearch = (issue.subject || '').toLowerCase().includes(q) ||
+                         (issue.message || '').toLowerCase().includes(q) ||
+                         (issue.reportedBy || '').toLowerCase().includes(q) ||
+                         (issue.reportedByName || '').toLowerCase().includes(q);
     
     return matchesStatus && matchesPriority && matchesCategory && matchesSearch;
   });
@@ -877,7 +876,9 @@ export default function AdminReportedIssuesPage() {
                 <p><strong>Reported by:</strong> {selectedIssue.reportedByName || selectedIssue.reportedBy.split('@')[0]}</p>
                 <p><strong>Reported at:</strong> {formatDateTimeSafe(selectedIssue.reportedAt)}</p>
                 <p>
-                  <strong>Bike:</strong> {selectedIssue.bikeId ? (bikeIdToName[selectedIssue.bikeId] || selectedIssue.bikeName || selectedIssue.bikeId) : (selectedIssue.bikeName || '—')}
+                  <strong>Bike:</strong> {selectedIssue.bikeId
+                    ? (bikeIdToName[String(selectedIssue.bikeId)] || selectedIssue.bikeName || String(selectedIssue.bikeId))
+                    : (selectedIssue.bikeName || '—')}
                 </p>
                 {selectedIssue.assignedTo && (
                   <p><strong>Assigned to:</strong> {selectedIssue.assignedTo}</p>

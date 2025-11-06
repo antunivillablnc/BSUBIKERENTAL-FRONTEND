@@ -160,16 +160,15 @@ export default function AdminBikesPage() {
   // Sort bikes based on selected field and order
   const sortedBikes = [...bikes].sort((a, b) => {
     if (sortField === 'status') {
-      // Available first, then rented
-      if (a.status === b.status) return 0;
-      return sortOrder === 'asc'
-        ? a.status.localeCompare(b.status)
-        : b.status.localeCompare(a.status);
+      const sa = String(a.status || '');
+      const sb = String(b.status || '');
+      if (sa === sb) return 0;
+      return sortOrder === 'asc' ? sa.localeCompare(sb) : sb.localeCompare(sa);
     }
     if (sortField === 'name') {
-      return sortOrder === 'asc'
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
+      const na = String(a.name || '');
+      const nb = String(b.name || '');
+      return sortOrder === 'asc' ? na.localeCompare(nb) : nb.localeCompare(na);
     }
     if (sortField === 'date') {
       return sortOrder === 'asc'
@@ -181,7 +180,7 @@ export default function AdminBikesPage() {
 
   // Filter bikes by status and plate number
   const filteredBikes = (statusFilter === 'all' ? sortedBikes : sortedBikes.filter(b => b.status === statusFilter))
-    .filter(bike => bike.name.toLowerCase().includes(plateFilter.toLowerCase()));
+    .filter(bike => String(bike.name || '').toLowerCase().includes(plateFilter.toLowerCase()));
 
   // Reset to first page when filters/sorts change
   useEffect(() => {
