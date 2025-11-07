@@ -170,7 +170,7 @@ export default function ForgotPasswordPage() {
               {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
               <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
                 Remembered your password?{' '}
-                <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Sign In</a>
+                <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Log in</a>
               </div>
             </div>
           </div>

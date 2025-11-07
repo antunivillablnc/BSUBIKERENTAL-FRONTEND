@@ -288,7 +288,7 @@ export default function LoginPage() {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
                   }}
                 >
-                  {isSubmitting ? "Signing In..." : "Sign In"}
+                  {isSubmitting ? "Logging in..." : "Log in"}
                 </button>
                 <div style={{ textAlign: "center", marginBottom: 8 }}>
                   <a href="/forgot-password" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500, cursor: "pointer" }}>

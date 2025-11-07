@@ -215,12 +215,13 @@ export default function ResetPasswordForm() {
                     }}
                     onClick={() => router.push("/login")}
                   >
-                    Go back to Sign in
+                    Go back to Log in
                   </button>
                 </>
               )}
               <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
                 Go back to{' '}
+                <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Log in</a>
               </div>
             </div>
           </div>
