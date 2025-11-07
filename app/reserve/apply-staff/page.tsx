@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Staff Bike Rental Application - BSU Lipa Bike Rental",
+  description: "Apply for bike rental as BSU Lipa teaching or non-teaching staff. Submit your staff application with department details and rental purpose.",
+};
+
 "use client";
 import { useState, useEffect } from "react";
 import { getApiBaseUrl } from "@/lib/apiClient";
