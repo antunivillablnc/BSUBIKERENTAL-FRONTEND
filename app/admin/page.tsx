@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [recentBikes, setRecentBikes] = useState<RecentBike[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [rentalHistory, setRentalHistory] = useState<any[]>([]);
   const [reportedIssues, setReportedIssues] = useState<any[]>([]);
   const [usageRange, setUsageRange] = useState<'week' | 'month' | 'year'>('week');
   const [collegeRange, setCollegeRange] = useState<'week' | 'month' | 'year'>('week');
@@ -70,23 +71,26 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const [appsRes, bikesRes, lbRes, issuesRes] = await Promise.all([
+      const [appsRes, bikesRes, lbRes, issuesRes, historyRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/applications`, { credentials: 'include' }),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bikes`, { credentials: 'include' }),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/leaderboard?limit=5`, { credentials: 'include' }),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reported-issues`, { credentials: 'include' }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/rental-history`, { credentials: 'include' }),
       ]);
       
       const appsData = await appsRes.json();
       const bikesData = await bikesRes.json();
       const lbData = await lbRes.json();
       const issuesData = await issuesRes.json();
+      const historyData = await historyRes.json();
       
       if (appsData.success && bikesData.success && lbData.success) {
         const applications = appsData.applications;
         const bikes = bikesData.bikes;
         const fetchedLb: LeaderboardEntry[] = lbData.entries || [];
         const issues = issuesData?.issues || [];
+        const history = Array.isArray(historyData?.history) ? historyData.history : [];
         
         // Calculate stats
         const totalApplications = applications.length;
@@ -108,6 +112,7 @@ export default function AdminDashboard() {
         // Get recent applications (last 5)
         setRecentApplications(applications.slice(0, 5));
         setApplications(applications);
+        setRentalHistory(history);
         
         // Get currently rented bikes
         setRecentBikes(bikes.filter((b: any) => (b?.status || '').toLowerCase() === 'rented'));
@@ -243,7 +248,20 @@ export default function AdminDashboard() {
 
   // Derived analytics
   const usage = useMemo(() => {
-    const now = nowManila();
+    // Use the most recent activity across applications and rental history
+    const latestAppMs = applications.reduce((latest, a) => {
+      const d = toManila(new Date(a?.createdAt));
+      const t = d.getTime();
+      return Number.isNaN(t) ? latest : Math.max(latest, t);
+    }, 0);
+    const latestRentMs = rentalHistory.reduce((latest, r) => {
+      const raw = r?.startDate || r?.createdAt;
+      const d = toManila(new Date(raw));
+      const t = d.getTime();
+      return Number.isNaN(t) ? latest : Math.max(latest, t);
+    }, 0);
+    const latestMs = Math.max(latestAppMs, latestRentMs);
+    const now = latestMs ? new Date(latestMs) : nowManila();
     if (usageRange === 'week') {
       // Normalize to Manila midnight boundaries to avoid off-by-one around day changes
       const todayM = new Date(now);
@@ -257,14 +275,24 @@ export default function AdminDashboard() {
       });
       const rentals = new Array(7).fill(0);
       const appsArr = new Array(7).fill(0);
+      // applications timeline (submissions)
       applications.forEach((a) => {
-        const d = toManila(new Date(a.createdAt));
+        const d = toManila(new Date(a?.createdAt));
         const dm = new Date(d);
         dm.setHours(0,0,0,0);
         if (dm < start || dm > todayM) return;
         const idx = Math.max(0, Math.min(6, Math.floor((dm.getTime() - start.getTime()) / (24*60*60*1000))));
         appsArr[idx] += 1;
-        if (a.bikeId) rentals[idx] += 1;
+      });
+      // rentals timeline (assignments/completions) from history
+      rentalHistory.forEach((r) => {
+        const raw = r?.startDate || r?.createdAt;
+        const d = toManila(new Date(raw));
+        const dm = new Date(d);
+        dm.setHours(0,0,0,0);
+        if (dm < start || dm > todayM) return;
+        const idx = Math.max(0, Math.min(6, Math.floor((dm.getTime() - start.getTime()) / (24*60*60*1000))));
+        rentals[idx] += 1;
       });
       return { labels, rentals, apps: appsArr };
     }
@@ -279,14 +307,23 @@ export default function AdminDashboard() {
       const end = new Date(now);
       end.setHours(0,0,0,0);
       applications.forEach((a) => {
-        const d = toManila(new Date(a.createdAt));
+        const d = toManila(new Date(a?.createdAt));
         const dm = new Date(d);
         dm.setHours(0,0,0,0);
         if (dm < firstOfMonth || dm > end) return; // only current month
         const dayOfMonth = dm.getDate();
         const idx = Math.max(0, Math.min(3, Math.floor((dayOfMonth - 1) / 7))); // W1..W4
         appsArr[idx] += 1;
-        if (a.bikeId) rentals[idx] += 1;
+      });
+      rentalHistory.forEach((r) => {
+        const raw = r?.startDate || r?.createdAt;
+        const d = toManila(new Date(raw));
+        const dm = new Date(d);
+        dm.setHours(0,0,0,0);
+        if (dm < firstOfMonth || dm > end) return;
+        const dayOfMonth = dm.getDate();
+        const idx = Math.max(0, Math.min(3, Math.floor((dayOfMonth - 1) / 7)));
+        rentals[idx] += 1;
       });
       return { labels, rentals, apps: appsArr };
     }
@@ -308,7 +345,7 @@ export default function AdminDashboard() {
       labels.push(monthLabels[m]);
     }
     applications.forEach((a) => {
-      const d = toManila(new Date(a.createdAt));
+      const d = toManila(new Date(a?.createdAt));
       const dm = new Date(d);
       dm.setHours(0,0,0,0);
       dm.setDate(1);
@@ -316,61 +353,72 @@ export default function AdminDashboard() {
       const monthsDiff = (dm.getFullYear() - start.getFullYear()) * 12 + (dm.getMonth() - start.getMonth());
       if (monthsDiff >= 0 && monthsDiff < 12) {
         appsArr[monthsDiff] += 1;
-        if (a.bikeId) rentals[monthsDiff] += 1;
+      }
+    });
+    rentalHistory.forEach((r) => {
+      const raw = r?.startDate || r?.createdAt;
+      const d = toManila(new Date(raw));
+      const dm = new Date(d);
+      dm.setHours(0,0,0,0);
+      dm.setDate(1);
+      if (dm < start || dm > anchor) return;
+      const monthsDiff = (dm.getFullYear() - start.getFullYear()) * 12 + (dm.getMonth() - start.getMonth());
+      if (monthsDiff >= 0 && monthsDiff < 12) {
+        rentals[monthsDiff] += 1;
       }
     });
     return { labels, rentals, apps: appsArr };
-  }, [applications, usageRange]);
+  }, [applications, rentalHistory, usageRange]);
 
   const collegeAnalytics = useMemo(() => {
     const colleges = ['CTE', 'CET', 'CAS', 'CABE', 'CICS'];
-    const now = nowManila();
-    
-    // Filter applications based on collegeRange
-    let filteredApplications = applications;
-    
+    // Anchor to latest activity across applications and rentals
+    const latestAppMs = applications.reduce((latest, a) => {
+      const d = toManila(new Date(a?.createdAt));
+      const t = d.getTime();
+      return Number.isNaN(t) ? latest : Math.max(latest, t);
+    }, 0);
+    const latestRentMs = rentalHistory.reduce((latest, r) => {
+      const raw = r?.startDate || r?.createdAt;
+      const d = toManila(new Date(raw));
+      const t = d.getTime();
+      return Number.isNaN(t) ? latest : Math.max(latest, t);
+    }, 0);
+    const now = (latestAppMs || latestRentMs) ? new Date(Math.max(latestAppMs, latestRentMs)) : nowManila();
+
+    // Build time window predicate
+    let inWindow: (dm: Date) => boolean;
     if (collegeRange === 'week') {
-      const todayM = new Date(now);
-      todayM.setHours(0,0,0,0);
-      const start = new Date(todayM);
-      start.setDate(todayM.getDate() - 6);
-      filteredApplications = applications.filter((a) => {
-        const d = toManila(new Date(a.createdAt));
-        const dm = new Date(d);
-        dm.setHours(0,0,0,0);
-        return dm >= start && dm <= todayM;
-      });
+      const todayM = new Date(now); todayM.setHours(0,0,0,0);
+      const start = new Date(todayM); start.setDate(todayM.getDate() - 6);
+      inWindow = (dm: Date) => dm >= start && dm <= todayM;
     } else if (collegeRange === 'month') {
-      const firstOfMonth = new Date(now);
-      firstOfMonth.setHours(0,0,0,0);
-      firstOfMonth.setDate(1);
-      const end = new Date(now);
-      end.setHours(0,0,0,0);
-      filteredApplications = applications.filter((a) => {
-        const d = toManila(new Date(a.createdAt));
-        const dm = new Date(d);
-        dm.setHours(0,0,0,0);
-        return dm >= firstOfMonth && dm <= end;
-      });
-    } else if (collegeRange === 'year') {
-      const anchor = new Date(now);
-      anchor.setHours(0,0,0,0);
-      anchor.setDate(1);
-      const start = new Date(anchor);
-      start.setMonth(anchor.getMonth() - 11);
-      filteredApplications = applications.filter((a) => {
-        const d = toManila(new Date(a.createdAt));
-        const dm = new Date(d);
-        dm.setHours(0,0,0,0);
-        dm.setDate(1);
-        return dm >= start && dm <= anchor;
-      });
+      const firstOfMonth = new Date(now); firstOfMonth.setHours(0,0,0,0); firstOfMonth.setDate(1);
+      const end = new Date(now); end.setHours(0,0,0,0);
+      inWindow = (dm: Date) => dm >= firstOfMonth && dm <= end;
+    } else {
+      const anchor = new Date(now); anchor.setHours(0,0,0,0); anchor.setDate(1);
+      const start = new Date(anchor); start.setMonth(anchor.getMonth() - 11);
+      inWindow = (dm: Date) => { const d = new Date(dm); d.setHours(0,0,0,0); d.setDate(1); return d >= start && d <= anchor; };
     }
-    
+
+    // Filter data by window
+    const filteredApplications = applications.filter((a) => {
+      const d = toManila(new Date(a?.createdAt));
+      const dm = new Date(d); dm.setHours(0,0,0,0);
+      return inWindow(dm);
+    });
+    const filteredRentals = rentalHistory.filter((r) => {
+      const raw = r?.startDate || r?.createdAt;
+      const d = toManila(new Date(raw));
+      const dm = new Date(d); dm.setHours(0,0,0,0);
+      return inWindow(dm);
+    });
+
     const rentalCounts = [0, 0, 0, 0, 0];
     const applicationCounts = [0, 0, 0, 0, 0];
-    
-    // Create a mapping for flexible college name matching
+
+    // Flexible college mapping
     const collegeMapping: Record<string, number> = {
       'CTE': 0, 'COLLEGE OF TEACHER EDUCATION': 0, 'TEACHER EDUCATION': 0,
       'CET': 1, 'COLLEGE OF ENGINEERING TECHNOLOGY': 1, 'ENGINEERING TECHNOLOGY': 1,
@@ -378,34 +426,30 @@ export default function AdminDashboard() {
       'CABE': 3, 'COLLEGE OF ACCOUNTANCY BUSINESS AND ECONOMICS': 3, 'ACCOUNTANCY BUSINESS ECONOMICS': 3,
       'CICS': 4, 'COLLEGE OF INFORMATICS AND COMPUTING SCIENCES': 4, 'INFORMATICS COMPUTING SCIENCES': 4
     };
-    
+
+    const resolveIndex = (name: string): number => {
+      const upper = (name || '').toUpperCase().trim();
+      let idx = colleges.indexOf(upper);
+      if (idx === -1) {
+        for (const [key, i] of Object.entries(collegeMapping)) {
+          if (upper.includes(key) || key.includes(upper)) { idx = i; break; }
+        }
+      }
+      return idx;
+    };
+
     filteredApplications.forEach((a) => {
-      const college = (a.college || '').toUpperCase().trim();
-      
-      // Try exact match first
-      let collegeIndex = colleges.indexOf(college);
-      
-      // If no exact match, try flexible matching
-      if (collegeIndex === -1) {
-        for (const [key, index] of Object.entries(collegeMapping)) {
-          if (college.includes(key) || key.includes(college)) {
-            collegeIndex = index;
-            break;
-          }
-        }
-      }
-      
-      if (collegeIndex >= 0) {
-        applicationCounts[collegeIndex] += 1;
-        // Check multiple possible field names for bike assignment
-        if (a.bikeId || a.bike_id || a.assignedBikeId || a.assignedBike || a.status === 'assigned' || a.status === 'Assigned') {
-          rentalCounts[collegeIndex] += 1;
-        }
-      }
+      const idx = resolveIndex((a.college || a.department || '') as string);
+      if (idx >= 0) applicationCounts[idx] += 1;
     });
-    
+
+    filteredRentals.forEach((r) => {
+      const idx = resolveIndex((r.college || '') as string);
+      if (idx >= 0) rentalCounts[idx] += 1;
+    });
+
     return { colleges, rentalCounts, applicationCounts };
-  }, [applications, collegeRange]);
+  }, [applications, rentalHistory, collegeRange]);
 
   const maintenanceAnalytics = useMemo(() => {
     const typeCounts: Record<string, number> = {};
