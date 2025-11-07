@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 type SendMailOptions = {
   to: string;
@@ -6,47 +6,32 @@ type SendMailOptions = {
   html?: string;
   text?: string;
   from?: string;
+  replyTo?: string;
 };
 
-let cachedTransporter: nodemailer.Transporter | null = null;
+let cachedClient: Resend | null = null;
 
-function getTransporter(): nodemailer.Transporter {
-  if (cachedTransporter) return cachedTransporter;
-  const port = Number(process.env.EMAIL_PORT || 465);
-  cachedTransporter = nodemailer.createTransport({
-    host: process.env.EMAIL_SERVER || 'smtp.gmail.com',
-    port,
-    secure: port === 465,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: { rejectUnauthorized: false },
-  });
-  // Optional connection verification on cold start for debugging
-  if (process.env.EMAIL_DEBUG === 'true') {
-    cachedTransporter.verify().then(() => {
-      console.log('[mailer] SMTP connection verified');
-    }).catch((err) => {
-      console.error('[mailer] SMTP verify failed:', err);
-    });
-  }
-  return cachedTransporter;
+function getClient(): Resend {
+  if (cachedClient) return cachedClient;
+  const apiKey = process.env.RESEND_API_KEY || '';
+  cachedClient = new Resend(apiKey);
+  return cachedClient;
 }
 
 export async function sendMail(options: SendMailOptions) {
-  const transporter = getTransporter();
-  const from = options.from || process.env.EMAIL_USER || '';
-  if (process.env.EMAIL_DEBUG === 'true') {
-    console.log('[mailer] Sending email', { to: options.to, subject: options.subject, from });
-  }
-  return transporter.sendMail({
+  const resend = getClient();
+  const from = options.from || process.env.RESEND_FROM || '';
+  const replyTo = options.replyTo || process.env.RESEND_REPLY_TO;
+  if (!from) throw new Error('RESEND_FROM is not configured');
+  const payload: any = {
     from,
     to: options.to,
     subject: options.subject,
-    html: options.html,
-    text: options.text,
-  });
+  };
+  if (options.html) payload.html = options.html;
+  if (options.text) payload.text = options.text;
+  if (replyTo) payload.replyTo = replyTo;
+  return resend.emails.send(payload);
 }
 
 
