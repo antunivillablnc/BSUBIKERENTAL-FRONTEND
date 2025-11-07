@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Register - BSU Lipa Bike Rental",
+  description: "Create your account for BSU Lipa bike rental system. Register as a student, teaching staff, or non-teaching staff to start renting bikes.",
+};
+
 "use client";
 import { useState } from "react";
 import apiClient from "@/lib/api";

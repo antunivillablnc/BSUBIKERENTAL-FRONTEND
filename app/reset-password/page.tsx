@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Reset Password - BSU Lipa Bike Rental",
+  description: "Set a new password for your BSU Lipa bike rental account. Complete the password reset process to regain access to your account.",
+};
+
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 import { Suspense } from "react";

@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About BSU Lipa Bike Rental",
+  description: "Learn about BSU Lipa bike rental system. Contact information, social media links, and support details for Batangas State University students.",
+};
+
 "use client";
 
 export default function AboutPage() {

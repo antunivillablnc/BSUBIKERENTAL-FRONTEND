@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Help Center - BSU Lipa Bike Rental",
+  description: "Get answers to frequently asked questions about BSU Lipa bike rental system. Find information on registration, reservations, safety, and technical support.",
+};
+
 "use client";
 
 import { useState, useRef } from 'react';

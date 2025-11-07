@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Reserve a Bike - BSU Lipa Bike Rental",
+  description: "Browse and reserve bikes at BSU Lipa. View available bikes, amenities, and apply for bike rental as a student or staff member.",
+};
+
 "use client";
 import { useRef, useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
