@@ -1,10 +1,3 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Apply for Bike Rental - BSU Lipa Bike Rental",
-  description: "Apply for bike rental at BSU Lipa. Submit your application with required documents including Certificate of Indigency, GWA, ECA, and ITR.",
-};
-
 "use client";
 import { useState, useEffect } from "react";
 import { getApiBaseUrl } from "@/lib/apiClient";

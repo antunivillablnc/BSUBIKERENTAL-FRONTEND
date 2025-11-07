@@ -1,10 +1,3 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "BSU Lipa Bike Rental - Dashboard",
-  description: "Access your BSU Lipa bike rental dashboard. Reserve bikes, view rental history, and manage your account.",
-};
-
 "use client";
 
 import { useEffect, useState } from 'react';

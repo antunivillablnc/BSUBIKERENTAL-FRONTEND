@@ -1,10 +1,3 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Forgot Password - BSU Lipa Bike Rental",
-  description: "Reset your password for BSU Lipa bike rental system. Enter your email address to receive password reset instructions.",
-};
-
 "use client";
 import { useState } from "react";
 

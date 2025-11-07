@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bike Rental Website ",
-  description: "Bike Rental Website for the Batangas State University - Lipa Campus",
+  title: "BSU Lipa Bike Rental",
+  description: "Online bike rental system for Batangas State University students.",
 };
 
 export default function RootLayout({

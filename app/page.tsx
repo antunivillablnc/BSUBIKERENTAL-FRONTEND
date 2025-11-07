@@ -1,10 +1,3 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "BSU Lipa Bike Rental - Login",
-  description: "Online bike rental system for Batangas State University students. Login to access your account and rent bikes.",
-};
-
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
