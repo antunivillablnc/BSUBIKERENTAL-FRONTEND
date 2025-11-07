@@ -33,13 +33,16 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setLoading(true);
     if (!email) {
       setError("Please enter your email.");
+      setLoading(false);
       return;
     }
     try {
@@ -51,6 +54,8 @@ export default function RegisterPage() {
       }
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || "Failed to send verification link.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -175,11 +180,15 @@ export default function RegisterPage() {
                 style={inputStyle}
               />
             </div>
+            <p style={{ marginTop: -8, marginBottom: 16, fontSize: 13, color: '#555' }}>
+              We’ll email you a secure one‑click verification link to continue.
+            </p>
                 <button
                   type="submit"
+                  disabled={loading}
                   style={{
                     width: "100%",
-                    background: "#FFD600",
+                    background: loading ? "#e6cc00" : "#FFD600",
                     color: "#222",
                     fontWeight: 600,
                     fontSize: 18,
@@ -191,15 +200,11 @@ export default function RegisterPage() {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
                   }}
                 >
-                  Send verification link
+                  {loading ? "Sending..." : "Send verification link"}
                 </button>
               </form>
               {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
               {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
-              <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
-                Already verified?{' '}
-                <a href="/register/complete" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Complete registration</a>
-              </div>
               <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
                 Already have an account?{' '}
                 <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Log in</a>

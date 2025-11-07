@@ -116,7 +116,14 @@ export default function CompleteRegistrationPage() {
         background: "rgba(128,128,128,0.7)",
         zIndex: 1
       }} />
+      <style>{`
+        @media (max-width: 600px) {
+          .register-flex-container { justify-content: center !important; padding-left: 0 !important; padding-right: 0 !important; }
+          .auth-left-logo { display: none !important; }
+        }
+      `}</style>
       <div
+        className="register-flex-container"
         style={{
           position: "relative",
           zIndex: 2,
@@ -124,6 +131,9 @@ export default function CompleteRegistrationPage() {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
+          paddingLeft: "0",
+          paddingRight: "0",
+          paddingTop: "0",
         }}
       >
         <div
@@ -133,80 +143,94 @@ export default function CompleteRegistrationPage() {
             boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
             padding: "32px 16px 16px 16px",
             width: "100%",
-            maxWidth: 560,
+            maxWidth: 780,
+            display: "flex",
+            gap: 16,
+            alignItems: "stretch",
           }}
         >
-          <h2 style={{ margin: "0 0 16px 0", fontWeight: 500, color: "#222" }}>Complete Registration</h2>
-          <p style={{ marginTop: 0, marginBottom: 16, color: "#333" }}>Your email is verified. Finish creating your account.</p>
-          <form onSubmit={handleSubmit}>
-            <div style={inputGroupStyle}>
-              <div style={iconBoxStyle}><Icon type="user" /></div>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                required
-                style={inputStyle}
-              />
+          <div className="auth-left-logo" style={{ flex: "0 0 350px", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
+            <img src="/bsu_logo.png" alt="BSU Logo" style={{ width: "100%", maxWidth: 340, height: "auto" }} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+              <img src="/spartan_logo.png" alt="Sparta Logo" style={{ width: 48, height: 48, marginRight: 10 }} />
+              <div>
+                <div style={{ fontWeight: 700, color: "#b22222", fontSize: 22, letterSpacing: 1 }}>UNIVERSITY BIKE RENTAL</div>
+                <div style={{ fontSize: 14, color: "#444" }}>Rent. Ride. Return. Spartan-style.</div>
+              </div>
             </div>
-            <div style={inputGroupStyle}>
-              <div style={iconBoxStyle}><Icon type="lock" /></div>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                style={inputStyle}
-              />
+            <h2 style={{ margin: "18px 0 8px 0", fontWeight: 500, color: "#222" }}>Complete Registration</h2>
+            <form onSubmit={handleSubmit}>
+              <div style={inputGroupStyle}>
+                <div style={iconBoxStyle}><Icon type="user" /></div>
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div style={inputGroupStyle}>
+                <div style={iconBoxStyle}><Icon type="lock" /></div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(s => !s)}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: "0 12px 0 0" }}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  <Icon type={showPassword ? "eye-off" : "eye"} />
+                </button>
+              </div>
+              <div style={inputGroupStyle}>
+                <div style={iconBoxStyle}><Icon type="gift" /></div>
+                <select
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  required
+                  style={{ ...selectStyle, color: '#222' }}
+                >
+                  {roles.map(r => (
+                    <option key={r.value} value={r.value} disabled={r.value === ""}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
               <button
-                type="button"
-                onClick={() => setShowPassword(s => !s)}
-                style={{ background: "none", border: "none", cursor: "pointer", padding: "0 12px 0 0" }}
-                tabIndex={-1}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                type="submit"
+                style={{
+                  width: "100%",
+                  background: "#FFD600",
+                  color: "#222",
+                  fontWeight: 600,
+                  fontSize: 18,
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "12px 0",
+                  marginBottom: 10,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+                }}
               >
-                <Icon type={showPassword ? "eye-off" : "eye"} />
+                Create account
               </button>
+            </form>
+            {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
+            {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
+            <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
+              Already have an account?{' '}
+              <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Log in</a>
             </div>
-            <div style={inputGroupStyle}>
-              <div style={iconBoxStyle}><Icon type="gift" /></div>
-              <select
-                value={role}
-                onChange={e => setRole(e.target.value)}
-                required
-                style={{ ...selectStyle, color: '#222' }}
-              >
-                {roles.map(r => (
-                  <option key={r.value} value={r.value} disabled={r.value === ""}>{r.label}</option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              style={{
-                width: "100%",
-                background: "#FFD600",
-                color: "#222",
-                fontWeight: 600,
-                fontSize: 18,
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 0",
-                marginBottom: 10,
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
-              }}
-            >
-              Create account
-            </button>
-          </form>
-          {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
-          {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
-          <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
-            Already have an account?{' '}
-            <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Log in</a>
           </div>
         </div>
       </div>

@@ -17,7 +17,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isAdmin = pathname?.startsWith('/admin');
-  const shouldHideNavbar = isAdmin || pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password';
+  const isAuthScreen = (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
+    (pathname?.startsWith('/register') ?? false)
+  );
+  const shouldHideNavbar = isAdmin || isAuthScreen;
 
   return (
     <>
