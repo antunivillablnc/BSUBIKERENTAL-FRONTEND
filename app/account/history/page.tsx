@@ -2,8 +2,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import HistoryClient from './HistoryClient';
 
-export default function AccountHistoryPage() {
-	const auth = cookies().get('auth')?.value;
+export default async function AccountHistoryPage() {
+	const cookieStore = await cookies();
+	const auth = cookieStore.get('auth')?.value;
 	if (!auth) {
 		redirect('/');
 	}
