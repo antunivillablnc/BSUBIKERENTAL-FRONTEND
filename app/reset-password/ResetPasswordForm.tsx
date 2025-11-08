@@ -61,6 +61,12 @@ export default function ResetPasswordForm() {
     setError("");
     setSuccess("");
     setLoading(true);
+    const policy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!policy.test(String(password))) {
+      setLoading(false);
+      setError('Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.');
+      return;
+    }
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -174,6 +180,14 @@ export default function ResetPasswordForm() {
                 <Icon type={showPassword ? "eye-off" : "eye"} />
               </button>
             </div>
+            <div style={{ fontSize: 12, color: '#666', marginTop: -8, marginBottom: 8 }}>
+              Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.
+            </div>
+            {error && (
+              <div style={{ color: '#b22222', marginTop: -4, marginBottom: 8 }}>
+                {error}
+              </div>
+            )}
                 <button
                   type="submit"
                   disabled={loading}
@@ -194,7 +208,6 @@ export default function ResetPasswordForm() {
                   {loading ? "Resetting..." : "Reset Password"}
                 </button>
               </form>
-              {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
               {success && (
                 <>
                   <div style={{ color: "green", marginTop: 12, fontWeight: 500 }}>

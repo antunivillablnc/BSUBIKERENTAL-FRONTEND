@@ -25,6 +25,11 @@ export default function CompleteRegistrationPage() {
       setError("Please fill in all fields.");
       return;
     }
+    const policy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!policy.test(String(password))) {
+      setError('Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.');
+      return;
+    }
     try {
       const response = await apiClient.post("/auth/register/complete", {
         name: fullName,
@@ -193,6 +198,14 @@ export default function CompleteRegistrationPage() {
                   <Icon type={showPassword ? "eye-off" : "eye"} />
                 </button>
               </div>
+              <div style={{ fontSize: 12, color: '#666', marginTop: -8, marginBottom: 8 }}>
+                Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.
+              </div>
+              {error && (
+                <div style={{ color: '#b22222', marginTop: -4, marginBottom: 8 }}>
+                  {error}
+                </div>
+              )}
               <div style={inputGroupStyle}>
                 <div style={iconBoxStyle}><Icon type="gift" /></div>
                 <select
@@ -225,7 +238,6 @@ export default function CompleteRegistrationPage() {
                 Create account
               </button>
             </form>
-            {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
             {success && <p style={{ color: "green", margin: 0, marginBottom: 8 }}>{success}</p>}
             <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
               Already have an account?{' '}
