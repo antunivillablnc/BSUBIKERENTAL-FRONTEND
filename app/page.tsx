@@ -67,10 +67,13 @@ export default function LoginPage() {
       }
     } catch (err) {
       const resp: any = (err as any)?.response;
-      const serverMsg = resp?.data?.error || resp?.data?.message;
-      const status = resp?.status;
-      const message = err instanceof Error ? err.message : String(err);
-      setError(serverMsg ? `Login failed${status ? ` (${status})` : ''}: ${serverMsg}` : `Login request failed: ${message}`);
+      if (resp?.status === 401) {
+        setError("Incorrect email or password.");
+      } else {
+        const serverMsg = resp?.data?.error || resp?.data?.message;
+        const message = err instanceof Error ? err.message : String(err);
+        setError(serverMsg || message || "Login failed. Please try again.");
+      }
     } finally {
       recaptchaRef.current?.reset();
       setIsSubmitting(false);

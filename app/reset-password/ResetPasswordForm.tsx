@@ -56,6 +56,12 @@ export default function ResetPasswordForm() {
     color: "#000",
   } as const;
 
+  const hasMinLength = password.length >= 8;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -76,7 +82,6 @@ export default function ResetPasswordForm() {
     setLoading(false);
     if (res.ok) {
       setSuccess("Password has been reset. You can now log in.");
-      router.push("/");
     } else {
       const data = await res.json();
       setError(data.error || "Failed to reset password.");
@@ -180,8 +185,27 @@ export default function ResetPasswordForm() {
                 <Icon type={showPassword ? "eye-off" : "eye"} />
               </button>
             </div>
-            <div style={{ fontSize: 12, color: '#666', marginTop: -8, marginBottom: 8 }}>
-              Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.
+            <div style={{ fontSize: 12, color: '#444', marginTop: -8, marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ color: hasMinLength ? "green" : "#b22222", fontWeight: 700 }}>{hasMinLength ? "✓" : "✕"}</span>
+                <span>At least 8 characters</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ color: hasUppercase ? "green" : "#b22222", fontWeight: 700 }}>{hasUppercase ? "✓" : "✕"}</span>
+                <span>At least one uppercase letter</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ color: hasLowercase ? "green" : "#b22222", fontWeight: 700 }}>{hasLowercase ? "✓" : "✕"}</span>
+                <span>At least one lowercase letter</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ color: hasNumber ? "green" : "#b22222", fontWeight: 700 }}>{hasNumber ? "✓" : "✕"}</span>
+                <span>At least one number</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <span style={{ color: hasSymbol ? "green" : "#b22222", fontWeight: 700 }}>{hasSymbol ? "✓" : "✕"}</span>
+                <span>At least one symbol</span>
+              </div>
             </div>
             {error && (
               <div style={{ color: '#b22222', marginTop: -4, marginBottom: 8 }}>
@@ -232,10 +256,6 @@ export default function ResetPasswordForm() {
                   </button>
                 </>
               )}
-              <div style={{ textAlign: "center", fontSize: 15, marginTop: 8, color: "#222" }}>
-                Go back to{' '}
-                <a href="/" style={{ color: "#1976d2", textDecoration: "underline", fontWeight: 500 }}>Log in</a>
-              </div>
             </div>
           </div>
         </div>

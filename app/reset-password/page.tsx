@@ -27,9 +27,6 @@ export default function Page() {
   return (
     <Suspense fallback={null}>
       <ResetPasswordForm />
-      <div style={{ textAlign: 'center', marginTop: 16 }}>
-        Go back to <a href="/" style={{ color: '#1976d2', textDecoration: 'underline', fontWeight: 500 }}>Log in</a>
-      </div>
     </Suspense>
   );
 } 
