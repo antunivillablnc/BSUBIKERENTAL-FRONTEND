@@ -12,7 +12,14 @@
     "migrate:firestore": "tsx scripts/migrate-to-firestore.ts",
     "seed:firestore": "tsx scripts/seed-firestore.ts",
     "seed:from-schema": "tsx scripts/seed-from-schema.ts",
-    "seed:mongo:maintenance": "node scripts/seed-mongo-maintenance.js"
+    "seed:mongo:maintenance": "node scripts/seed-mongo-maintenance.js",
+    "seed:mongo:metrics": "node scripts/seed-mongo-maintenance-metrics.js",
+    "fix:mongo:preds": "node scripts/fix-duplicate-maintenance-predictions.js",
+    "fix:mongo:preds-index": "node scripts/mongo-fix-maintenance-preds-index.js",
+    "fix:mongo:drop-bikelId-index": "node scripts/mongo-drop-bikelId-index.js",
+    "sync:rtdb": "node scripts/sync-maintenance-rtdb.js",
+    "migrate:mongo:models": "node scripts/mongo-migrate-models.js",
+    "seed:mongo:supervised": "node scripts/seed-mongo-supervised-dataset.js"
   },
   "dependencies": {
     "@splinetool/react-spline": "^4.0.0",

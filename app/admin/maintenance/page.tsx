@@ -95,7 +95,9 @@ export default function AdminMaintenancePage() {
   const [bikeIdToName, setBikeIdToName] = useState<Record<string, string>>({});
   const [forecast, setForecast] = useState<ForecastPoint[]>([]);
   const [nextMonth, setNextMonth] = useState<ForecastSummary | null>(null);
+  const [hasRealtimeMetrics, setHasRealtimeMetrics] = useState<boolean>(false);
   const base = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000").replace(/\/$/, "");
+  const baselineDays = Number(process.env.NEXT_PUBLIC_MAINTENANCE_BASELINE_DAYS || 60);
 
   function fmt(n: number | null | undefined, d = 2) {
     if (n == null || !isFinite(Number(n))) return "—";
@@ -117,15 +119,38 @@ export default function AdminMaintenancePage() {
   }
 
   async function fetchBikes() {
+    // Try admin endpoint first (more consistent in admin area), then fall back to public bikes
+    const buildMapFrom = (arr: any[]): Record<string, string> => {
+      const map: Record<string, string> = {};
+      for (const raw of arr) {
+        const b: any = raw || {};
+        const candidateName =
+          b.name ||
+          b.plate ||
+          b.plateNumber ||
+          b.number ||
+          b.label ||
+          b.title ||
+          b.id;
+        map[String(b.id)] = String(candidateName || b.id);
+      }
+      return map;
+    };
+
+    try {
+      const adminRes = await fetch(`${base}/admin/bikes`, { credentials: 'include', cache: 'no-store' });
+      const adminJson = await parseJsonOrThrow(adminRes);
+      if (adminJson?.success && Array.isArray(adminJson?.bikes)) {
+        setBikeIdToName(buildMapFrom(adminJson.bikes));
+        return;
+      }
+    } catch {}
+
     try {
       const res = await fetch(`${base}/bikes`, { credentials: 'include', cache: 'no-store' });
       const json = await parseJsonOrThrow(res);
       if (json?.success && Array.isArray(json?.bikes)) {
-        const map: Record<string, string> = {};
-        for (const b of json.bikes) {
-          map[b.id] = b.name || b.id;
-        }
-        setBikeIdToName(map);
+        setBikeIdToName(buildMapFrom(json.bikes));
       }
     } catch {}
   }
@@ -137,7 +162,10 @@ export default function AdminMaintenancePage() {
       const res = await fetch(`${base}/maintenance/predictions`, { credentials: 'include', cache: 'no-store' });
       const json = await parseJsonOrThrow(res);
       if (json?.success) {
-        setMetrics(json?.model?.metrics || null);
+        // Do not overwrite metrics that came from Realtime DB (Mongo broadcast)
+        if (!hasRealtimeMetrics) {
+          setMetrics(json?.model?.metrics || null);
+        }
         setPredictions(Array.isArray(json?.predictions) ? json.predictions : []);
       } else {
         setError(json?.error || 'Failed to load predictions');
@@ -245,7 +273,10 @@ export default function AdminMaintenancePage() {
     });
     const offModel = onValue(ref(rtdb, 'maintenance/model'), (snap: any) => {
       const m = snap.val();
-      if (m && typeof m === 'object') setMetrics(m.metrics || null);
+      if (m && typeof m === 'object') {
+        setMetrics(m.metrics || null);
+        setHasRealtimeMetrics(true);
+      }
     });
     return () => { offPreds(); offModel(); };
   }, []);
@@ -290,8 +321,21 @@ export default function AdminMaintenancePage() {
             <div style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr' }}>
               <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', padding: 16, boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-                  <div style={{ fontSize: 12, color: '#6b7280', alignSelf: 'stretch' }}>RMSE</div>
-                  <CircularGauge value={Number((metrics as any).rmse ?? Math.sqrt(Number((metrics as any).mse || 0)))} size={128} strokeWidth={10} color="#06b6d4" />
+                  <div style={{ fontSize: 12, color: '#6b7280', alignSelf: 'stretch' }}>RMSE (days)</div>
+                  <CircularGauge
+                    value={Number((metrics as any).rmse ?? Math.sqrt(Number((metrics as any).mse || 0)))}
+                    size={128}
+                    strokeWidth={10}
+                    color="#06b6d4"
+                    unit="days"
+                  />
+                </div>
+              </div>
+              <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', padding: 16, boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>Maintenance window</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{baselineDays} days</div>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>Baseline interval used by the model</div>
                 </div>
               </div>
               {/* Val RMSE hidden intentionally */}
@@ -390,7 +434,7 @@ export default function AdminMaintenancePage() {
               <thead>
                 <tr style={{ textAlign: 'left', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                   <th style={{ padding: '8px 12px', fontWeight: 600 }}>Bike</th>
-                  <th style={{ padding: '8px 12px', fontWeight: 600 }}>Predicted km until maintenance</th>
+                  <th style={{ padding: '8px 12px', fontWeight: 600 }}>Predicted days until maintenance</th>
                   <th style={{ padding: '8px 12px', fontWeight: 600 }}>Updated</th>
                 </tr>
               </thead>
@@ -403,11 +447,10 @@ export default function AdminMaintenancePage() {
                     <tr key={rowKey} style={{ borderBottom: '1px solid #f3f4f6' }}>
                       <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                         <div style={{ fontWeight: 600 }}>{name}</div>
-                        <div style={{ fontSize: 12, color: '#9ca3af' }}>{baseKey}</div>
                       </td>
                       <td style={{ padding: '10px 12px' }}>
                         <span style={{ display: 'inline-block', borderRadius: 6, padding: '4px 8px', background: '#f3f4f6', color: '#111827', fontSize: 14 }}>
-                          {fmt((p as any).predictedKmUntilMaintenance, 2)} km
+                          {fmt((p as any).predictedKmUntilMaintenance, 2)} days
                         </span>
                       </td>
                       <td style={{ padding: '10px 12px' }}>{(p.updatedAt || '').split('T')[0] || '—'}</td>

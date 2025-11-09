@@ -52,45 +52,74 @@ const dotenv = require('dotenv');
     bikes.push({ id: String(doc._id), name });
   }
 
-  // Seed recent rides
-  const rides = [];
+  // Seed rides AND issues with a natural signal:
+  // - Each bike has a wear threshold in KM; when cumulative KM since last issue crosses it, emit an issue.
   const today = new Date();
+  const start = new Date(today);
+  start.setDate(start.getDate() - DAYS);
+
+  const wearMin = Number(process.env.THRESHOLD_MIN || 220); // km
+  const wearMax = Number(process.env.THRESHOLD_MAX || 380); // km
+  const minDaysBetween = Number(process.env.MIN_DAYS_BETWEEN || 7);
+
+  let totalRides = 0;
+  let totalIssues = 0;
+
   for (const b of bikes) {
-    for (let d = DAYS; d >= 1; d--) {
-      if (Math.random() > RIDE_PROB) continue;
-      const date = new Date(today);
-      date.setDate(today.getDate() - d);
+    const threshold = wearMin + Math.random() * (wearMax - wearMin);
+    let kmSinceIssue = 0;
+    let lastIssueDate = null;
 
-      const distance = Math.round((6 + Math.random() * 18) * 10) / 10; // 6–24 km
-      const duration = Math.max(15, Math.round((distance / (14 + Math.random() * 8)) * 60));
-      const avg = Math.round((distance / (duration / 60)) * 10) / 10;
+    const toInsertRides = [];
+    const toInsertIssues = [];
 
-      rides.push({
-        bike_name: b.name,
-        ride_date: date,
-        distance_km: distance,
-        duration_min: duration,
-        avg_speed_kmh: Number.isFinite(avg) ? avg : 16,
-      });
+    for (let d = 0; d < DAYS; d++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + d);
+
+      if (Math.random() <= RIDE_PROB) {
+        const distance = Math.round((6 + Math.random() * 18) * 10) / 10; // 6–24 km
+        const duration = Math.max(15, Math.round((distance / (14 + Math.random() * 8)) * 60));
+        const avg = Math.round((distance / (duration / 60)) * 10) / 10;
+
+        toInsertRides.push({
+          bike_name: b.name,
+          ride_date: date,
+          distance_km: distance,
+          duration_min: duration,
+          avg_speed_kmh: Number.isFinite(avg) ? avg : 16,
+        });
+        kmSinceIssue += distance;
+      }
+
+      const daysSinceLast = lastIssueDate ? Math.floor((date.getTime() - lastIssueDate.getTime()) / 86400000) : Number.POSITIVE_INFINITY;
+      const noise = (Math.random() - 0.5) * 30; // ±15 km typical
+      const trigger = kmSinceIssue >= (threshold + noise) && daysSinceLast >= minDaysBetween;
+      if (trigger) {
+        toInsertIssues.push({ bikeId: b.id, reportedAt: new Date(date) });
+        kmSinceIssue = 0;
+        lastIssueDate = new Date(date);
+      }
+    }
+
+    if (toInsertRides.length) { await ridesCol.insertMany(toInsertRides); totalRides += toInsertRides.length; }
+    if (toInsertIssues.length) { await issuesCol.insertMany(toInsertIssues); totalIssues += toInsertIssues.length; }
+
+    // Guarantee at least 2 issues per bike
+    if (toInsertIssues.length < 2) {
+      const fallbackDate = new Date(today); fallbackDate.setDate(today.getDate() - Math.max(3, Math.floor(DAYS * 0.2)));
+      await issuesCol.insertMany([
+        { bikeId: b.id, reportedAt: fallbackDate },
+      ]);
+      totalIssues += 1;
     }
   }
-  if (rides.length) await ridesCol.insertMany(rides);
-
-  // Seed 2 issues per bike
-  const issues = [];
-  for (const b of bikes) {
-    const i1 = new Date(today); i1.setDate(today.getDate() - Math.max(10, Math.floor(DAYS * 0.6)));
-    const i2 = new Date(today); i2.setDate(today.getDate() - Math.max(3, Math.floor(DAYS * 0.2)));
-    issues.push({ bikeId: b.id, reportedAt: i1 });
-    issues.push({ bikeId: b.id, reportedAt: i2 });
-  }
-  if (issues.length) await issuesCol.insertMany(issues);
 
   console.log('Maintenance seed complete:', {
     db: dbName,
     bikes: bikes.length,
-    rides: rides.length,
-    issues: issues.length,
+    rides: totalRides,
+    issues: totalIssues,
   });
 
   await client.close();
