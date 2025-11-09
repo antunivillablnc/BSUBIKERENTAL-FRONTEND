@@ -15,9 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BSU Lipa Bike Rental",
+  title: "SPARTA | BSU-TNEU Bike Rental",
   description: "Online bike rental system for Batangas State University students.",
+  icons: {
+    icon: "/logo-spartan.png",          // or your custom path
+    apple: "/logo-spartan.png",
+  }
 };
+
 
 export default function RootLayout({
   children,
