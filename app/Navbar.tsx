@@ -916,7 +916,7 @@ export default function Navbar() {
                      {/* Menu Items */}
                     <div style={{ padding: '8px 0' }}>
                       {/* Rental History Button (no preview) */}
-                      <Link href="/account/history" style={{ textDecoration: 'none' }} onClick={() => setUserDropdownOpen(false)}>
+                      <Link href="/history" style={{ textDecoration: 'none' }} onClick={() => setUserDropdownOpen(false)}>
                         <button
                           style={{
                             width: '100%',
