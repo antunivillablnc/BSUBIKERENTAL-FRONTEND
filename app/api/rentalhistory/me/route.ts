@@ -17,9 +17,20 @@ type HistoryItem = {
 // No indexes needed when using Firestore/compat layer
 
 export async function GET(req: NextRequest) {
-	const user = getAuthUserFromRequest(req);
+	let user = getAuthUserFromRequest(req);
+	// Fallback: allow querying by userId/email when auth cookie is not present (helps when cross-site cookies are blocked)
 	if (!user?.id) {
-		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		const url = new URL(req.url);
+		const qsUserId = url.searchParams.get('userId') || undefined;
+		const qsEmail = url.searchParams.get('email') || undefined;
+		if (!qsUserId && !qsEmail) {
+			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		}
+		user = {
+			id: String(qsUserId || ''),
+			email: String(qsEmail || ''),
+			role: 'student',
+		};
 	}
 
 	const { searchParams } = new URL(req.url);
