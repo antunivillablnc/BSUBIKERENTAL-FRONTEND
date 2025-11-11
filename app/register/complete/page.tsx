@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import apiClient from "@/lib/api";
 
@@ -10,7 +10,7 @@ const roles = [
   { value: "non_teaching_staff", label: "Non-Teaching Staff" },
 ];
 
-export default function CompleteRegistrationPage() {
+function CompleteRegistrationPageInner() {
   const searchParams = useSearchParams();
   const emailParam = (searchParams.get("email") || "").trim().toLowerCase();
   const [fullName, setFullName] = useState("");
@@ -282,6 +282,14 @@ export default function CompleteRegistrationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CompleteRegistrationPage() {
+  return (
+    <Suspense fallback={null}>
+      <CompleteRegistrationPageInner />
+    </Suspense>
   );
 }
 
