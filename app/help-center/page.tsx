@@ -2,13 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { apiFetch } from '../../lib/apiClient';
-
-interface FAQItem {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-}
+import FaqBot from '../components/FaqBot';
 
 interface ReportIssue {
   subject: string;
@@ -19,165 +13,8 @@ interface ReportIssue {
   bikeName?: string; // optional; used when reporting bike-related issues
 }
 
-const faqData: FAQItem[] = [
-  {
-    id: '1',
-    question: 'How do I register for the bike rental system?',
-    answer: 'To register, click on the "Register" button on the homepage and fill out the registration form with your information. You\'ll need to provide your email, and other required details. Once submitted, your application will be reviewed by the admin team.',
-    category: 'Registration'
-  },
-  {
-    id: '2',
-    question: 'How long does the application approval process take?',
-    answer: 'Application approval typically takes 1-3 business days. You\'ll receive an notification on the app once your application has been reviewed. You can also check your application status in your dashboard.',
-    category: 'Registration'
-  },
-  {
-    id: '3',
-    question: 'What documents do I need to register?',
-    answer: 'You need a Certificate of Indigency, General Weighted Average, Extra Curricular Activities, and Income Tax Return.',
-    category: 'Registration'
-  },
-  {
-    id: '4',
-    question: 'Can I register if I\'m not a current student?',
-    answer: 'The bike rental system is exclusively for current students, teacher and staff of the university.',
-    category: 'Registration'
-  },
-  {
-    id: '5',
-    question: 'How do I rent a bike?',
-    answer: 'Once your application is approved, your bike will be assigned to you and you can pick it up from SDO CECS building.',
-    category: 'Reservations'
-  },
-  {
-    id: '6',
-    question: 'Can I rent multiple bikes at once?',
-    answer: 'No, each student can only rent one bike at a time. This policy ensures that bikes are available for as many students as possible.',
-    category: 'Reservations'
-  },
-  {
-    id: '7',
-    question: 'How do I cancel my rent?',
-    answer: 'You can cancel a rent through returning the bike to the same location where you picked it up.',
-    category: 'Reservations'
-  },
-  {
-    id: '8',
-    question: 'Where can I pick up and return bikes?',
-    answer: 'Bikes can be picked up and returned at SDO CECS building. Always return bikes to the same location where you picked them up.',
-    category: 'Locations'
-  },
-  {
-    id: '9',
-    question: 'What are the operating hours for bike pickup and return?',
-    answer: 'Bikes can be picked up and returned during campus hours, typically from 7:00 AM to 4:00 PM.',
-    category: 'Locations'
-  },
-  {
-    id: '10',
-    question: 'What should I do if a bike is damaged or not working?',
-    answer: 'If you encounter a damaged or non-functional bike, please report it immediately through the "Report Issue" feature in your "Help Center" or contact the staff. Do not attempt to use a damaged bike as it may be unsafe.',
-    category: 'Issues'
-  },
-  {
-    id: '11',
-    question: 'What if I lose or damage a bike during my rental?',
-    answer: 'Report any loss or damage immediately to the staff. You may be responsible for repair costs or replacement fees. Contact support as soon as possible to discuss the situation.',
-    category: 'Issues'
-  },
-  {
-    id: '12',
-    question: 'How do I report a technical issue with the system?',
-    answer: 'Use the "Report Issue" feature in your "Help Center" or contact support directly. Provide as much detail as possible about the problem you\'re experiencing.',
-    category: 'Issues'
-  },
-  {
-    id: '13',
-    question: 'Can I extend my rental period?',
-    answer: 'No, you cannot extend your rental period because the bike is assigned to you for a specific period you may apply again for a new application.',
-    category: 'Rental Management'
-  },
-  {
-    id: '14',
-    question: 'What happens if I return a bike late?',
-    answer: 'Late returns may result in penalties or temporary suspension of rental privileges. The system tracks rental periods automatically. Please try to return bikes on time to maintain good standing.',
-    category: 'Rental Management'
-  },
-  {
-    id: '15',
-    question: 'What safety equipment is provided with bikes?',
-    answer: 'Each bike comes with a helmet and basic safety equipment. Helmets are mandatory for all riders. Additional safety gear may be available like tumbler and air pump at pickup locations.',
-    category: 'Safety'
-  },
-  {
-    id: '16',
-    question: 'Are there any safety rules I need to follow?',
-    answer: 'Yes, you must wear a helmet at all times, follow traffic rules, and ride responsibly. No riding under the influence of alcohol or drugs. Always check the bike before riding.',
-    category: 'Safety'
-  },
-  {
-    id: '17',
-    question: 'What should I do in case of an accident?',
-    answer: 'In case of an accident, prioritize your safety first. Contact emergency services if needed, then report the incident to the bike rental staff immediately. Do not leave the scene without proper documentation.',
-    category: 'Safety'
-  },
-  {
-    id: '18',
-    question: 'Is there a mobile app available?',
-    answer: 'Currently, the bike rental system is accessible through the web interface, which is mobile-responsive. A dedicated mobile app may be available in the future. The web version works well on smartphones and tablets.',
-    category: 'Technical'
-  },
-  {
-    id: '19',
-    question: 'What browsers are supported?',
-    answer: 'The system works best with modern browsers including Chrome, Firefox, Safari, and Edge. Make sure your browser is updated to the latest version for the best experience.',
-    category: 'Technical'
-  },
-  {
-    id: '20',
-    question: 'What if I forget my password?',
-    answer: 'Use the "Forgot Password" link on the login page to reset your password. You\'ll receive an email with instructions to create a new password.',
-    category: 'Technical'
-  },
-  {
-    id: '21',
-    question: 'How do I update my profile information?',
-    answer: 'You can update your profile information through the "Profile Settings" section in your dashboard.',
-    category: 'Account Management'
-  },
-  {
-    id: '22',
-    question: 'Can I change my email address?',
-    answer: 'Yes, you can update your email address in your profile settings.',
-    category: 'Account Management'
-  },
-  {
-    id: '23',
-    question: 'How do I deactivate my account?',
-    answer: 'Contact support to request account deactivation. Make sure to return any active rentals and clear any outstanding issues before deactivation.',
-    category: 'Account Management'
-  },
-  {
-    id: '24',
-    question: 'How do I contact support?',
-    answer: 'You can contact support through the phone number (09694567890) or email (sdobsulipa@g.batstate-u.edu.ph) provided in the contact section. Response times are typically within 24 hours during business days.',
-    category: 'Support'
-  },
-  {
-    id: '25',
-    question: 'What are the support hours?',
-    answer: 'Support is available during business hours, Monday through Friday, 8:00 AM to 5:00 PM. For urgent issues outside these hours, use the emergency contact number.',
-    category: 'Support'
-  }
-];
-
-const categories = ['All', 'Registration', 'Reservations', 'Locations', 'Issues', 'Rental Management', 'Safety', 'Technical', 'Account Management', 'Support'];
 
 export default function HelpCenterPage() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportForm, setReportForm] = useState<ReportIssue>({
     subject: '',
@@ -203,21 +40,6 @@ export default function HelpCenterPage() {
       setToast(prev => ({ ...prev, visible: false }));
       toastTimerRef.current = null;
     }, 3000) as unknown as number;
-  };
-
-  const filteredFAQs = faqData.filter(faq => {
-    const matchesCategory = selectedCategory === 'All' || faq.category === selectedCategory;
-    const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const toggleExpanded = (id: string) => {
-    setExpandedItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -440,14 +262,15 @@ export default function HelpCenterPage() {
         padding: '48px 24px' 
       }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-        {/* Header */}
+
+        {/* Page Header */}
         <div style={{ 
           background: 'var(--card-bg)', 
           borderRadius: 16, 
           boxShadow: '0 4px 16px var(--shadow-color)', 
           border: '1px solid var(--border-color)', 
           padding: 32,
-          marginBottom: 32,
+          marginBottom: 24,
           textAlign: 'center'
         }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>❓</div>
@@ -455,219 +278,16 @@ export default function HelpCenterPage() {
             color: '#1976d2', 
             fontWeight: 800, 
             fontSize: 36, 
-            marginBottom: 16 
+            marginBottom: 12 
           }}>
             Help Center
           </h1>
           <p style={{ 
             color: 'var(--text-secondary)', 
-            fontSize: 18, 
-            marginBottom: 24 
+            fontSize: 16
           }}>
-            Find answers to common questions about our bike rental system
+            Find answers to common questions, report issues, or contact support.
           </p>
-          
-          {/* Search Bar */}
-          <div style={{ 
-            maxWidth: 500, 
-            margin: '0 auto',
-            position: 'relative'
-          }}>
-            <input
-              type="text"
-              placeholder="Search FAQs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px 12px 48px',
-                border: '2px solid var(--border-color)',
-                borderRadius: 12,
-                fontSize: 16,
-                background: 'var(--bg-primary)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                transition: 'border-color 0.2s ease'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#1976d2'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-            />
-            <svg 
-              width="20" 
-              height="20" 
-              fill="none" 
-              stroke="var(--text-muted)" 
-              strokeWidth="2" 
-              viewBox="0 0 24 24"
-              style={{
-                position: 'absolute',
-                left: 16,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none'
-              }}
-            >
-              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-          </div>
-        </div>
-
-        {/* Category Filter */}
-        <div style={{ 
-          background: 'var(--card-bg)', 
-          borderRadius: 12, 
-          border: '1px solid var(--border-color)', 
-          padding: 20,
-          marginBottom: 24
-        }}>
-          <h3 style={{ 
-            color: 'var(--text-primary)', 
-            fontSize: 18, 
-            fontWeight: 600, 
-            marginBottom: 16 
-          }}>
-            Categories
-          </h3>
-          <div style={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: 8 
-          }}>
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 20,
-                  border: 'none',
-                  background: selectedCategory === category ? '#1976d2' : 'var(--bg-tertiary)',
-                  color: selectedCategory === category ? '#fff' : 'var(--text-secondary)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedCategory !== category) {
-                    e.currentTarget.style.background = 'var(--bg-primary)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedCategory !== category) {
-                    e.currentTarget.style.background = 'var(--bg-tertiary)';
-                  }
-                }}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* FAQ Items */}
-        <div style={{ 
-          background: 'var(--card-bg)', 
-          borderRadius: 16, 
-          border: '1px solid var(--border-color)', 
-          overflow: 'hidden'
-        }}>
-          {filteredFAQs.length === 0 ? (
-            <div style={{ 
-              padding: 48, 
-              textAlign: 'center',
-              color: 'var(--text-muted)'
-            }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-              <h3 style={{ fontSize: 20, marginBottom: 8 }}>No FAQs found</h3>
-              <p>Try adjusting your search or category filter</p>
-            </div>
-          ) : (
-            filteredFAQs.map((faq, index) => (
-              <div
-                key={faq.id}
-                style={{
-                  borderBottom: index < filteredFAQs.length - 1 ? '1px solid var(--border-color)' : 'none'
-                }}
-              >
-                <button
-                  onClick={() => toggleExpanded(faq.id)}
-                  style={{
-                    width: '100%',
-                    padding: '20px 24px',
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'background 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-tertiary)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 12, 
-                      marginBottom: 4 
-                    }}>
-                      <span style={{
-                        background: '#1976d2',
-                        color: '#fff',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '4px 8px',
-                        borderRadius: 12
-                      }}>
-                        {faq.category}
-                      </span>
-                    </div>
-                    <h3 style={{ 
-                      color: 'var(--text-primary)', 
-                      fontSize: 16, 
-                      fontWeight: 600,
-                      margin: 0
-                    }}>
-                      {faq.question}
-                    </h3>
-                  </div>
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="var(--text-muted)"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    style={{
-                      transform: expandedItems.includes(faq.id) ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s ease'
-                    }}
-                  >
-                    <path d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-                
-                {expandedItems.includes(faq.id) && (
-                  <div style={{ 
-                    padding: '0 24px 20px 24px',
-                    background: 'var(--bg-tertiary)'
-                  }}>
-                    <p style={{ 
-                      color: 'var(--text-secondary)', 
-                      fontSize: 15, 
-                      lineHeight: 1.6,
-                      margin: 0
-                    }}>
-                      {faq.answer}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
         </div>
 
         {/* Report Issue Section */}
@@ -1117,6 +737,22 @@ export default function HelpCenterPage() {
            </div>
         </div>
         </div>
+
+        {/* Floating FAQ Chatbot (kept) */}
+        <FaqBot
+          variant="floating"
+          onEscalate={({ question, transcript }) => {
+            setShowReportForm(true);
+            setReportForm(prev => ({
+              ...prev,
+              subject: question ? `From FAQ: ${question}` : 'From FAQ',
+              message: `Support chat transcript:\n${transcript}`,
+              category: 'other',
+              priority: 'medium'
+            }));
+            setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+          }}
+        />
       </div>
     </div>
   );
