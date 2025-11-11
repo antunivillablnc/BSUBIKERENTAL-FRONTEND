@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import apiClient from "@/lib/api";
 
 const roles = [
@@ -10,10 +11,13 @@ const roles = [
 ];
 
 export default function CompleteRegistrationPage() {
+  const searchParams = useSearchParams();
+  const emailParam = (searchParams.get("email") || "").trim().toLowerCase();
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState(roles[0].value);
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -21,8 +25,8 @@ export default function CompleteRegistrationPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (!fullName || !password || !role) {
-      setError("Please fill in all fields.");
+    if (!emailParam || !fullName || !password || !role || !otp) {
+      setError("Please fill in all fields, including the verification code.");
       return;
     }
     const policy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -31,10 +35,23 @@ export default function CompleteRegistrationPage() {
       return;
     }
     try {
+      // 1) Verify OTP to obtain short-lived registration token
+      const verifyRes = await apiClient.post("/auth/register/verify-otp", {
+        email: emailParam,
+        otp: otp.trim(),
+      });
+      const registrationToken = verifyRes.data?.registrationToken;
+      if (!registrationToken) {
+        setError("Invalid or expired verification code.");
+        return;
+      }
+
+      // 2) Complete registration by sending the token in the body
       const response = await apiClient.post("/auth/register/complete", {
         name: fullName,
         password,
         role,
+        registrationToken,
       });
       if (response.status === 200) {
         setSuccess("Registration successful! You can now log in.");
@@ -167,6 +184,11 @@ export default function CompleteRegistrationPage() {
             </div>
             <h2 style={{ margin: "18px 0 8px 0", fontWeight: 500, color: "#222" }}>Complete Registration</h2>
             <form onSubmit={handleSubmit}>
+              {emailParam && (
+                <div style={{ fontSize: 13, color: "#444", marginBottom: 8 }}>
+                  Verification code was sent to <strong>{emailParam}</strong>.
+                </div>
+              )}
               <div style={inputGroupStyle}>
                 <div style={iconBoxStyle}><Icon type="user" /></div>
                 <input
@@ -174,6 +196,19 @@ export default function CompleteRegistrationPage() {
                   placeholder="Full Name"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div style={inputGroupStyle}>
+                <div style={iconBoxStyle}><Icon type="gift" /></div>
+                <input
+                  type="text"
+                  placeholder="Verification code (6 digits)"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value)}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   required
                   style={inputStyle}
                 />

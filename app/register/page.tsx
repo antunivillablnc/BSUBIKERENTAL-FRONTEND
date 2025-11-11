@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
 
 const roles = [
@@ -34,6 +35,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,14 +48,18 @@ export default function RegisterPage() {
       return;
     }
     try {
-      const response = await apiClient.post("/auth/register/send-link", { email });
+      const response = await apiClient.post("/auth/register/send-otp", { email });
       if (response.status === 200) {
-        setSuccess("If this email is valid, a verification link has been sent. Please check your inbox.");
+        setSuccess("If this email is valid, a verification code has been sent.");
+        // Redirect to complete page with email as query param
+        setTimeout(() => {
+          router.push(`/register/complete?email=${encodeURIComponent(email)}`);
+        }, 600);
       } else {
-        setError((response.data && response.data.error) || "Failed to send verification link.");
+        setError((response.data && response.data.error) || "Failed to send verification code.");
       }
     } catch (e: any) {
-      setError(e?.response?.data?.error || e?.message || "Failed to send verification link.");
+      setError(e?.response?.data?.error || e?.message || "Failed to send verification code.");
     } finally {
       setLoading(false);
     }
@@ -181,7 +187,7 @@ export default function RegisterPage() {
               />
             </div>
             <p style={{ marginTop: -8, marginBottom: 16, fontSize: 13, color: '#555' }}>
-              We’ll email you a secure one‑click verification link to continue.
+              We’ll email you a 6‑digit verification code to continue.
             </p>
                 <button
                   type="submit"
@@ -200,7 +206,7 @@ export default function RegisterPage() {
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
                   }}
                 >
-                  {loading ? "Sending..." : "Send verification link"}
+                  {loading ? "Sending..." : "Send code"}
                 </button>
               </form>
               {error && <p style={{ color: "#b22222", margin: 0, marginBottom: 8 }}>{error}</p>}
