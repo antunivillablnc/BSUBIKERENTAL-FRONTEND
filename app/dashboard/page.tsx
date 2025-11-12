@@ -223,11 +223,11 @@ export default function DashboardPage() {
     return () => clearTimeout(id);
   }, []);
 
-  // Simulated data matching the design
-  const [distanceKm] = useState(15.2);
-  const [co2SavedKg] = useState(1.8);
-  const [caloriesBurned] = useState(450);
-  const [weeklyData] = useState([
+  // Live data state (with sensible defaults as fallback)
+  const [distanceKm, setDistanceKm] = useState(15.2);
+  const [co2SavedKg, setCo2SavedKg] = useState(1.8);
+  const [caloriesBurned, setCaloriesBurned] = useState(450);
+  const [weeklyData, setWeeklyData] = useState([
     { day: 'Mon', distance: 12.5, calories: 380, co2: 1.2 },
     { day: 'Tue', distance: 8.3, calories: 250, co2: 0.8 },
     { day: 'Wed', distance: 15.7, calories: 470, co2: 1.5 },
@@ -236,8 +236,60 @@ export default function DashboardPage() {
     { day: 'Sat', distance: 22.1, calories: 680, co2: 2.1 },
     { day: 'Sun', distance: 14.3, calories: 440, co2: 1.4 }
   ]);
-  const [longestRide] = useState(75);
-  const [fastestSpeed] = useState(35);
+  const [longestRide, setLongestRide] = useState(75);
+  const [fastestSpeed, setFastestSpeed] = useState(35);
+  const [assignedBike, setAssignedBike] = useState<{ bikeId: string; bikeName?: string | null; deviceId?: string | null } | null>(null);
+
+  // Assigned bike lookup + analytics fetch
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const resp = await fetch('/api/me/assigned-bike', { credentials: 'include', cache: 'no-store' });
+        if (!resp.ok) throw new Error('failed assigned bike');
+        const data = await resp.json();
+        if (!data?.success) throw new Error('no assigned');
+        if (!cancelled) setAssignedBike({ bikeId: String(data.bikeId), bikeName: data.bikeName, deviceId: null });
+
+        // Fetch deviceId from bike doc if present (helps when only device stream is active)
+        try {
+          const bResp = await fetch(`/api/bikes/${encodeURIComponent(String(data.bikeId))}`, { cache: 'no-store' });
+          if (bResp.ok) {
+            const b = await bResp.json();
+            if (b?.success && b?.bike?.deviceId && !cancelled) {
+              setAssignedBike((prev) => prev ? { ...prev, deviceId: String(b.bike.deviceId) } : prev);
+            }
+          }
+        } catch {}
+
+        const params = new URLSearchParams();
+        if (data.bikeId) params.set('bikeId', data.bikeId);
+        if (data.bikeName) params.set('bikeName', data.bikeName);
+        const aResp = await fetch(`/api/analytics/by-bike?${params.toString()}`, { cache: 'no-store' });
+        if (!aResp.ok) throw new Error('failed analytics');
+        const a = await aResp.json();
+        if (a?.success && !cancelled) {
+          setDistanceKm(Number(a.distanceKmToday || 0));
+          setCo2SavedKg(Number(a.co2SavedKgToday || 0));
+          setCaloriesBurned(Number(a.caloriesBurnedToday || 0));
+          if (Array.isArray(a.weekly) && a.weekly.length) {
+            setWeeklyData(a.weekly.map((w: any) => ({
+              day: String(w.day || ''),
+              distance: Number(w.distance || 0),
+              calories: Number(w.calories || 0),
+              co2: Number(w.co2 || 0),
+            })));
+          }
+          setLongestRide(Number(a.longestRideKm || 0));
+          setFastestSpeed(Number(a.fastestSpeedKmh || 0));
+        }
+      } catch {
+        // keep defaults
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   // Goals state with localStorage persistence
   const [goals, setGoals] = useState(() => {
@@ -281,7 +333,16 @@ export default function DashboardPage() {
     <div className="dashboard-container">
       {/* Main Map Section */}
       <div className="map-section">
-        <DashboardMap distanceKm={distanceKm} height={320} />
+        <DashboardMap
+          distanceKm={distanceKm}
+          height={320}
+          bikeId={assignedBike?.bikeId}
+          deviceId={assignedBike?.deviceId || undefined}
+          trailPointLimit={500}
+          snapToRoads
+          snapProfile="cycling"
+          snapMode="directions"
+        />
       </div>
 
       {/* Metrics Cards Row */}
