@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export async function GET(_req: NextRequest, context: { params: { id: string } }) {
   try {
-    const id = String(params?.id || '').trim();
+    const id = String(context?.params?.id || '').trim();
     if (!id) return NextResponse.json({ success: false, error: 'id required' }, { status: 400 });
     const doc = await db.collection('bikes').doc(id).get();
     if (!doc.exists) return NextResponse.json({ success: false, error: 'not found' }, { status: 404 });
