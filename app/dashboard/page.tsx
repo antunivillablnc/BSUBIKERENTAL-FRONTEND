@@ -250,10 +250,11 @@ export default function DashboardPage() {
         if (!resp.ok) throw new Error('failed assigned bike');
         const data = await resp.json();
         if (!data?.success) throw new Error('no assigned');
-        if (!cancelled) setAssignedBike({ bikeId: String(data.bikeId), bikeName: data.bikeName, deviceId: null });
+        if (!cancelled) setAssignedBike({ bikeId: String(data.bikeId), bikeName: data.bikeName, deviceId: data.deviceId || null });
 
         // Try to resolve deviceId via backend (preferred, since Next API route may not exist in prod)
         try {
+          if (data?.deviceId) return; // already resolved
           const base = getApiBaseUrl();
           if (base) {
             const bResp = await fetch(`${base}/bikes/${encodeURIComponent(String(data.bikeId))}`, { credentials: 'include' as RequestCredentials });

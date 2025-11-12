@@ -9,6 +9,7 @@ type AssignedBikeResponse = {
   bikeName?: string | null;
   applicationId: string;
   assignedAt?: string | null;
+  deviceId?: string | null;
 } | {
   success: false;
   error: string;
@@ -64,12 +65,21 @@ export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeRe
       applications = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     }
 
-    const activeStatuses = new Set(['assigned', 'active', 'approved']);
+    // Prefer 'assigned' then 'active', and only then 'approved' (rarely has a bike)
+    const priority: Record<string, number> = { assigned: 3, active: 2, approved: 1 };
+    const normalized = (s: any) => String(s || '').toLowerCase();
     const currentApp = applications
-      .filter((a: any) => activeStatuses.has(String(a.status || '').toLowerCase()) && a.bikeId)
+      .filter((a: any) => {
+        const st = normalized(a.status);
+        return (st === 'assigned' || st === 'active' || st === 'approved') && a.bikeId;
+      })
       .sort((a: any, b: any) => {
-        const da = new Date(a.createdAt || a.assignedAt || 0).getTime();
-        const dbt = new Date(b.createdAt || b.assignedAt || 0).getTime();
+        const pa = priority[normalized(a.status)] || 0;
+        const pb = priority[normalized(b.status)] || 0;
+        if (pb !== pa) return pb - pa;
+        // Fallback to latest by assignedAt/createdAt
+        const da = new Date(a.assignedAt || a.createdAt || 0).getTime();
+        const dbt = new Date(b.assignedAt || b.createdAt || 0).getTime();
         return dbt - da;
       })[0];
 
@@ -81,6 +91,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeRe
     const bikeData: any = bikeDoc.exists ? { id: bikeDoc.id, ...bikeDoc.data() } : null;
     const assignedAt = (currentApp.assignedAt as any)?.toDate?.() || currentApp.assignedAt || null;
     const resolvedBikeName = bikeData?.name || bikeData?.bikeName || bikeData?.plateNumber || null;
+    const resolvedDeviceId = bikeData?.DEVICE_ID || bikeData?.deviceId || null;
 
     return NextResponse.json({
       success: true,
@@ -88,6 +99,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeRe
       bikeName: resolvedBikeName,
       applicationId: String(currentApp.id),
       assignedAt: assignedAt ? new Date(assignedAt).toISOString() : null,
+      deviceId: resolvedDeviceId,
     });
   } catch (e: any) {
     return NextResponse.json({ success: false, error: e?.message || 'Failed to get assigned bike' }, { status: 500 });
