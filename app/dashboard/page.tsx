@@ -252,13 +252,16 @@ export default function DashboardPage() {
         if (!data?.success) throw new Error('no assigned');
         if (!cancelled) setAssignedBike({ bikeId: String(data.bikeId), bikeName: data.bikeName, deviceId: null });
 
-        // Device id via Next API (or fall back to backend later)
+        // Try to resolve deviceId via backend (preferred, since Next API route may not exist in prod)
         try {
-          const bResp = await fetch(`/api/bikes/${encodeURIComponent(String(data.bikeId))}`, { cache: 'no-store' });
-          if (bResp.ok) {
-            const b = await bResp.json();
-            if (b?.success && b?.bike?.deviceId && !cancelled) {
-              setAssignedBike((prev) => prev ? { ...prev, deviceId: String(b.bike.deviceId) } : prev);
+          const base = getApiBaseUrl();
+          if (base) {
+            const bResp = await fetch(`${base}/bikes/${encodeURIComponent(String(data.bikeId))}`, { credentials: 'include' as RequestCredentials });
+            if (bResp.ok) {
+              const b = await bResp.json();
+              if (b?.success && b?.bike?.deviceId && !cancelled) {
+                setAssignedBike((prev) => prev ? { ...prev, deviceId: String(b.bike.deviceId) } : prev);
+              }
             }
           }
         } catch {}
