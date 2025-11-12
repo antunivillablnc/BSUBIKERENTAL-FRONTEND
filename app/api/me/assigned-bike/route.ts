@@ -14,6 +14,10 @@ type AssignedBikeResponse = {
   error: string;
 };
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeResponse>> {
   try {
     let user = getAuthUserFromRequest(req);
@@ -28,12 +32,16 @@ export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeRe
       user = { id: String(qsUserId || ''), email: String(qsEmail || ''), role: 'student' } as any;
     }
 
+    // Cache simple scalars for safe narrowing
+    const uid = user?.id ? String(user.id) : '';
+    const uemail = user?.email ? String(user.email) : '';
+
     // Prefer going through backend dashboard route to avoid Firestore index issues
     let applications: any[] = [];
     try {
       const base = getApiBaseUrl();
-      const q = user.id ? `userId=${encodeURIComponent(String(user.id))}` :
-        (user.email ? `email=${encodeURIComponent(String(user.email))}` : '');
+      const q = uid ? `userId=${encodeURIComponent(uid)}` :
+        (uemail ? `email=${encodeURIComponent(uemail)}` : '');
       const resp = await fetch(`${base}/dashboard?${q}`, {
         headers: { Accept: 'application/json' },
         cache: 'no-store',
@@ -51,7 +59,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeRe
     if (applications.length === 0) {
       // Fallback: query Firestore directly
       const query = db.collection('applications')
-        .where('userId', '==', String(user.id || ''));
+        .where('userId', '==', uid);
       const snap = await query.get();
       applications = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     }
@@ -70,13 +78,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<AssignedBikeRe
     }
 
     const bikeDoc = await db.collection('bikes').doc(String(currentApp.bikeId)).get();
-    const bike = bikeDoc.exists ? { id: bikeDoc.id, ...bikeDoc.data() } : null;
+    const bikeData: any = bikeDoc.exists ? { id: bikeDoc.id, ...bikeDoc.data() } : null;
     const assignedAt = (currentApp.assignedAt as any)?.toDate?.() || currentApp.assignedAt || null;
+    const resolvedBikeName = bikeData?.name || bikeData?.bikeName || bikeData?.plateNumber || null;
 
     return NextResponse.json({
       success: true,
       bikeId: String(currentApp.bikeId),
-      bikeName: bike?.name || bike?.plateNumber || null,
+      bikeName: resolvedBikeName,
       applicationId: String(currentApp.id),
       assignedAt: assignedAt ? new Date(assignedAt).toISOString() : null,
     });
