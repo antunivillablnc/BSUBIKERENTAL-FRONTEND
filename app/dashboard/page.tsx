@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import DashboardMap from "../components/DashboardMap";
 import BikeLoader from "../components/BikeLoader";
+import { getApiBaseUrl } from "@/lib/apiClient";
 
 // Simple circular progress component
 function CircularProgress({ value, max, color, size = 80, strokeWidth = 8, unit, goal }: { 
@@ -244,14 +245,14 @@ export default function DashboardPage() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      try {
+      async function tryViaNextApi() {
         const resp = await fetch('/api/me/assigned-bike', { credentials: 'include', cache: 'no-store' });
         if (!resp.ok) throw new Error('failed assigned bike');
         const data = await resp.json();
         if (!data?.success) throw new Error('no assigned');
         if (!cancelled) setAssignedBike({ bikeId: String(data.bikeId), bikeName: data.bikeName, deviceId: null });
 
-        // Fetch deviceId from bike doc if present (helps when only device stream is active)
+        // Device id via Next API (or fall back to backend later)
         try {
           const bResp = await fetch(`/api/bikes/${encodeURIComponent(String(data.bikeId))}`, { cache: 'no-store' });
           if (bResp.ok) {
@@ -262,29 +263,72 @@ export default function DashboardPage() {
           }
         } catch {}
 
-        const params = new URLSearchParams();
-        if (data.bikeId) params.set('bikeId', data.bikeId);
-        if (data.bikeName) params.set('bikeName', data.bikeName);
-        const aResp = await fetch(`/api/analytics/by-bike?${params.toString()}`, { cache: 'no-store' });
-        if (!aResp.ok) throw new Error('failed analytics');
-        const a = await aResp.json();
-        if (a?.success && !cancelled) {
-          setDistanceKm(Number(a.distanceKmToday || 0));
-          setCo2SavedKg(Number(a.co2SavedKgToday || 0));
-          setCaloriesBurned(Number(a.caloriesBurnedToday || 0));
-          if (Array.isArray(a.weekly) && a.weekly.length) {
-            setWeeklyData(a.weekly.map((w: any) => ({
-              day: String(w.day || ''),
-              distance: Number(w.distance || 0),
-              calories: Number(w.calories || 0),
-              co2: Number(w.co2 || 0),
-            })));
+        // Analytics from Next API (optional; safe to ignore failures)
+        try {
+          const params = new URLSearchParams();
+          if (data.bikeId) params.set('bikeId', data.bikeId);
+          if (data.bikeName) params.set('bikeName', data.bikeName);
+          const aResp = await fetch(`/api/analytics/by-bike?${params.toString()}`, { cache: 'no-store' });
+          if (aResp.ok) {
+            const a = await aResp.json();
+            if (a?.success && !cancelled) {
+              setDistanceKm(Number(a.distanceKmToday || 0));
+              setCo2SavedKg(Number(a.co2SavedKgToday || 0));
+              setCaloriesBurned(Number(a.caloriesBurnedToday || 0));
+              if (Array.isArray(a.weekly) && a.weekly.length) {
+                setWeeklyData(a.weekly.map((w: any) => ({
+                  day: String(w.day || ''),
+                  distance: Number(w.distance || 0),
+                  calories: Number(w.calories || 0),
+                  co2: Number(w.co2 || 0),
+                })));
+              }
+              setLongestRide(Number(a.longestRideKm || 0));
+              setFastestSpeed(Number(a.fastestSpeedKmh || 0));
+            }
           }
-          setLongestRide(Number(a.longestRideKm || 0));
-          setFastestSpeed(Number(a.fastestSpeedKmh || 0));
-        }
+        } catch {}
+      }
+
+      async function fallbackViaBackend() {
+        const base = getApiBaseUrl();
+        if (!base) return;
+        // get user id/email from localStorage
+        let uid: string | undefined;
+        let email: string | undefined;
+        try {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+          const u = raw ? JSON.parse(raw) : null;
+          uid = u?.id || u?._id || undefined;
+          email = u?.email || undefined;
+        } catch {}
+        const q = uid ? `userId=${encodeURIComponent(String(uid))}` : (email ? `email=${encodeURIComponent(String(email))}` : '');
+        if (!q) return;
+        const resp = await fetch(`${base}/dashboard?${q}`, { credentials: 'include' as RequestCredentials });
+        if (!resp.ok) return;
+        const dj = await resp.json();
+        const apps = Array.isArray(dj?.applications) ? dj.applications : [];
+        const activeStatuses = new Set(['assigned', 'active', 'approved']);
+        const currentApp = apps
+          .filter((a: any) => activeStatuses.has(String(a.status || '').toLowerCase()) && a.bikeId)
+          .sort((a: any, b: any) => new Date(b.createdAt || b.assignedAt || 0).getTime() - new Date(a.createdAt || a.assignedAt || 0).getTime())[0];
+        if (!currentApp?.bikeId) return;
+        if (!cancelled) setAssignedBike({ bikeId: String(currentApp.bikeId), bikeName: currentApp.bikeName || null, deviceId: null });
+        try {
+          const bResp = await fetch(`${base}/bikes/${encodeURIComponent(String(currentApp.bikeId))}`, { credentials: 'include' as RequestCredentials });
+          if (bResp.ok) {
+            const b = await bResp.json();
+            if (b?.success && b?.bike?.deviceId && !cancelled) {
+              setAssignedBike((prev) => prev ? { ...prev, deviceId: String(b.bike.deviceId) } : prev);
+            }
+          }
+        } catch {}
+      }
+
+      try {
+        await tryViaNextApi();
       } catch {
-        // keep defaults
+        await fallbackViaBackend();
       }
     }
     load();
