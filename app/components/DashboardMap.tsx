@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import type { FeatureCollection, LineString, Position } from "geojson";
 import { rtdb, ref as dbRef, onValue, query as rtdbQuery, orderByKey, limitToLast } from "@/lib/firebaseClient";
+import { MAPBOX_TOKEN, getMapStyleUrl, upsertMultiLine, directionsSnapPairs, upsertCirclePoints } from "@/lib/mapboxCommon";
+import { useTelemetryRoute } from "@/lib/useTelemetryRoute";
 
 type LngLatTuple = [number, number];
 
@@ -57,7 +59,7 @@ export default function DashboardMap({
   const snapTimeoutRef = useRef<number | null>(null);
   const snapAbortRef = useRef<AbortController | null>(null);
 
-  const token = (process.env.NEXT_PUBLIC_MAPBOX_TOKEN || FALLBACK_TOKEN).trim();
+  const token = (MAPBOX_TOKEN || FALLBACK_TOKEN).trim();
 
   // Default route around a small park-like loop
   const defaultRoute: LngLatTuple[] = (
@@ -75,145 +77,24 @@ export default function DashboardMap({
 
   const defaultCenter: LngLatTuple = center || defaultRoute[0];
 
-  // Subscribe to Realtime Database for a bike's live route
+  // Use shared telemetry hook: full history and timestamp ordering
+  const telemetryPath = deviceId
+    ? `tracker/devices/${deviceId}/telemetry`
+    : (bikeId ? `tracker/bikes/${bikeId}/telemetry` : (realtimePath || undefined));
+  const tele = useTelemetryRoute(telemetryPath);
   useEffect(() => {
-    const path =
-      realtimePath ||
-      (bikeId ? `telemetry/${bikeId}/route` : undefined);
-    if (!path) return;
-    let unsubscribe: (() => void) | null = null;
-    try {
-      const ref = dbRef(rtdb, path);
-      const off = onValue(ref, (snap) => {
-        const val = snap.val();
-        if (!val) return;
-        const pairs: LngLatTuple[] = [];
-        const pushIfValid = (lng: any, lat: any) => {
-          const Lng = Number(lng), Lat = Number(lat);
-          if (!Number.isFinite(Lng) || !Number.isFinite(Lat)) return;
-          pairs.push([Lng, Lat]);
-        };
-        if (Array.isArray(val)) {
-          for (const p of val) {
-            if (Array.isArray(p) && p.length >= 2) pushIfValid(p[0], p[1]);
-            else if (p && typeof p === "object") pushIfValid(p.lng ?? p.longitude, p.lat ?? p.latitude);
-          }
-        } else if (typeof val === "object") {
-          for (const k of Object.keys(val)) {
-            const p = val[k];
-            if (Array.isArray(p) && p.length >= 2) pushIfValid(p[0], p[1]);
-            else if (p && typeof p === "object") pushIfValid(p.lng ?? p.longitude, p.lat ?? p.latitude);
-          }
-        }
-        if (pairs.length >= 2) {
-          setLiveRoute(pairs);
-          // If map is ready, update source and markers immediately
-          const map = mapRef.current;
-          if (map && map.getSource("route")) {
-            const lineCoordinates: Position[] = pairs.map(([lng, lat]) => [lng, lat]);
-            const geojson: FeatureCollection<LineString> = {
-              type: "FeatureCollection",
-              features: [{ type: "Feature", geometry: { type: "LineString", coordinates: lineCoordinates }, properties: {} }],
-            };
-            try {
-              (map.getSource("route") as mapboxgl.GeoJSONSource).setData(geojson as any);
-            } catch {}
-            // Reposition markers
-            try {
-              const start = pairs[0];
-              const end = pairs[pairs.length - 1];
-              startMarkerRef.current?.setLngLat(start);
-              endMarkerRef.current?.setLngLat(end);
-              const bounds = new mapboxgl.LngLatBounds();
-              pairs.forEach((c) => bounds.extend(c as any));
-              try { map.fitBounds(bounds, { padding: 40, duration: 400 }); } catch {}
-            } catch {}
-          }
-        }
-      });
-      unsubscribe = () => off();
-    } catch {
-      // ignore
+    if (tele.coords && tele.coords.length) {
+      setLiveRoute(tele.coords);
+      setLivePoint(tele.coords[tele.coords.length - 1]);
+      setLastFixTs(tele.lastFixTs);
+    } else {
+      setLiveRoute(null);
+      setLivePoint(null);
+      setLastFixTs(null);
     }
-    return () => { unsubscribe?.(); };
-  }, [bikeId, realtimePath]);
+  }, [tele.coords, tele.lastFixTs]);
 
-  // Subscribe to rolling telemetry trail (device or bike) and draw recent path
-  useEffect(() => {
-    const path = deviceId
-      ? `tracker/devices/${deviceId}/telemetry`
-      : (bikeId ? `tracker/bikes/${bikeId}/telemetry` : undefined);
-    if (!path) return;
-    let off: (() => void) | null = null;
-    try {
-      const q = rtdbQuery(dbRef(rtdb, path), orderByKey(), limitToLast(Math.max(10, trailPointLimit)));
-      off = onValue(q as any, (snap) => {
-        const obj = (snap as any)?.val?.() ?? (snap as any)?.val ?? null;
-        if (!obj || typeof obj !== "object") return;
-        const keys = Object.keys(obj).sort();
-        const pts: LngLatTuple[] = [];
-        for (const k of keys) {
-          const v = obj[k];
-          const lat = Number(v?.lat ?? v?.latitude);
-          const lng = Number(v?.lng ?? v?.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          pts.push([lng, lat]);
-        }
-        if (pts.length >= 2) {
-          setLiveRoute(pts);
-          setLivePoint(pts[pts.length - 1]);
-          // Keep fallback trail in sync with server telemetry
-          try { fallbackTrailRef.current = pts.slice(-Math.max(10, trailPointLimit)); } catch {}
-          const latest = Number(keys[keys.length - 1]);
-          if (Number.isFinite(latest)) setLastFixTs(latest < 2_000_000_000 ? latest * 1000 : latest);
-        }
-      });
-    } catch {}
-    return () => { try { off?.(); } catch {} };
-  }, [bikeId, deviceId, trailPointLimit]);
-
-  // Subscribe to single-point live location similar to admin map
-  useEffect(() => {
-    centeredOnceRef.current = false;
-    if (!bikeId && !deviceId) return;
-    let off: (() => void) | null = null;
-    try {
-      const path = deviceId
-        ? `tracker/devices/${deviceId}/last`
-        : `tracker/bikes/${bikeId}/last`;
-      const refPoint = dbRef(rtdb, path);
-      off = onValue(refPoint, (snap) => {
-        const v = (snap as any)?.val?.() ?? (snap as any)?.val ?? null;
-        if (!v) return;
-        const lat = Number(v.lat ?? v.latitude);
-        const lng = Number(v.lng ?? v.longitude);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-        const point: LngLatTuple = [lng, lat];
-        setLivePoint(point);
-        const ts = Number((v as any).ts ?? (v as any).timestamp ?? (v as any).time);
-        if (Number.isFinite(ts)) setLastFixTs(ts < 2_000_000_000 ? ts * 1000 : ts);
-
-        // Build a local trail if server telemetry is not being appended
-        try {
-          const trail = fallbackTrailRef.current;
-          const last = trail[trail.length - 1];
-          if (!last || last[0] !== point[0] || last[1] !== point[1]) {
-            trail.push(point);
-            if (trail.length > Math.max(10, trailPointLimit)) trail.shift();
-          }
-          setLiveRoute([...trail]);
-        } catch {}
-
-        // Optionally recenter
-        const map = mapRef.current;
-        if (map && (!centeredOnceRef.current || follow)) {
-          centeredOnceRef.current = true;
-          try { map.flyTo({ center: [lng, lat], zoom: Math.max(15, zoom) }); } catch {}
-        }
-      });
-    } catch {}
-    return () => { try { off?.(); } catch {} };
-  }, [bikeId, deviceId, zoom, follow]);
+  // Removed 'last' single-point subscription; rely solely on telemetry stream for location
 
   // Snap the live route to roads using Mapbox Map Matching (debounced and chunked)
   useEffect(() => {
@@ -331,35 +212,23 @@ export default function DashboardMap({
     };
   }, [liveRoute, snapToRoads, snapProfile, token, trailPointLimit]);
 
-  // Update map line and markers whenever liveRoute changes
+  // Update markers whenever liveRoute changes (no raw polyline)
   useEffect(() => {
     const map = mapRef.current;
-    const renderRoute = (snappedRoute && snappedRoute.length >= 2) ? snappedRoute : liveRoute;
+    const renderRoute = liveRoute;
     if (!map || !renderRoute || renderRoute.length < 2) return;
 
-    const lineCoordinates: Position[] = renderRoute.map(([lng, lat]) => [lng, lat]);
-    const geojson: FeatureCollection<LineString> = {
-      type: "FeatureCollection",
-      features: [
-        { type: "Feature", geometry: { type: "LineString", coordinates: lineCoordinates }, properties: {} },
-      ],
-    };
-
     try {
-      if (!map.getSource("route")) {
-        map.addSource("route", { type: "geojson", data: geojson });
-      } else {
-        (map.getSource("route") as mapboxgl.GeoJSONSource).setData(geojson as any);
-      }
+      // Ensure any previous unsnapped line is removed
+      try {
+        if (map.getLayer("route-line")) map.removeLayer("route-line");
+        if (map.getSource("route")) map.removeSource("route");
+      } catch {}
 
-      if (!map.getLayer("route-line")) {
-        map.addLayer({
-          id: "route-line",
-          type: "line",
-          source: "route",
-          paint: { "line-color": "#22c55e", "line-width": 5, "line-opacity": 0.95 },
-        });
-      }
+      // Draw small dots for each telemetry fix
+      try {
+        upsertCirclePoints(map as any, "trail-points", "trail-points", renderRoute as any, 3, "#22c55e");
+      } catch {}
 
       // Move start/end markers with route
       const start = renderRoute[0];
@@ -371,7 +240,40 @@ export default function DashboardMap({
         try { map.panTo(end as any); } catch {}
       }
     } catch {}
-  }, [liveRoute, snappedRoute, follow]);
+  }, [liveRoute, follow]);
+
+  // Render snapped segments (multiple lines) based on liveRoute
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !liveRoute || liveRoute.length < 2 || !token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const segments = await directionsSnapPairs(liveRoute, snapProfile, token, 300);
+        if (cancelled) return;
+        if (segments && segments.length) {
+          upsertMultiLine(map as any, "route-snapped", "route-snapped-line", segments, "#22c55e", 5);
+        } else {
+          // cleanup if no segments
+          try {
+            if (map.getLayer("route-snapped-line")) map.removeLayer("route-snapped-line");
+            if (map.getSource("route-snapped")) map.removeSource("route-snapped");
+            if (map.getLayer("trail-points")) map.removeLayer("trail-points");
+            if (map.getSource("trail-points")) map.removeSource("trail-points");
+          } catch {}
+        }
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+      try {
+        if (map.getLayer("route-snapped-line")) map.removeLayer("route-snapped-line");
+        if (map.getSource("route-snapped")) map.removeSource("route-snapped");
+        if (map.getLayer("trail-points")) map.removeLayer("trail-points");
+        if (map.getSource("trail-points")) map.removeSource("trail-points");
+      } catch {}
+    };
+  }, [liveRoute, token, snapProfile]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -397,7 +299,7 @@ export default function DashboardMap({
       return false;
     };
 
-    const getMapStyle = (dark: boolean) => dark ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11";
+    const getMapStyle = (dark: boolean) => getMapStyleUrl(dark);
 
     const applyRouteAndMarkers = (map: mapboxgl.Map) => {
       const hasLine = defaultRoute.length >= 2;
