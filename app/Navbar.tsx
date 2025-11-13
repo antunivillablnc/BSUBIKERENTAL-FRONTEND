@@ -38,6 +38,10 @@ function ProfileSettingsForm({
   const [isUploading, setIsUploading] = useState(false);
   const [isPhotoLoading, setIsPhotoLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [phase, setPhase] = useState<'edit' | 'verify'>( 'edit' );
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [otp, setOtp] = useState('');
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,6 +94,7 @@ function ProfileSettingsForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setIsUploading(true);
 
     try {
@@ -99,9 +104,44 @@ function ProfileSettingsForm({
         photoUrl = await uploadPhoto(photoFile);
       }
 
+      const trimmedName = name.trim();
+      const trimmedEmail = email.trim().toLowerCase();
+      const originalEmail = (userEmail || '').trim().toLowerCase();
+
+      // 1) Always update name/photo immediately (no OTP)
+      try {
+        await apiClient.post('/auth/profile/update-name', { name: trimmedName, photo: photoUrl });
+      } catch {
+        // Non-fatal for subsequent email flow; surface error but proceed
+        setError('Failed to update name/photo. You can try again.');
+      }
+
+      // 2) If email changed, send OTP and switch to verify phase
+      if (trimmedEmail && trimmedEmail !== originalEmail) {
+        try {
+          await apiClient.post('/auth/profile/send-email-otp', { newEmail: trimmedEmail });
+          setPendingEmail(trimmedEmail);
+          setPhase('verify');
+          setInfo(`We sent a 6-digit verification code to ${trimmedEmail}. Enter it below to confirm your new email.`);
+        } catch (err: any) {
+          const status = err?.response?.status;
+          const msg = err?.response?.data?.error || 'Failed to send verification code';
+          if (status === 409) {
+            setError('This email is already used by another account. Please use a different email.');
+          } else {
+            setError(msg);
+          }
+        } finally {
+          setIsUploading(false);
+        }
+        // Do not call onUpdate yet for email; wait until verification succeeds
+        return;
+      }
+
+      // Email not changed → finish immediately
       onUpdate({
-        name: name.trim(),
-        email: email.trim(),
+        name: trimmedName,
+        email: trimmedEmail || originalEmail,
         photo: photoUrl,
       });
     } catch (error) {
@@ -269,6 +309,122 @@ function ProfileSettingsForm({
         />
       </div>
 
+      {/* OTP Verification Phase */}
+      {phase === 'verify' && (
+        <div>
+          <label style={{
+            display: 'block',
+            color: 'var(--text-primary)',
+            fontWeight: 600,
+            marginBottom: 8,
+            fontSize: 14,
+          }}>
+            Verification Code
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              background: 'var(--input-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 8,
+              color: 'var(--text-primary)',
+              fontSize: 14,
+              letterSpacing: 4,
+            }}
+            placeholder="Enter 6-digit code"
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <button
+              type="button"
+              onClick={async () => {
+                setError('');
+                setInfo('');
+                try {
+                  if (!pendingEmail || !otp) {
+                    setError('Enter the code to verify');
+                    return;
+                  }
+                  const resp = await apiClient.post('/auth/profile/verify-email-otp', { newEmail: pendingEmail, otp });
+                  const user = resp?.data?.user;
+                  if (user) {
+                    onUpdate({ name, email: user.email, photo });
+                  } else {
+                    onUpdate({ name, email: pendingEmail, photo });
+                  }
+                } catch (err: any) {
+                  const msg = err?.response?.data?.error || 'Invalid code';
+                  setError(msg);
+                }
+              }}
+              style={{
+                background: 'var(--accent-color)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '10px 16px',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Confirm Code
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setError('');
+                setInfo('');
+                try {
+                  await apiClient.post('/auth/profile/send-email-otp', { newEmail: pendingEmail || email.trim().toLowerCase() });
+                  setInfo(`A new code has been sent to ${pendingEmail || email}.`);
+                } catch (err: any) {
+                  const status = err?.response?.status;
+                  const msg = err?.response?.data?.error || 'Failed to resend code';
+                  if (status === 409) {
+                    try { alert('This email is already used by another account. Please use a different email.'); } catch {}
+                  }
+                  setError(msg);
+                }
+              }}
+              style={{
+                background: 'transparent',
+                color: 'var(--accent-color)',
+                border: '1px solid var(--accent-color)',
+                borderRadius: 8,
+                padding: '10px 16px',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Resend Code
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPhase('edit'); setOtp(''); setPendingEmail(''); setInfo(''); setError(''); }}
+              style={{
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 8,
+                padding: '10px 16px',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Error Message */}
       {error && (
         <div style={{
@@ -281,6 +437,19 @@ function ProfileSettingsForm({
           border: '1px solid rgba(239, 68, 68, 0.2)',
         }}>
           {error}
+        </div>
+      )}
+      {!error && info && (
+        <div style={{
+          color: 'var(--text-secondary)',
+          fontSize: 14,
+          textAlign: 'center',
+          padding: '8px 12px',
+          background: 'var(--bg-tertiary)',
+          borderRadius: 6,
+          border: '1px solid var(--border-color)',
+        }}>
+          {info}
         </div>
       )}
 
@@ -301,7 +470,7 @@ function ProfileSettingsForm({
           opacity: isUploading ? 0.7 : 1,
         }}
       >
-        {isUploading ? 'Updating...' : 'Update Profile'}
+        {phase === 'verify' ? (isUploading ? 'Sending...' : 'Verify Email') : (isUploading ? 'Updating...' : 'Update Profile')}
       </button>
     </form>
   );
