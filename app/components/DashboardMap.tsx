@@ -174,7 +174,7 @@ export default function DashboardMap({
 
         // Segment sanity thresholds
         const MIN_SEG_DIST_M = 5;          // ignore jitter < 5m
-        const MIN_SEG_DT_S = 5;            // ignore pauses/duplicates under 5s
+        const MIN_SEG_DT_S = 1;            // ignore pauses/duplicates under 1s (trackers often ping every 1-3s)
         const MAX_SEG_DT_S = 30 * 60;      // ignore very long gaps > 30 min
         const MAX_SPEED_KMH = 100;         // drop spikes above 100 km/h
 

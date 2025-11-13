@@ -431,7 +431,31 @@ export default function DashboardPage() {
               center={assignedBike?.bikeId ? undefined : [121.16294702315251, 13.956835879996431]}
               bikeId={assignedBike?.bikeId}
               deviceId={assignedBike?.deviceId || undefined}
-              onDistanceChange={(km) => setDistanceKm(km)}
+              onDistanceChange={(km) => {
+                setDistanceKm(km);
+                // Ensure weekly chart reflects live progress even if analytics haven't loaded yet.
+                if (km > 0) {
+                  setWeeklyData((prev) => {
+                    try {
+                      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                      const todayName = dayNames[new Date().getDay()];
+                      const idx = prev.findIndex((d) => d.day === todayName);
+                      if (idx === -1) return prev;
+                      const current = prev[idx];
+                      // Prefer the larger of existing bucket vs live distance
+                      if (current.distance >= km) return prev;
+                      const hours = km / Math.max(AVG_SPEED_KMH, 1e-6);
+                      const kcal = Math.round(MET * WEIGHT_KG * hours);
+                      const co2 = (km * FUEL_CONSUMPTION_L_PER_100KM * EMISSION_FACTOR_KG_CO2_PER_L) / 100;
+                      const next = [...prev];
+                      next[idx] = { day: todayName, distance: Number(km.toFixed(2)), calories: kcal, co2: Number(co2.toFixed(2)) };
+                      return next;
+                    } catch { return prev; }
+                  });
+                  // Never let personal best regress; use live distance as a floor.
+                  setLongestRide((prev) => Math.max(prev, Number(km || 0)));
+                }
+              }}
               onWeeklyUpdate={(w) => setWeeklyData(w)}
               onPersonalUpdate={(p) => {
                 // Only raise values if live telemetry detects a new personal best.
