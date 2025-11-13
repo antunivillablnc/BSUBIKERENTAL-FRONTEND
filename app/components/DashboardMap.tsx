@@ -157,7 +157,8 @@ export default function DashboardMap({
       off = onValue(q as any, (snap) => {
         const obj = (snap as any)?.val?.() ?? (snap as any)?.val ?? null;
         if (!obj || typeof obj !== "object") return;
-        const keys = Object.keys(obj).sort();
+        // Sort numerically by timestamp-like key when possible
+        const keys = Object.keys(obj).sort((a: any, b: any) => Number(a) - Number(b));
         type Pt = { lng: number; lat: number; ts: number };
         const pts: Pt[] = [];
         for (const k of keys) {
@@ -181,14 +182,25 @@ export default function DashboardMap({
           return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
         };
 
+        // Segment sanity thresholds
+        const MIN_SEG_DIST_M = 5;          // ignore jitter < 5m
+        const MIN_SEG_DT_S = 5;            // ignore pauses/duplicates under 5s
+        const MAX_SEG_DT_S = 30 * 60;      // ignore very long gaps > 30 min
+        const MAX_SPEED_KMH = 100;         // drop spikes above 100 km/h
+
         // Group by date (YYYY-MM-DD)
         const groups: Record<string, number> = {};
         for (let i = 1; i < pts.length; i++) {
           const a = pts[i - 1], b = pts[i];
           const dayA = new Date(a.ts).toISOString().slice(0, 10);
           const dayB = new Date(b.ts).toISOString().slice(0, 10);
-          if (dayA !== dayB) continue;
+          if (dayA !== dayB) continue; // keep day buckets consistent
           const km = havKm(a, b);
+          const dtS = Math.max(0, (b.ts - a.ts) / 1000);
+          const m = km * 1000;
+          if (m < MIN_SEG_DIST_M || dtS < MIN_SEG_DT_S || dtS > MAX_SEG_DT_S) continue;
+          const spd = km / (dtS / 3600); // km/h
+          if (spd > MAX_SPEED_KMH) continue;
           groups[dayA] = (groups[dayA] || 0) + km;
         }
 
@@ -210,12 +222,18 @@ export default function DashboardMap({
         // Personal: longest ride and fastest speed
         let longest = 0;
         for (const k of Object.keys(groups)) longest = Math.max(longest, groups[k] || 0);
+        // Fastest segment in last 24 hours with bounds
         let fastest = 0;
+        const since = Date.now() - 24 * 60 * 60 * 1000;
         for (let i = 1; i < pts.length; i++) {
           const a = pts[i - 1], b = pts[i];
-          const dtH = Math.max(1e-6, (b.ts - a.ts) / (1000 * 60 * 60));
-          const spd = havKm(a, b) / dtH;
-          if (spd < 60) fastest = Math.max(fastest, spd);
+          if (b.ts < since) continue;
+          const km = havKm(a, b);
+          const dtS = Math.max(0, (b.ts - a.ts) / 1000);
+          const m = km * 1000;
+          if (m < MIN_SEG_DIST_M || dtS < MIN_SEG_DT_S || dtS > MAX_SEG_DT_S) continue;
+          const spd = km / (dtS / 3600);
+          if (spd <= MAX_SPEED_KMH) fastest = Math.max(fastest, spd);
         }
         try { onPersonalUpdate?.({ longestRideKm: Number(longest.toFixed(1)), fastestSpeedKmh: Number(fastest.toFixed(1)) }); } catch {}
       });
