@@ -68,21 +68,11 @@ export default function DashboardMap({
 
   const token = (MAPBOX_TOKEN || FALLBACK_TOKEN).trim();
 
-  // Default route around a small park-like loop
-  const defaultRoute: LngLatTuple[] = (
-    (liveRoute || route) || [
-      [121.11685, 13.9572],
-      [121.1182, 13.9579],
-      [121.1193, 13.9588],
-      [121.1191, 13.9599],
-      [121.1177, 13.9602],
-      [121.1164, 13.9594],
-      [121.1162, 13.9583],
-      [121.11685, 13.9572],
-    ]
-  );
+  // Do not use a hardcoded demo route; render only live or provided route
+  const defaultRoute: LngLatTuple[] = (liveRoute || route) || [];
 
-  const defaultCenter: LngLatTuple = center || defaultRoute[0];
+  // Prefer provided center, then latest live point, else neutral world center
+  const defaultCenter: LngLatTuple = (center as any) || (livePoint as any) || [0, 0];
 
   // Use shared telemetry hook: full history and timestamp ordering
   const telemetryPath = deviceId

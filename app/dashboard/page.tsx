@@ -249,16 +249,16 @@ export default function DashboardPage() {
   const [co2SavedKg, setCo2SavedKg] = useState(1.8);
   const [caloriesBurned, setCaloriesBurned] = useState(450);
   const [weeklyData, setWeeklyData] = useState([
-    { day: 'Mon', distance: 12.5, calories: 380, co2: 1.2 },
-    { day: 'Tue', distance: 8.3, calories: 250, co2: 0.8 },
-    { day: 'Wed', distance: 15.7, calories: 470, co2: 1.5 },
-    { day: 'Thu', distance: 6.2, calories: 190, co2: 0.6 },
-    { day: 'Fri', distance: 18.9, calories: 580, co2: 1.8 },
-    { day: 'Sat', distance: 22.1, calories: 680, co2: 2.1 },
-    { day: 'Sun', distance: 14.3, calories: 440, co2: 1.4 }
+    { day: 'Mon', distance: 0, calories: 0, co2: 0 },
+    { day: 'Tue', distance: 0, calories: 0, co2: 0 },
+    { day: 'Wed', distance: 0, calories: 0, co2: 0 },
+    { day: 'Thu', distance: 0, calories: 0, co2: 0 },
+    { day: 'Fri', distance: 0, calories: 0, co2: 0 },
+    { day: 'Sat', distance: 0, calories: 0, co2: 0 },
+    { day: 'Sun', distance: 0, calories: 0, co2: 0 }
   ]);
-  const [longestRide, setLongestRide] = useState(75);
-  const [fastestSpeed, setFastestSpeed] = useState(35);
+  const [longestRide, setLongestRide] = useState(0);
+  const [fastestSpeed, setFastestSpeed] = useState(0);
   const [assignedBike, setAssignedBike] = useState<{ bikeId: string; bikeName?: string | null; deviceId?: string | null } | null>(null);
 
   // Recompute CO₂ using static formula whenever distance changes
@@ -428,6 +428,7 @@ export default function DashboardPage() {
             <DashboardMap
               distanceKm={distanceKm}
               height={"80vh"}
+              center={assignedBike?.bikeId ? undefined : [121.16294702315251, 13.956835879996431]}
               bikeId={assignedBike?.bikeId}
               deviceId={assignedBike?.deviceId || undefined}
               onDistanceChange={(km) => setDistanceKm(km)}

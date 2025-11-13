@@ -29,7 +29,7 @@ export default function AdminUsersPage() {
     email: "",
     password: "",
     name: "",
-    role: "user"
+    role: "student"
   });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
       email: "",
       password: "",
       name: "",
-      role: "user"
+      role: "student"
     });
     setFormError("");
   };
@@ -157,8 +157,12 @@ export default function AdminUsersPage() {
     switch (role) {
       case "admin":
         return "#dc2626";
-      case "user":
+      case "student":
         return "#1976d2";
+      case "teaching_staff":
+        return "#0d9488";
+      case "non_teaching_staff":
+        return "#7c3aed";
       default:
         return "#6b7280";
     }
@@ -400,7 +404,9 @@ export default function AdminUsersPage() {
                       }}
                       required
                     >
-                      <option value="user">User</option>
+                      <option value="student">Student</option>
+                      <option value="teaching_staff">Teaching Staff</option>
+                      <option value="non_teaching_staff">Non-Teaching Staff</option>
                       <option value="admin">Admin</option>
                     </select>
                   </div>
@@ -557,7 +563,9 @@ export default function AdminUsersPage() {
                       }}
                       required
                     >
-                      <option value="user">User</option>
+                      <option value="student">Student</option>
+                      <option value="teaching_staff">Teaching Staff</option>
+                      <option value="non_teaching_staff">Non-Teaching Staff</option>
                       <option value="admin">Admin</option>
                     </select>
                   </div>
