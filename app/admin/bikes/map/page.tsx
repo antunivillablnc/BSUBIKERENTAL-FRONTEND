@@ -380,6 +380,44 @@ export default function AdminBikesMapPage() {
     };
   }, [tele.coords, tele.lastFixTs, tele.distanceKm, token]);
 
+  // If a deviceId is provided in the query, fetch the latest position once and show a marker
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!qDeviceId) return;
+
+    (async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        const res = await fetch(`${base}/tracker/last?deviceId=${encodeURIComponent(String(qDeviceId))}`, {
+          cache: 'no-store',
+          credentials: 'omit'
+        });
+        const json = await res.json();
+        const v = json?.data || null;
+        if (!v) return;
+        const lat = Number(v.lat);
+        const lng = Number(v.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        const key = `device:${qDeviceId}`;
+        let marker = markersByIdRef.current[key];
+        if (!marker) {
+          const el = createPinElement(String(qDeviceId), '#2563eb');
+          marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
+          markersByIdRef.current[key] = marker;
+        } else {
+          try { marker.setLngLat([lng, lat]); } catch {}
+        }
+        setHasLiveData(true);
+        if (!deviceCenteredRef.current) {
+          deviceCenteredRef.current = true;
+          try { map.flyTo({ center: [lng, lat], zoom: 17 }); } catch {}
+        }
+      } catch {}
+    })();
+  }, [qDeviceId]);
+
   useEffect(() => {
     // Load bikes for all-markers view
     (async () => {

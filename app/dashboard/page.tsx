@@ -4,6 +4,16 @@ import DashboardMap from "../components/DashboardMap";
 import BikeLoader from "../components/BikeLoader";
 import { getApiBaseUrl } from "@/lib/apiClient";
 
+// Static assumptions for CO₂ calculation
+// CO2 (kg) = Distance (km) × (Fuel Consumption L/100km) × (Emission Factor kg CO2/L) / 100
+const FUEL_CONSUMPTION_L_PER_100KM = 7.5; // average small car
+const EMISSION_FACTOR_KG_CO2_PER_L = 2.31; // gasoline tailpipe CO2
+// Defaults for calorie estimation using MET formula
+// Calories (kcal) = MET × Weight(kg) × Time(hours); Time = Distance / Speed
+const DEFAULT_MET = 8.0;         // moderate cycling
+const DEFAULT_WEIGHT_KG = 70;    // typical rider
+const DEFAULT_SPEED_KMH = 16;    // average moving speed
+
 // Simple circular progress component
 function CircularProgress({ value, max, color, size = 80, strokeWidth = 8, unit, goal }: { 
   value: number; 
@@ -224,6 +234,16 @@ export default function DashboardPage() {
     return () => clearTimeout(id);
   }, []);
 
+  // CO₂ estimation constants:
+  // - Average small car fuel consumption (liters per 100 km)
+  // - Gasoline CO₂ emission factor (kg per liter)
+  const FUEL_CONSUMPTION_L_PER_100KM = 7.5;
+  const EMISSION_FACTOR_KG_CO2_PER_L = 2.31;
+  // Calorie estimation parameters (MET-based)
+  const MET = DEFAULT_MET;
+  const WEIGHT_KG = DEFAULT_WEIGHT_KG;
+  const AVG_SPEED_KMH = DEFAULT_SPEED_KMH;
+
   // Live data state (with sensible defaults as fallback)
   const [distanceKm, setDistanceKm] = useState(15.2);
   const [co2SavedKg, setCo2SavedKg] = useState(1.8);
@@ -240,6 +260,19 @@ export default function DashboardPage() {
   const [longestRide, setLongestRide] = useState(75);
   const [fastestSpeed, setFastestSpeed] = useState(35);
   const [assignedBike, setAssignedBike] = useState<{ bikeId: string; bikeName?: string | null; deviceId?: string | null } | null>(null);
+
+  // Recompute CO₂ using static formula whenever distance changes
+  useEffect(() => {
+    const co2 = (distanceKm * FUEL_CONSUMPTION_L_PER_100KM * EMISSION_FACTOR_KG_CO2_PER_L) / 100;
+    setCo2SavedKg(co2);
+  }, [distanceKm]);
+
+  // Recompute Calories using MET formula whenever distance changes
+  useEffect(() => {
+    const hours = distanceKm / Math.max(AVG_SPEED_KMH, 1e-6);
+    const kcal = MET * WEIGHT_KG * hours;
+    setCaloriesBurned(Math.max(0, Math.round(kcal)));
+  }, [distanceKm]);
 
   // Assigned bike lookup + analytics fetch
   useEffect(() => {
@@ -275,10 +308,19 @@ export default function DashboardPage() {
           const aResp = await fetch(`/api/analytics/by-bike?${params.toString()}`, { cache: 'no-store' });
           if (aResp.ok) {
             const a = await aResp.json();
-            if (a?.success && !cancelled) {
-              setDistanceKm(Number(a.distanceKmToday || 0));
-              setCo2SavedKg(Number(a.co2SavedKgToday || 0));
-              setCaloriesBurned(Number(a.caloriesBurnedToday || 0));
+          if (a?.success && !cancelled) {
+            const dKm = Number(a.distanceKmToday || 0);
+            // Do not overwrite live distance with zero
+            setDistanceKm(prev => (dKm > 0 ? dKm : prev));
+            // Only adopt CO₂ from API when it is positive; otherwise keep computed value
+            const apiCo2 = Number(a.co2SavedKgToday);
+            if (Number.isFinite(apiCo2) && apiCo2 > 0) {
+              setCo2SavedKg(apiCo2);
+            }
+            const apiKcal = Number(a.caloriesBurnedToday);
+            if (Number.isFinite(apiKcal) && apiKcal > 0) {
+              setCaloriesBurned(Math.round(apiKcal));
+            }
               if (Array.isArray(a.weekly) && a.weekly.length) {
                 setWeeklyData(a.weekly.map((w: any) => ({
                   day: String(w.day || ''),
@@ -386,6 +428,7 @@ export default function DashboardPage() {
           height={320}
           bikeId={assignedBike?.bikeId}
           deviceId={assignedBike?.deviceId || undefined}
+          onDistanceChange={(km) => setDistanceKm(km)}
           trailPointLimit={500}
           snapToRoads
           snapProfile="cycling"

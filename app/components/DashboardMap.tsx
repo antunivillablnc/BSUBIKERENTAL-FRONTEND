@@ -25,6 +25,7 @@ export type DashboardMapProps = {
   snapToRoads?: boolean; // use Mapbox Map Matching to follow roads
   snapProfile?: "cycling" | "driving" | "walking"; // map matching profile
   snapMode?: "auto" | "directions" | "off"; // snapping strategy
+  onDistanceChange?: (km: number) => void; // emit live distance
 };
 
 const FALLBACK_TOKEN = ""; // empty indicates missing
@@ -45,11 +46,13 @@ export default function DashboardMap({
   snapToRoads = true,
   snapProfile = "cycling",
   snapMode = "auto",
+  onDistanceChange,
 }: DashboardMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const startMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const endMarkerRef = useRef<mapboxgl.Marker | null>(null);
+	const deviceMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [liveRoute, setLiveRoute] = useState<LngLatTuple[] | null>(null);
   const [livePoint, setLivePoint] = useState<LngLatTuple | null>(null);
   const centeredOnceRef = useRef(false);
@@ -87,14 +90,59 @@ export default function DashboardMap({
       setLiveRoute(tele.coords);
       setLivePoint(tele.coords[tele.coords.length - 1]);
       setLastFixTs(tele.lastFixTs);
+      try { onDistanceChange?.(tele.distanceKm); } catch {}
     } else {
       setLiveRoute(null);
       setLivePoint(null);
       setLastFixTs(null);
+      try { onDistanceChange?.(0); } catch {}
     }
   }, [tele.coords, tele.lastFixTs]);
 
-  // Removed 'last' single-point subscription; rely solely on telemetry stream for location
+	// Prefer live distance from telemetry for the map's distance display
+	const distanceKmDisplay = tele?.distanceKm ?? distanceKm;
+
+	// If deviceId is provided, fetch the latest single-point once (like admin map) to seed location
+	useEffect(() => {
+		const map = mapRef.current;
+		if (!map) return;
+		if (!deviceId) return;
+
+		(async () => {
+			try {
+				const base = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+				const res = await fetch(`${base}/tracker/last?deviceId=${encodeURIComponent(String(deviceId))}`, {
+					cache: 'no-store',
+					credentials: 'omit'
+				});
+				const json = await res.json();
+				const v = json?.data || null;
+				if (!v) return;
+				const lat = Number(v.lat);
+				const lng = Number(v.lng);
+				if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+				if (!deviceMarkerRef.current) {
+					const el = document.createElement("div");
+					el.title = String(deviceId);
+					el.style.width = "12px";
+					el.style.height = "12px";
+					el.style.borderRadius = "9999px";
+					el.style.background = "#2563eb";
+					el.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.35)";
+					deviceMarkerRef.current = new mapboxgl.Marker({ element: el as any, anchor: "bottom" }).setLngLat([lng, lat]).addTo(map);
+				} else {
+					try { deviceMarkerRef.current.setLngLat([lng, lat]); } catch {}
+				}
+				setLivePoint([lng, lat]);
+				if (typeof v?.ts === "number") setLastFixTs(v.ts);
+				if (!centeredOnceRef.current) {
+					centeredOnceRef.current = true;
+					try { map.flyTo({ center: [lng, lat], zoom: Math.max(zoom, 15) }); } catch {}
+				}
+			} catch {}
+		})();
+	}, [deviceId]);
 
   // Snap the live route to roads using Mapbox Map Matching (debounced and chunked)
   useEffect(() => {
@@ -482,7 +530,7 @@ export default function DashboardMap({
       >
         <span style={{ width: 8, height: 8, borderRadius: 9999, background: "#22c55e" }} />
         <span style={{ fontWeight: 700 }}>Distance Travelled Today:</span>
-        <span style={{ color: "#16a34a", fontWeight: 900 }}>{distanceKm.toFixed(1)} km</span>
+        <span style={{ color: "#16a34a", fontWeight: 900 }}>{distanceKmDisplay.toFixed(1)} km</span>
       </div>
 
       <div

@@ -14,6 +14,8 @@ interface Bike {
   applications?: any[];
   latitude?: number;
   longitude?: number;
+	deviceId?: string;
+	DEVICE_ID?: string;
 }
 
 export default function AdminBikesPage() {
@@ -711,8 +713,14 @@ export default function AdminBikesPage() {
                       </div>
                     </div>
                   )}
-                  <a
-                    href={`/admin/bikes/map?label=${encodeURIComponent(bike.name)}${typeof bike.latitude === 'number' && typeof bike.longitude === 'number' ? `&lat=${encodeURIComponent(bike.latitude)}&lng=${encodeURIComponent(bike.longitude)}` : ''}`}
+					<a
+						href={(() => {
+							const devId = String((bike as any).deviceId || (bike as any).DEVICE_ID || '').trim();
+							if (devId) {
+								return `/admin/bikes/map?deviceId=${encodeURIComponent(devId)}`;
+							}
+							return `/admin/bikes/map?label=${encodeURIComponent(bike.name)}${typeof bike.latitude === 'number' && typeof bike.longitude === 'number' ? `&lat=${encodeURIComponent(bike.latitude)}&lng=${encodeURIComponent(bike.longitude)}` : ''}`;
+						})()}
                     onClick={e => {
                       e.stopPropagation();
                     }}
