@@ -26,6 +26,8 @@ export type DashboardMapProps = {
   snapProfile?: "cycling" | "driving" | "walking"; // map matching profile
   snapMode?: "auto" | "directions" | "off"; // snapping strategy
   onDistanceChange?: (km: number) => void; // emit live distance
+  onWeeklyUpdate?: (data: { day: string; distance: number; calories: number; co2: number }[]) => void;
+  onPersonalUpdate?: (stats: { longestRideKm: number; fastestSpeedKmh: number }) => void;
 };
 
 const FALLBACK_TOKEN = ""; // empty indicates missing
@@ -47,6 +49,8 @@ export default function DashboardMap({
   snapProfile = "cycling",
   snapMode = "auto",
   onDistanceChange,
+  onWeeklyUpdate,
+  onPersonalUpdate,
 }: DashboardMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -143,6 +147,81 @@ export default function DashboardMap({
 			} catch {}
 		})();
 	}, [deviceId]);
+
+  // Secondary subscription used to compute weekly/personal metrics from timestamped telemetry
+  useEffect(() => {
+    if (!telemetryPath) return;
+    let off: (() => void) | null = null;
+    try {
+      const q = rtdbQuery(dbRef(rtdb, telemetryPath), orderByKey());
+      off = onValue(q as any, (snap) => {
+        const obj = (snap as any)?.val?.() ?? (snap as any)?.val ?? null;
+        if (!obj || typeof obj !== "object") return;
+        const keys = Object.keys(obj).sort();
+        type Pt = { lng: number; lat: number; ts: number };
+        const pts: Pt[] = [];
+        for (const k of keys) {
+          const v = obj[k];
+          const lat = Number(v?.lat ?? v?.latitude);
+          const lng = Number(v?.lng ?? v?.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+          let ts = Number(k);
+          if (!(Number.isFinite(ts) && ts > 1e9)) ts = Number(v?.ts ?? v?.timestamp ?? v?.time ?? Date.now());
+          pts.push({ lng, lat, ts: ts < 2_000_000_000 ? ts * 1000 : ts });
+        }
+        if (pts.length < 2) return;
+
+        const toRad = (d: number) => (d * Math.PI) / 180;
+        const havKm = (a: Pt, b: Pt) => {
+          const R = 6371;
+          const dLat = toRad(b.lat - a.lat);
+          const dLng = toRad(b.lng - a.lng);
+          const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+          const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+          return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+        };
+
+        // Group by date (YYYY-MM-DD)
+        const groups: Record<string, number> = {};
+        for (let i = 1; i < pts.length; i++) {
+          const a = pts[i - 1], b = pts[i];
+          const dayA = new Date(a.ts).toISOString().slice(0, 10);
+          const dayB = new Date(b.ts).toISOString().slice(0, 10);
+          if (dayA !== dayB) continue;
+          const km = havKm(a, b);
+          groups[dayA] = (groups[dayA] || 0) + km;
+        }
+
+        // Weekly array Mon..Sun of last 7 days
+        const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const MET = 8.0, WEIGHT_KG = 70, SPEED_KMH = 16;
+        const weekly: { day: string; distance: number; calories: number; co2: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+          const key = d.toISOString().slice(0, 10);
+          const dist = Number((groups[key] || 0).toFixed(2));
+          const hours = dist / SPEED_KMH;
+          const kcal = Math.round(MET * WEIGHT_KG * hours);
+          const co2 = Number((dist * 7.5 * 2.31 / 100).toFixed(2));
+          weekly.push({ day: dayNames[d.getDay()], distance: dist, calories: kcal, co2 });
+        }
+        try { onWeeklyUpdate?.(weekly); } catch {}
+
+        // Personal: longest ride and fastest speed
+        let longest = 0;
+        for (const k of Object.keys(groups)) longest = Math.max(longest, groups[k] || 0);
+        let fastest = 0;
+        for (let i = 1; i < pts.length; i++) {
+          const a = pts[i - 1], b = pts[i];
+          const dtH = Math.max(1e-6, (b.ts - a.ts) / (1000 * 60 * 60));
+          const spd = havKm(a, b) / dtH;
+          if (spd < 60) fastest = Math.max(fastest, spd);
+        }
+        try { onPersonalUpdate?.({ longestRideKm: Number(longest.toFixed(1)), fastestSpeedKmh: Number(fastest.toFixed(1)) }); } catch {}
+      });
+    } catch {}
+    return () => { try { off?.(); } catch {} };
+  }, [telemetryPath, onWeeklyUpdate, onPersonalUpdate]);
 
   // Snap the live route to roads using Mapbox Map Matching (debounced and chunked)
   useEffect(() => {

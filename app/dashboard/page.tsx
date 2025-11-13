@@ -421,160 +421,167 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-container">
-      {/* Main Map Section */}
-      <div className="map-section">
-        <DashboardMap
-          distanceKm={distanceKm}
-          height={320}
-          bikeId={assignedBike?.bikeId}
-          deviceId={assignedBike?.deviceId || undefined}
-          onDistanceChange={(km) => setDistanceKm(km)}
-          trailPointLimit={500}
-          snapToRoads
-          snapProfile="cycling"
-          snapMode="directions"
-        />
-      </div>
-
-      {/* Metrics Cards Row */}
-      <div className="metrics-row">
-        {/* CO2 Saved Card */}
-        <div className="metric-card co2-card">
-          <div className="metric-icon">🌱</div>
-          <div className="metric-center-content">
-            <div className="metric-label">CO₂ Saved</div>
-            <CircularProgress 
-              value={co2SavedKg} 
-              max={5} 
-              color="#22c55e" 
-              size={100} 
-              unit="kg"
-              goal={goals.co2}
+      <div className="layout">
+        {/* Left: Map takes the whole left half */}
+        <div className="left-col">
+          <div className="map-section">
+            <DashboardMap
+              distanceKm={distanceKm}
+              height={"80vh"}
+              bikeId={assignedBike?.bikeId}
+              deviceId={assignedBike?.deviceId || undefined}
+              onDistanceChange={(km) => setDistanceKm(km)}
+              onWeeklyUpdate={(w) => setWeeklyData(w)}
+              onPersonalUpdate={(p) => { setLongestRide(p.longestRideKm); setFastestSpeed(p.fastestSpeedKmh); }}
+              trailPointLimit={500}
+              snapToRoads
+              snapProfile="cycling"
+              snapMode="directions"
             />
           </div>
         </div>
 
-        {/* Calories Burned Card */}
-        <div className="metric-card calories-card">
-          <div className="metric-icon">🔥</div>
-          <div className="metric-center-content">
-            <div className="metric-label">Calories Burned</div>
-            <CircularProgress 
-              value={caloriesBurned} 
-              max={1000} 
-              color="#f97316" 
-              size={100} 
-              unit="kcal"
-              goal={goals.calories}
-            />
-          </div>
-        </div>
-
-        {/* Kilometers Biked Card */}
-        <div className="metric-card distance-card">
-          <div className="metric-icon">🚴‍♂️</div>
-          <div className="metric-center-content">
-            <div className="metric-label">Kilometers Biked</div>
-            <CircularProgress 
-              value={distanceKm} 
-              max={25} 
-              color="#3b82f6" 
-              size={100} 
-              unit="km"
-              goal={goals.distance}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="bottom-section">
-        {/* Weekly Activity */}
-        <div className="activity-card">
-          <h3>Weekly Activity</h3>
-          <WeeklyActivity data={weeklyData} />
-        </div>
-
-        {/* Personal Bests & Goals */}
-        <div className="personal-bests-card">
-          <div className="bests-header">
-            <h3>Personal Bests & Goals</h3>
-            <button 
-              className="settings-button"
-              onClick={() => setShowGoalSettings(!showGoalSettings)}
-              title="Set Goals"
-            >
-              ⚙️
-            </button>
-          </div>
-          
-          {showGoalSettings && (
-            <div className="goal-settings">
-              <h4>Set Your Goals</h4>
-              <div className="goal-input-group">
-                <label>CO₂ Saved (kg):</label>
-                <input
-                  type="number"
-                  value={goals.co2}
-                  onChange={(e) => setGoals({...goals, co2: parseFloat(e.target.value) || 0})}
-                  min="0"
-                  step="0.1"
-                />
-              </div>
-              <div className="goal-input-group">
-                <label>Calories (kcal):</label>
-                <input
-                  type="number"
-                  value={goals.calories}
-                  onChange={(e) => setGoals({...goals, calories: parseFloat(e.target.value) || 0})}
-                  min="0"
-                  step="10"
-                />
-              </div>
-              <div className="goal-input-group">
-                <label>Distance (km):</label>
-                <input
-                  type="number"
-                  value={goals.distance}
-                  onChange={(e) => setGoals({...goals, distance: parseFloat(e.target.value) || 0})}
-                  min="0"
-                  step="0.1"
+        {/* Right: Cards stacked */}
+        <div className="right-col">
+          <div className="metrics-row">
+            {/* CO2 Saved Card */}
+            <div className="metric-card co2-card">
+              <div className="metric-icon">🌱</div>
+              <div className="metric-center-content">
+                <div className="metric-label">CO₂ Saved</div>
+                <CircularProgress 
+                  value={co2SavedKg} 
+                  max={5} 
+                  color="#22c55e" 
+                  size={100} 
+                  unit="kg"
+                  goal={goals.co2}
                 />
               </div>
             </div>
-          )}
-          
-          <div className="best-item">
-            <span>Longest Ride:</span>
-            <span className="best-value">{longestRide} km</span>
-          </div>
-          <div className="best-item">
-            <span>Fastest Speed:</span>
-            <span className="best-value">{fastestSpeed} km/h</span>
-          </div>
-          
-          <div className="goal-progress-section">
-            <h4>Today's Progress</h4>
-            <div className="goal-progress-item">
-              <span>CO₂ Goal:</span>
-              <span className="progress-text">
-                {co2SavedKg.toFixed(1)} / {goals.co2} kg 
-                ({Math.round((co2SavedKg / goals.co2) * 100)}%)
-              </span>
+
+            {/* Calories Burned Card */}
+            <div className="metric-card calories-card">
+              <div className="metric-icon">🔥</div>
+              <div className="metric-center-content">
+                <div className="metric-label">Calories Burned</div>
+                <CircularProgress 
+                  value={caloriesBurned} 
+                  max={1000} 
+                  color="#f97316" 
+                  size={100} 
+                  unit="kcal"
+                  goal={goals.calories}
+                />
+              </div>
             </div>
-            <div className="goal-progress-item">
-              <span>Calories Goal:</span>
-              <span className="progress-text">
-                {caloriesBurned} / {goals.calories} kcal 
-                ({Math.round((caloriesBurned / goals.calories) * 100)}%)
-              </span>
+
+            {/* Kilometers Biked Card */}
+            <div className="metric-card distance-card">
+              <div className="metric-icon">🚴‍♂️</div>
+              <div className="metric-center-content">
+                <div className="metric-label">Kilometers Biked</div>
+                <CircularProgress 
+                  value={distanceKm} 
+                  max={25} 
+                  color="#3b82f6" 
+                  size={100} 
+                  unit="km"
+                  goal={goals.distance}
+                />
+              </div>
             </div>
-            <div className="goal-progress-item">
-              <span>Distance Goal:</span>
-              <span className="progress-text">
-                {distanceKm.toFixed(1)} / {goals.distance} km 
-                ({Math.round((distanceKm / goals.distance) * 100)}%)
-              </span>
+          </div>
+
+          <div className="stack-card">
+            <div className="activity-card">
+              <h3>Weekly Activity</h3>
+              <WeeklyActivity data={weeklyData} />
+            </div>
+          </div>
+
+          <div className="stack-card">
+            <div className="personal-bests-card">
+              <div className="bests-header">
+                <h3>Personal Bests & Goals</h3>
+                <button 
+                  className="settings-button"
+                  onClick={() => setShowGoalSettings(!showGoalSettings)}
+                  title="Set Goals"
+                >
+                  ⚙️
+                </button>
+              </div>
+              
+              {showGoalSettings && (
+                <div className="goal-settings">
+                  <h4>Set Your Goals</h4>
+                  <div className="goal-input-group">
+                    <label>CO₂ Saved (kg):</label>
+                    <input
+                      type="number"
+                      value={goals.co2}
+                      onChange={(e) => setGoals({...goals, co2: parseFloat(e.target.value) || 0})}
+                      min="0"
+                      step="0.1"
+                    />
+                  </div>
+                  <div className="goal-input-group">
+                    <label>Calories (kcal):</label>
+                    <input
+                      type="number"
+                      value={goals.calories}
+                      onChange={(e) => setGoals({...goals, calories: parseFloat(e.target.value) || 0})}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
+                  <div className="goal-input-group">
+                    <label>Distance (km):</label>
+                    <input
+                      type="number"
+                      value={goals.distance}
+                      onChange={(e) => setGoals({...goals, distance: parseFloat(e.target.value) || 0})}
+                      min="0"
+                      step="0.1"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <div className="best-item">
+                <span>Longest Ride:</span>
+                <span className="best-value">{longestRide} km</span>
+              </div>
+              <div className="best-item">
+                <span>Fastest Speed:</span>
+                <span className="best-value">{fastestSpeed} km/h</span>
+              </div>
+              
+              <div className="goal-progress-section">
+                <h4>Today's Progress</h4>
+                <div className="goal-progress-item">
+                  <span>CO₂ Goal:</span>
+                  <span className="progress-text">
+                    {co2SavedKg.toFixed(1)} / {goals.co2} kg 
+                    ({Math.round((co2SavedKg / goals.co2) * 100)}%)
+                  </span>
+                </div>
+                <div className="goal-progress-item">
+                  <span>Calories Goal:</span>
+                  <span className="progress-text">
+                    {caloriesBurned} / {goals.calories} kcal 
+                    ({Math.round((caloriesBurned / goals.calories) * 100)}%)
+                  </span>
+                </div>
+                <div className="goal-progress-item">
+                  <span>Distance Goal:</span>
+                  <span className="progress-text">
+                    {distanceKm.toFixed(1)} / {goals.distance} km 
+                    ({Math.round((distanceKm / goals.distance) * 100)}%)
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -585,9 +592,7 @@ export default function DashboardPage() {
           min-height: 100vh;
           background: url('/car-rental-app.jpg') center center / cover no-repeat fixed;
           padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
+          display: block;
           position: relative;
         }
 
@@ -630,32 +635,51 @@ export default function DashboardPage() {
           z-index: 1;
         }
 
-        .map-section {
-          width: 100%;
-          max-width: 800px;
+        .layout {
+          display: grid;
+          grid-template-columns: 55% 45%;
+          align-items: stretch;
+          gap: 20px;
+          max-width: 1600px;
           margin: 0 auto;
         }
 
-        .metrics-row {
+        .left-col {
+          min-width: 0;
+          height: 100%;
+          min-width: 0;
+        }
+        .right-col {
           display: flex;
+          flex-direction: column;
           gap: 20px;
-          justify-content: center;
-          flex-wrap: wrap;
-          max-width: 1000px;
-          margin: 0 auto;
+          height: 100%;
+          min-width: 0;
+        }
+
+        .map-section {
+          width: 100%;
+          height: 100%;
+        }
+
+        .metrics-row {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          width: 100%;
         }
 
         .metric-card {
           background: var(--card-bg);
           border-radius: 20px;
-          padding: 32px 24px;
+          padding: 24px 20px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 24px;
-          min-width: 280px;
-          flex: 1;
+          min-width: 0;
+          width: 100%;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
           position: relative;
         }
@@ -686,13 +710,7 @@ export default function DashboardPage() {
           text-align: center;
         }
 
-        .bottom-section {
-          display: flex;
-          gap: 20px;
-          max-width: 800px;
-          margin: 0 auto;
-          width: 100%;
-        }
+        .stack-card { width: 100%; }
 
         .activity-card {
           background: var(--card-bg);
@@ -852,19 +870,19 @@ export default function DashboardPage() {
         }
 
         /* Mobile Responsive */
+        @media (max-width: 1024px) {
+          .layout { display: flex; flex-direction: column; }
+          .metrics-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
         @media (max-width: 768px) {
           .dashboard-container {
             padding: 12px;
             gap: 16px;
           }
 
-          .metrics-row {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-            margin: 0;
-            max-width: 100%;
-          }
+          .layout { display: flex; flex-direction: column; }
+          .metrics-row { grid-template-columns: 1fr; }
 
           .metric-card {
             min-width: unset;
