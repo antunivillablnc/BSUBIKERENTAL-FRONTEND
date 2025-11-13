@@ -433,7 +433,12 @@ export default function DashboardPage() {
               deviceId={assignedBike?.deviceId || undefined}
               onDistanceChange={(km) => setDistanceKm(km)}
               onWeeklyUpdate={(w) => setWeeklyData(w)}
-              onPersonalUpdate={(p) => { setLongestRide(p.longestRideKm); setFastestSpeed(p.fastestSpeedKmh); }}
+              onPersonalUpdate={(p) => {
+                // Only raise values if live telemetry detects a new personal best.
+                // Avoid overwriting accurate backend stats with partial live estimates.
+                setLongestRide((prev) => Math.max(prev, Number(p.longestRideKm || 0)));
+                setFastestSpeed((prev) => Math.max(prev, Number(p.fastestSpeedKmh || 0)));
+              }}
               trailPointLimit={500}
               snapToRoads
               snapProfile="cycling"
