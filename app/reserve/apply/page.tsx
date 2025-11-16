@@ -155,6 +155,43 @@ export default function BikeRentalApplication() {
   const [itrPreview, setItrPreview] = useState<string | null>(null);
 
   useEffect(() => {
+    // Auto-fill user data from localStorage on component mount
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setForm(f => {
+            const updates: any = {};
+            // Auto-fill email if available
+            if (user.email && !f.email) {
+              updates.email = user.email;
+            }
+            // Auto-fill name if available and not already filled
+            if (user.name && !f.firstName && !f.lastName) {
+              // Split full name into first and last name
+              const nameParts = user.name.trim().split(/\s+/);
+              if (nameParts.length >= 2) {
+                // Last name is the last part, first name is everything else
+                updates.lastName = nameParts[nameParts.length - 1];
+                updates.firstName = nameParts.slice(0, -1).join(' ');
+              } else if (nameParts.length === 1) {
+                // Only one name part, use it as first name
+                updates.firstName = nameParts[0];
+              }
+            }
+            return { ...f, ...updates };
+          });
+        } catch (e) {
+          // Silently fail if user data can't be parsed
+          console.error('Failed to parse user data:', e);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     fetch("/philippines.json")
       .then(res => res.json())
       .then(data => {
