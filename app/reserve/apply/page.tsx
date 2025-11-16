@@ -578,10 +578,10 @@ export default function BikeRentalApplication() {
             </ul>
             <hr style={{ margin: '20px 0', border: 'none', borderTop: '1.5px solid var(--border-color)' }} />
             <h3 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 18, marginBottom: 12, textAlign: 'center', textTransform: 'uppercase' }}>Certification</h3>
-            <p style={{ marginBottom: 12, lineHeight: 1.7 }}>
+            <p style={{ marginBottom: 12, lineHeight: 1.7, textAlign: 'justify' }}>
               I hereby certify that the information provided in this application is true, accurate, and complete to the best of my knowledge. I understand that any misrepresentation of facts shall result in the denial of my application and could lead to further disciplinary action by the University.
             </p>
-            <p style={{ marginBottom: 18, lineHeight: 1.7 }}>
+            <p style={{ marginBottom: 18, lineHeight: 1.7, textAlign: 'justify' }}>
               I understand that the University is authorized to process my personal and sensitive personal information pursuant to the relevant provisions on lawful processing as provided in Sections 4 paragraphs 12 and 13 of the Data Privacy Act of 2012. I consent to the processing of my personal information contained in this form and other related documents submitted for my application for the use of the University bicycle with the purpose of enabling the University and all relevant Offices to verify my identity, prevent fraud, process my application, and evaluate whether or not I am eligible to avail the use of University bicycle.
             </p>
             <p style={{ color: 'var(--accent-color)', fontWeight: 600, marginTop: 18, marginBottom: 0 }}>Please read all terms carefully before submitting your application.</p>
