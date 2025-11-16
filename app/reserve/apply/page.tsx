@@ -145,14 +145,8 @@ export default function BikeRentalApplication() {
   const [municipalityList, setMunicipalityList] = useState<string[]>([]);
   const [barangayList, setBarangayList] = useState<string[]>([]);
   const [agreed, setAgreed] = useState(false);
-  const [indigencyFile, setIndigencyFile] = useState<File | null>(null);
-  const [indigencyPreview, setIndigencyPreview] = useState<string | null>(null);
   const [gwaFile, setGwaFile] = useState<File | null>(null);
   const [gwaPreview, setGwaPreview] = useState<string | null>(null);
-  const [ecaFile, setEcaFile] = useState<File | null>(null);
-  const [ecaPreview, setEcaPreview] = useState<string | null>(null);
-  const [itrFile, setItrFile] = useState<File | null>(null);
-  const [itrPreview, setItrPreview] = useState<string | null>(null);
 
   useEffect(() => {
     // Auto-fill user data from localStorage on component mount
@@ -247,16 +241,6 @@ export default function BikeRentalApplication() {
     } else if (name === "college") {
       // Reset program when college changes to ensure a valid selection
       setForm(f => ({ ...f, college: value, program: "" }));
-    } else if (type === "file" && name === "indigencyFile") {
-      const file = (e.target as HTMLInputElement).files?.[0] || null;
-      setIndigencyFile(file);
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setIndigencyPreview(reader.result as string);
-        reader.readAsDataURL(file);
-      } else {
-        setIndigencyPreview(null);
-      }
     } else if (type === "file" && name === "gwaFile") {
       const file = (e.target as HTMLInputElement).files?.[0] || null;
       setGwaFile(file);
@@ -266,26 +250,6 @@ export default function BikeRentalApplication() {
         reader.readAsDataURL(file);
       } else {
         setGwaPreview(null);
-      }
-    } else if (type === "file" && name === "ecaFile") {
-      const file = (e.target as HTMLInputElement).files?.[0] || null;
-      setEcaFile(file);
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => setEcaPreview(reader.result as string);
-        reader.readAsDataURL(file);
-      } else {
-        setEcaPreview(null);
-      }
-    } else if (type === "file" && name === "itrFile") {
-      const file = (e.target as HTMLInputElement).files?.[0] || null;
-      setItrFile(file);
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => setItrPreview(reader.result as string);
-        reader.readAsDataURL(file);
-      } else {
-        setItrPreview(null);
       }
     } else {
       setForm(f => ({ ...f, [name]: value }));
@@ -302,28 +266,13 @@ export default function BikeRentalApplication() {
     setError("");
     setSuccess(false);
     // Basic validation
-    if (!form.lastName || !form.firstName || !form.srCode || !form.sex || !form.dateOfBirth || !form.phoneNumber || !form.email || !form.college || !form.program || !form.houseNo || !form.streetName || !form.barangay || !form.municipality || !form.province || !form.distanceFromCampus || !form.familyIncome || !form.intendedDuration) {
+    if (!form.lastName || !form.firstName || !form.srCode || !form.sex || !form.dateOfBirth || !form.phoneNumber || !form.email || !form.college || !form.program || !form.extracurricularActivities || !form.houseNo || !form.streetName || !form.barangay || !form.municipality || !form.province || !form.distanceFromCampus || !form.familyIncome || !form.intendedDuration) {
       setError("Please fill in all required fields.");
-      setSubmitting(false);
-      return;
-    }
-    if (!indigencyFile) {
-      setError("Please upload your Certificate of Indigency.");
       setSubmitting(false);
       return;
     }
     if (!gwaFile) {
       setError("Please upload your GWA (PDF or image).");
-      setSubmitting(false);
-      return;
-    }
-    if (!ecaFile) {
-      setError("Please upload your Extracurricular Activities proof (PDF or image).");
-      setSubmitting(false);
-      return;
-    }
-    if (!itrFile) {
-      setError("Please upload your ITR (PDF or image).");
       setSubmitting(false);
       return;
     }
@@ -350,10 +299,7 @@ export default function BikeRentalApplication() {
       if (userId) {
         formData.append("userId", userId);
       }
-      formData.append("indigencyFile", indigencyFile);
       formData.append("gwaFile", gwaFile);
-      formData.append("ecaFile", ecaFile);
-      formData.append("itrFile", itrFile);
       const res = await fetch(`${getApiBaseUrl()}/applications`, {
         method: "POST",
         credentials: 'include',
@@ -362,14 +308,8 @@ export default function BikeRentalApplication() {
       if (res.ok) {
         setSuccess(true);
         setForm(initialForm);
-        setIndigencyFile(null);
-        setIndigencyPreview(null);
         setGwaFile(null);
         setGwaPreview(null);
-        setEcaFile(null);
-        setEcaPreview(null);
-        setItrFile(null);
-        setItrPreview(null);
       } else {
         let message = "Submission failed. Please try again.";
         try {
@@ -496,61 +436,7 @@ export default function BikeRentalApplication() {
             </div>
           </div>
 
-          {/* Required Documents */}
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, margin: '12px 0 6px 0' }}>Required Documents</div>
           <div className="doc-grid" style={docGridStyle}>
-            <div>
-              <label style={labelStyle}>Certificate of Indigency</label>
-              <label className="file-input" htmlFor="indigencyFile" style={{
-                ...inputStyle,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                cursor: 'pointer',
-                marginBottom: 0,
-                height: 44,
-                borderRadius: 8,
-                fontSize: 16,
-                color: indigencyFile ? 'var(--text-primary)' : 'var(--text-muted)',
-                overflow: 'hidden',
-                position: 'relative',
-                maxWidth: 320, // Prevents the input from stretching
-              }}>
-                <span style={{
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  padding: '6px 16px',
-                  marginRight: 12,
-                  fontSize: 15,
-                  border: 'none',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}>Choose File</span>
-                <span style={{ fontSize: 15, color: indigencyFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
-                  {indigencyFile ? indigencyFile.name : 'No file chosen'}
-                </span>
-                <input
-                  id="indigencyFile"
-                  type="file"
-                  name="indigencyFile"
-                  accept="application/pdf,image/*"
-                  onChange={handleChange}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0,
-                    cursor: 'pointer',
-                  }}
-                  required
-                />
-              </label>
-            </div>
             <div>
               <label style={labelStyle}>General Weighted Average</label>
               <label className="file-input" htmlFor="gwaFile" style={{
@@ -596,92 +482,15 @@ export default function BikeRentalApplication() {
               </label>
             </div>
             <div>
-              <label style={labelStyle}>Extra Curricular Activities</label>
-              <label className="file-input" htmlFor="ecaFile" style={{
-                ...inputStyle,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                cursor: 'pointer',
-                marginBottom: 0,
-                height: 44,
-                borderRadius: 8,
-                fontSize: 16,
-                color: ecaFile ? 'var(--text-primary)' : 'var(--text-muted)',
-                overflow: 'hidden',
-                position: 'relative',
-                maxWidth: 320,
-              }}>
-                <span style={{
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  padding: '6px 16px',
-                  marginRight: 12,
-                  fontSize: 15,
-                  border: 'none',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}>Choose File</span>
-                <span style={{ fontSize: 15, color: ecaFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
-                  {ecaFile ? ecaFile.name : 'No file chosen'}
-                </span>
-                <input
-                  id="ecaFile"
-                  type="file"
-                  name="ecaFile"
-                  accept="application/pdf,image/*"
-                  onChange={handleChange}
-                  style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
-                  required
-                />
-              </label>
-            </div>
-            <div>
-              <label style={labelStyle}>Income Tax Return</label>
-              <label className="file-input" htmlFor="itrFile" style={{
-                ...inputStyle,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                cursor: 'pointer',
-                marginBottom: 0,
-                height: 44,
-                borderRadius: 8,
-                fontSize: 16,
-                color: itrFile ? 'var(--text-primary)' : 'var(--text-muted)',
-                overflow: 'hidden',
-                position: 'relative',
-                maxWidth: 320,
-              }}>
-                <span style={{
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
-                  fontWeight: 600,
-                  borderRadius: 6,
-                  padding: '6px 16px',
-                  marginRight: 12,
-                  fontSize: 15,
-                  border: 'none',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}>Choose File</span>
-                <span style={{ fontSize: 15, color: itrFile ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, display: 'inline-block' }}>
-                  {itrFile ? itrFile.name : 'No file chosen'}
-                </span>
-                <input
-                  id="itrFile"
-                  type="file"
-                  name="itrFile"
-                  accept="application/pdf,image/*"
-                  onChange={handleChange}
-                  style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
-                  required
-                />
-              </label>
+              <label style={labelStyle}>Extra Curricular Activities*</label>
+              <textarea
+                name="extracurricularActivities"
+                value={form.extracurricularActivities}
+                onChange={handleChange}
+                required
+                style={inputStyle}
+                placeholder="List your extracurricular activities"
+              />
             </div>
           </div>
           
@@ -767,6 +576,14 @@ export default function BikeRentalApplication() {
               <li>You are responsible for reporting any damage or issues immediately.</li>
               <li>Loss or damage due to negligence may result in penalties.</li>
             </ul>
+            <hr style={{ margin: '20px 0', border: 'none', borderTop: '1.5px solid var(--border-color)' }} />
+            <h3 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 18, marginBottom: 12, textAlign: 'center', textTransform: 'uppercase' }}>Certification</h3>
+            <p style={{ marginBottom: 12, lineHeight: 1.7 }}>
+              I hereby certify that the information provided in this application is true, accurate, and complete to the best of my knowledge. I understand that any misrepresentation of facts shall result in the denial of my application and could lead to further disciplinary action by the University.
+            </p>
+            <p style={{ marginBottom: 18, lineHeight: 1.7 }}>
+              I understand that the University is authorized to process my personal and sensitive personal information pursuant to the relevant provisions on lawful processing as provided in Sections 4 paragraphs 12 and 13 of the Data Privacy Act of 2012. I consent to the processing of my personal information contained in this form and other related documents submitted for my application for the use of the University bicycle with the purpose of enabling the University and all relevant Offices to verify my identity, prevent fraud, process my application, and evaluate whether or not I am eligible to avail the use of University bicycle.
+            </p>
             <p style={{ color: 'var(--accent-color)', fontWeight: 600, marginTop: 18, marginBottom: 0 }}>Please read all terms carefully before submitting your application.</p>
             <div style={{ marginTop: 18, marginBottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -784,15 +601,6 @@ export default function BikeRentalApplication() {
               {!agreed && <div style={{ color: '#b22222', fontWeight: 500, fontSize: 14, marginTop: 2 }}>You must accept the agreement to fill out the application.</div>}
             </div>
           </div>
-          <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid var(--border-color)' }} />
-          <h2 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How will the bike be maintained?</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 15, marginBottom: 16 }}>
-            All bikes are regularly checked and maintained by the BSU Bike Rental team. Please report any issues immediately after your ride.
-          </p>
-          <h2 style={{ color: 'var(--accent-color)', fontWeight: 700, fontSize: 20, marginBottom: 10 }}>How to find your bike?</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-            After your application is approved, you will receive instructions on where to pick up your bike on campus.
-          </p>
         </div>
       </div>
       <style jsx global>{`

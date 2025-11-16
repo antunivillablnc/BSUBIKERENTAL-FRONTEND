@@ -1242,7 +1242,6 @@ export default function AdminApplicationsPage() {
                   {/* Documents - only for students */}
                   {selectedApp.applicationType !== 'staff' && (
                     <div style={{ marginTop: 16 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Documents</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
                         {selectedApp.certificatePath && (
                           <DocCard title="Certificate of Indigency" url={selectedApp.certificatePath} />
