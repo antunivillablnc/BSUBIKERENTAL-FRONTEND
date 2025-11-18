@@ -15,6 +15,27 @@ interface Bike {
   status: string;
 }
 
+// Normalize a tracker device identifier to the GPS history convention.
+// Legacy history keys are shaped like "BIKE_TRACKER_001", even if the
+// live device id is "bike_tracker_001" or just "001".
+function normalizeHistoryDeviceId(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return undefined;
+  const upper = trimmed.toUpperCase();
+  if (upper.startsWith("BIKE_TRACKER_")) return upper;
+  const match = upper.match(/\d+/);
+  if (match) {
+    const n = Number.parseInt(match[0], 10);
+    if (Number.isFinite(n)) {
+      return `BIKE_TRACKER_${n.toString().padStart(3, "0")}`;
+    }
+  }
+  // Fallback: sanitize non-word characters
+  const safe = upper.replace(/[^\w]+/g, "_");
+  return safe || undefined;
+}
+
 export default function AdminBikesMapPage() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -337,8 +358,13 @@ export default function AdminBikesMapPage() {
     } catch {}
   };
 
-  // Subscribe via shared telemetry hook; build full trail and snap once (optional)
-  const telemetryPath = qDeviceId ? `tracker/devices/${String(qDeviceId)}/telemetry` : undefined;
+  // Subscribe via shared telemetry hook; build full trail and snap once (optional).
+  // Prefer the legacy GPS history RTDB tree when a deviceId is available:
+  //   GPS TRACKING HISTORY/devices/{deviceId}/telemetry
+  const historyDeviceId = normalizeHistoryDeviceId(qDeviceId);
+  const telemetryPath = historyDeviceId
+    ? `GPS TRACKING HISTORY/devices/${historyDeviceId}/telemetry`
+    : undefined;
   const tele = useTelemetryRoute(telemetryPath);
   useEffect(() => {
     const map = mapRef.current;

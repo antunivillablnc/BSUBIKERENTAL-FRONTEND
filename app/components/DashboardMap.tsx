@@ -32,6 +32,27 @@ export type DashboardMapProps = {
 
 const FALLBACK_TOKEN = ""; // empty indicates missing
 
+// Normalize a tracker device identifier to the GPS history convention.
+// Legacy history keys are shaped like "BIKE_TRACKER_001", even if the
+// live device id is "bike_tracker_001" or just "001".
+function normalizeHistoryDeviceId(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return undefined;
+  const upper = trimmed.toUpperCase();
+  if (upper.startsWith("BIKE_TRACKER_")) return upper;
+  const match = upper.match(/\d+/);
+  if (match) {
+    const n = Number.parseInt(match[0], 10);
+    if (Number.isFinite(n)) {
+      return `BIKE_TRACKER_${n.toString().padStart(3, "0")}`;
+    }
+  }
+  // Fallback: sanitize non-word characters
+  const safe = upper.replace(/[^\w]+/g, "_");
+  return safe || undefined;
+}
+
 export default function DashboardMap({
   distanceKm = 15.2,
   route,
@@ -74,10 +95,22 @@ export default function DashboardMap({
   // Prefer provided center, then latest live point, else neutral world center
   const defaultCenter: LngLatTuple = (center as any) || (livePoint as any) || [0, 0];
 
-  // Use shared telemetry hook: full history and timestamp ordering
-  const telemetryPath = deviceId
-    ? `tracker/devices/${deviceId}/telemetry`
-    : (bikeId ? `tracker/bikes/${bikeId}/telemetry` : (realtimePath || undefined));
+  // Use shared telemetry hook:
+  // - Prefer the legacy GPS history tree when a deviceId is available
+  //   (`GPS TRACKING HISTORY/devices/{deviceId}/telemetry` – where your
+  //   `bike_tracker_XXX` devices publish).
+  // - Fall back to bike‑scoped tracker history when only a bikeId is known
+  //   (`tracker/bikes/{bikeId}/telemetry`, populated by the backend when
+  //   device↔bike is linked).
+  // - Allow an explicit override via realtimePath for special cases.
+  const historyDeviceId = normalizeHistoryDeviceId(deviceId);
+  const telemetryPath =
+    realtimePath ||
+    (historyDeviceId
+      ? `GPS TRACKING HISTORY/devices/${historyDeviceId}/telemetry`
+      : bikeId
+      ? `tracker/bikes/${bikeId}/telemetry`
+      : undefined);
   const tele = useTelemetryRoute(telemetryPath);
   useEffect(() => {
     if (tele.coords && tele.coords.length) {
@@ -119,11 +152,13 @@ export default function DashboardMap({
 				if (!deviceMarkerRef.current) {
 					const el = document.createElement("div");
 					el.title = String(deviceId);
-					el.style.width = "12px";
-					el.style.height = "12px";
+					// Larger, high-contrast current-location marker
+					el.style.width = "18px";
+					el.style.height = "18px";
 					el.style.borderRadius = "9999px";
 					el.style.background = "#2563eb";
-					el.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.35)";
+					el.style.border = "2px solid #ffffff";
+					el.style.boxShadow = "0 0 0 5px rgba(37,99,235,0.55)";
 					deviceMarkerRef.current = new mapboxgl.Marker({ element: el as any, anchor: "bottom" }).setLngLat([lng, lat]).addTo(map);
 				} else {
 					try { deviceMarkerRef.current.setLngLat([lng, lat]); } catch {}
@@ -347,11 +382,11 @@ export default function DashboardMap({
     };
   }, [liveRoute, snapToRoads, snapProfile, token, trailPointLimit]);
 
-  // Update markers whenever liveRoute changes (no raw polyline)
+  // Update markers whenever liveRoute changes (supports single‑point traces too)
   useEffect(() => {
     const map = mapRef.current;
     const renderRoute = liveRoute;
-    if (!map || !renderRoute || renderRoute.length < 2) return;
+    if (!map || !renderRoute || renderRoute.length < 1) return;
 
     try {
       // Ensure any previous unsnapped line is removed
@@ -365,9 +400,9 @@ export default function DashboardMap({
         upsertCirclePoints(map as any, "trail-points", "trail-points", renderRoute as any, 3, "#22c55e");
       } catch {}
 
-      // Move start/end markers with route
+      // Move start/end markers with route (for a single point, both markers sit on that point)
       const start = renderRoute[0];
-      const end = renderRoute[renderRoute.length - 1];
+      const end = renderRoute[renderRoute.length - 1] ?? renderRoute[0];
       startMarkerRef.current?.setLngLat(start);
       endMarkerRef.current?.setLngLat(end);
 
@@ -466,18 +501,22 @@ export default function DashboardMap({
       const end = hasLine ? defaultRoute[defaultRoute.length - 1] : (livePoint || defaultRoute[0]);
 
       const startEl = document.createElement("div");
-      startEl.style.width = "12px";
-      startEl.style.height = "12px";
+      // Make the start-of-route marker more visible, but still secondary to the blue pin
+      startEl.style.width = "16px";
+      startEl.style.height = "16px";
       startEl.style.borderRadius = "9999px";
       startEl.style.background = "#22c55e";
-      startEl.style.boxShadow = "0 0 0 3px rgba(34,197,94,0.35)";
+      startEl.style.border = "2px solid #ffffff";
+      startEl.style.boxShadow = "0 0 0 4px rgba(34,197,94,0.5)";
 
       const endEl = document.createElement("div");
-      endEl.style.width = "12px";
-      endEl.style.height = "12px";
+      // Make the latest-point pin larger and more prominent
+      endEl.style.width = "18px";
+      endEl.style.height = "18px";
       endEl.style.borderRadius = "9999px";
-      endEl.style.background = "#ef4444";
-      endEl.style.boxShadow = "0 0 0 3px rgba(239,68,68,0.35)";
+      endEl.style.background = "#2563eb";
+      endEl.style.border = "2px solid #ffffff";
+      endEl.style.boxShadow = "0 0 0 5px rgba(37,99,235,0.55)";
 
       startMarkerRef.current?.remove();
       endMarkerRef.current?.remove();
