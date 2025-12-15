@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import apiClient from "@/lib/api";
+import { LuHouse, LuBike, LuLayoutDashboard } from "react-icons/lu";
 
 type Notification = {
   id: string;
@@ -742,9 +743,9 @@ export default function Navbar() {
   const showBadge = notifications.length > 0 && !notifDropdownOpen && (!!currentIdsSnapshot && currentIdsSnapshot !== seenIdsSnapshot);
 
   const navLinks = [
-    { href: "/home", label: "Home", icon: "🏠" },
-    { href: "/reserve", label: "Rent a Bike", icon: "🚲" },
-    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/home", label: "Home", icon: <LuHouse /> },
+    { href: "/reserve", label: "Rent a Bike", icon: <LuBike /> },
+    { href: "/dashboard", label: "Dashboard", icon: <LuLayoutDashboard /> },
   ];
 
   return (
@@ -818,7 +819,7 @@ export default function Navbar() {
                         }
                       }}
                   >
-                    <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
+                    <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
                     <span>{item.label}</span>
                   </Link>
                 ))}

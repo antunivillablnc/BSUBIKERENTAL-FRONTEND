@@ -92,8 +92,11 @@ export default function DashboardMap({
   // Do not use a hardcoded demo route; render only live or provided route
   const defaultRoute: LngLatTuple[] = (liveRoute || route) || [];
 
-  // Prefer provided center, then latest live point, else neutral world center
-  const defaultCenter: LngLatTuple = (center as any) || (livePoint as any) || [0, 0];
+  // School campus fallback coordinates
+  const SCHOOL_CAMPUS: LngLatTuple = [121.16301139616371, 13.956695316657788];
+
+  // Prefer provided center, then latest live point, else school campus
+  const defaultCenter: LngLatTuple = (center as any) || (livePoint as any) || SCHOOL_CAMPUS;
 
   // Use shared telemetry hook:
   // - Prefer the legacy GPS history tree when a deviceId is available
@@ -500,28 +503,39 @@ export default function DashboardMap({
       const start = hasLine ? defaultRoute[0] : (livePoint || defaultRoute[0]);
       const end = hasLine ? defaultRoute[defaultRoute.length - 1] : (livePoint || defaultRoute[0]);
 
-      const startEl = document.createElement("div");
-      // Make the start-of-route marker more visible, but still secondary to the blue pin
-      startEl.style.width = "16px";
-      startEl.style.height = "16px";
-      startEl.style.borderRadius = "9999px";
-      startEl.style.background = "#22c55e";
-      startEl.style.border = "2px solid #ffffff";
-      startEl.style.boxShadow = "0 0 0 4px rgba(34,197,94,0.5)";
+      // Only create markers if we have actual data (not just fallback to school campus)
+      const hasActualData = hasLine || livePoint;
+      
+      if (hasActualData) {
+        const startEl = document.createElement("div");
+        // Make the start-of-route marker more visible, but still secondary to the blue pin
+        startEl.style.width = "16px";
+        startEl.style.height = "16px";
+        startEl.style.borderRadius = "9999px";
+        startEl.style.background = "#22c55e";
+        startEl.style.border = "2px solid #ffffff";
+        startEl.style.boxShadow = "0 0 0 4px rgba(34,197,94,0.5)";
 
-      const endEl = document.createElement("div");
-      // Make the latest-point pin larger and more prominent
-      endEl.style.width = "18px";
-      endEl.style.height = "18px";
-      endEl.style.borderRadius = "9999px";
-      endEl.style.background = "#2563eb";
-      endEl.style.border = "2px solid #ffffff";
-      endEl.style.boxShadow = "0 0 0 5px rgba(37,99,235,0.55)";
+        const endEl = document.createElement("div");
+        // Make the latest-point pin larger and more prominent
+        endEl.style.width = "18px";
+        endEl.style.height = "18px";
+        endEl.style.borderRadius = "9999px";
+        endEl.style.background = "#2563eb";
+        endEl.style.border = "2px solid #ffffff";
+        endEl.style.boxShadow = "0 0 0 5px rgba(37,99,235,0.55)";
 
-      startMarkerRef.current?.remove();
-      endMarkerRef.current?.remove();
-      startMarkerRef.current = new mapboxgl.Marker(startEl).setLngLat(start).addTo(map);
-      endMarkerRef.current = new mapboxgl.Marker(endEl).setLngLat(end).addTo(map);
+        startMarkerRef.current?.remove();
+        endMarkerRef.current?.remove();
+        startMarkerRef.current = new mapboxgl.Marker(startEl).setLngLat(start).addTo(map);
+        endMarkerRef.current = new mapboxgl.Marker(endEl).setLngLat(end).addTo(map);
+      } else {
+        // Remove markers if no data
+        startMarkerRef.current?.remove();
+        endMarkerRef.current?.remove();
+        startMarkerRef.current = null;
+        endMarkerRef.current = null;
+      }
     };
 
     const init = () => {

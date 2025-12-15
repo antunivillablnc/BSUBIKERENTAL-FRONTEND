@@ -117,8 +117,8 @@ export default function AdminBikesMapPage() {
     // Stick to dark map design at all times (style centrally defined)
     const style = getMapStyleUrl(true);
 
-    // Campus default [lng, lat]
-    const center: [number, number] = [121.16294702315251, 13.956835879996431];
+    // School campus default [lng, lat]
+    const center: [number, number] = [121.16301139616371, 13.956695316657788];
     const startZoom = typeof selectedLat === 'number' && typeof selectedLng === 'number' && !Number.isNaN(selectedLat) && !Number.isNaN(selectedLng) ? 17 : 15;
 
     const map = new mapboxgl.Map({

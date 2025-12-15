@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import apiClient from "@/lib/api";
+import { AlertCircle, Bike, BikeIcon, Clipboard, FileText, Home, LayoutDashboard } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -80,12 +81,12 @@ export default function AdminLayout({
   }, [showDropdown]);
 
   const navItems = [
-    { href: "/admin", label: "Dashboard", icon: "📊" },
-    { href: "/admin/applications", label: "Applications", icon: "📋" },
-    { href: "/admin/bikes", label: "Bikes", icon: "🚲" },
-    { href: "/admin/reported-issues", label: "Reported Issues", icon: "🚨" },
-    { href: "/admin/rental-history", label: "Rental History", icon: "📜" },
-    { href: "/admin/activity-log", label: "Activity Log", icon: "📝" },
+    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/applications", label: "Applications", icon: FileText },
+    { href: "/admin/bikes", label: "Bikes", icon: BikeIcon },
+    { href: "/admin/reported-issues", label: "Reported Issues", icon: AlertCircle },
+    { href: "/admin/rental-history", label: "Rental History", icon: Clipboard },
+    { href: "/admin/activity-log", label: "Activity Log", icon: FileText },
   ];
 
   // Load basic user info for the logout card
@@ -373,7 +374,11 @@ export default function AdminLayout({
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                <span>{item.icon}</span>
+                <span>
+                  {typeof item.icon === "string" 
+                  ? item.icon 
+                  : <item.icon size={18} />}
+                </span>
                 {item.label}
               </Link>
             );
