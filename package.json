@@ -44,7 +44,6 @@
     "mongodb": "^6.20.0",
     "next": "^15.3.5",
     "papaparse": "^5.5.3",
-    "parser": "^0.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-google-recaptcha": "^3.1.0",
